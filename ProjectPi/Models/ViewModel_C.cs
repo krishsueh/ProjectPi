@@ -93,5 +93,152 @@ namespace ProjectPi.Models
             [DataType(DataType.Password)]
             public string Password { get; set; }
         }
+
+        /// <summary>
+        /// 修改基本資料
+        /// </summary>
+        public class Profile
+        {
+            /// <summary>
+            /// 諮商師姓名
+            /// </summary>
+            [Required]
+            [MaxLength(50)]
+            [Display(Name = "姓名")]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// 執業證照
+            /// </summary>
+            [Required]
+            [MaxLength(50)]
+            [Display(Name = "執業證照")]
+            public string LicenseImg { get; set; }
+
+            /// <summary>
+            /// 個人頭像
+            /// </summary>
+            [MaxLength(50)]
+            [Display(Name = "個人頭像")]
+            public string Photo { get; set; }
+
+            /// <summary>
+            /// 個人賣點
+            /// </summary>
+            [MaxLength(12)]
+            [Display(Name = "個人賣點")]
+            public string SellingPoint { get; set; }
+
+            /// <summary>
+            /// 自我介紹
+            /// </summary>
+            [MaxLength(100)]
+            [Display(Name = "自我介紹")]
+            public string SelfIntroduction { get; set; }
+
+            /// <summary>
+            /// 介紹影片
+            /// </summary>
+            [MaxLength(100)]
+            [Display(Name = "介紹影片")]
+            public string VideoLink { get; set; }
+
+            /// <summary>
+            /// 影片是否開放
+            /// </summary>
+            [MaxLength(50)]
+            [Display(Name = "影片開放")]
+            public string IsVideoOpen { get; set; }
+        }
+
+        /// <summary>
+        /// 新增/修改 課程資訊
+        /// </summary>
+        public class Course
+        {
+            /// <summary>
+            /// 專業領域編號
+            /// </summary>
+            [Display(Name = "專業領域ID")]
+            public int FieldId { get; set; }
+
+            /// <summary>
+            /// 課程方案
+            /// </summary>
+            [Display(Name = "課程方案")]
+            public Courses[] Courses { get; set; }
+
+            /// <summary>
+            /// 課程特色
+            /// </summary>
+            [Display(Name = "課程特色")]
+            public Features Features { get; set; }
+        }
+        public class Features
+        {
+            /// <summary>
+            /// 課程特色1
+            /// </summary>
+            [Display(Name = "特色1")]
+            [Required]
+            [MaxLength(25)]
+            public string Feature1 { get; set; }
+
+            /// <summary>
+            /// 課程特色2
+            /// </summary>
+            [Display(Name = "特色2")]
+            [Required]
+            [MaxLength(25)]
+            public string Feature2 { get; set; }
+
+            /// <summary>
+            /// 課程特色3
+            /// </summary>
+            [Display(Name = "特色3")]
+            [Required]
+            [MaxLength(25)]
+            public string Feature3 { get; set; }
+
+            /// <summary>
+            /// 課程特色4
+            /// </summary>
+            [Display(Name = "特色4")]
+            [MaxLength(25)]
+            public string Feature4 { get; set; }
+
+            /// <summary>
+            /// 課程特色5
+            /// </summary>
+            [Display(Name = "特色5")]
+            [MaxLength(25)]
+            public string Feature5 { get; set; }
+        }
+        public class Courses
+        {
+            /// <summary>
+            /// 課程方案
+            /// </summary>
+            [Display(Name = "課程方案")]
+            public string Item { get; set; }
+
+            /// <summary>
+            /// 數量
+            /// </summary>
+            [Display(Name = "數量")] 
+            public int Quantity { get; set; }
+
+            /// <summary>
+            /// 價格
+            /// </summary>
+            [Display(Name = "價格")]
+            public int Price { get; set; }
+
+            /// <summary>
+            /// 是否開放
+            /// </summary>
+            [Display(Name = "是否開放")]
+            public string Availability { get; set; }
+        }
     }
 }
