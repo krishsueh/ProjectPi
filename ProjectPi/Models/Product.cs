@@ -55,9 +55,8 @@ namespace ProjectPi.Models
         /// <summary>
         /// 課程是否開放
         /// </summary>
-        [MaxLength(50)]
         [Display(Name = "課程是否開放")]
-        public string Availability { get; set; }
+        public bool Availability { get; set; }
 
         /// <summary>
         /// 建立時間

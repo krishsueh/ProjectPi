@@ -236,6 +236,10 @@
     <Compile Include="Migrations\202303251336346_addPiTable4.Designer.cs">
       <DependentUpon>202303251336346_addPiTable4.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202303310310443_addPiTable5.cs" />
+    <Compile Include="Migrations\202303310310443_addPiTable5.Designer.cs">
+      <DependentUpon>202303310310443_addPiTable5.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\Cart.cs" />
@@ -351,6 +355,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202303251336346_addPiTable4.resx">
       <DependentUpon>202303251336346_addPiTable4.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202303310310443_addPiTable5.resx">
+      <DependentUpon>202303310310443_addPiTable5.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

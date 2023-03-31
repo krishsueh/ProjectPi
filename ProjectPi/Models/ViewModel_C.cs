@@ -148,7 +148,7 @@ namespace ProjectPi.Models
             /// </summary>
             [MaxLength(50)]
             [Display(Name = "影片開放")]
-            public string IsVideoOpen { get; set; }
+            public bool IsVideoOpen { get; set; }
         }
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace ProjectPi.Models
             /// <summary>
             /// 專業領域編號
             /// </summary>
-            [Display(Name = "專業領域ID")]
+            [Display(Name = "專業領域編號")]
             public int FieldId { get; set; }
 
             /// <summary>
@@ -238,7 +238,7 @@ namespace ProjectPi.Models
             /// 是否開放
             /// </summary>
             [Display(Name = "是否開放")]
-            public string Availability { get; set; }
+            public bool Availability { get; set; }
         }
     }
 }
