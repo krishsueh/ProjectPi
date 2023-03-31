@@ -44,7 +44,9 @@ namespace ProjectPi.Controllers
             else
             {
                 if (!ModelState.IsValid)
-                    return BadRequest("Email格式不符");
+                {
+                    return BadRequest("資料格式有誤");
+                }
                 else
                 {
                     if (view.Password != view.ConfirmPassword)
@@ -153,7 +155,9 @@ namespace ProjectPi.Controllers
             else
             {
                 if (!ModelState.IsValid)
-                    return BadRequest("Email格式不符");
+                {
+                    return BadRequest("資料格式有誤");
+                }
                 else
                 {
                     if (view.Password != view.ConfirmPassword)
