@@ -110,7 +110,7 @@ namespace ProjectPi.Controllers
                     else
                     {
                         JwtAuthUtil jwtAuthUtil = new JwtAuthUtil();
-                        string token = jwtAuthUtil.GenerateToken(hasAccount.Id, hasAccount.Account, hasAccount.Name);
+                        string token = jwtAuthUtil.GenerateToken(hasAccount.Id, hasAccount.Account, hasAccount.Name, hasAccount.Guid);
 
                         ApiResponse result = new ApiResponse { };
                         result.Success = true;
@@ -220,7 +220,7 @@ namespace ProjectPi.Controllers
                     else
                     {
                         JwtAuthUtil jwtAuthUtil = new JwtAuthUtil();
-                        string token = jwtAuthUtil.GenerateToken(hasAccount.Id, hasAccount.Account, hasAccount.Name);
+                        string token = jwtAuthUtil.GenerateToken(hasAccount.Id, hasAccount.Account, hasAccount.Name, hasAccount.Guid);
 
                         ApiResponse result = new ApiResponse { };
                         result.Success = true;

@@ -21,19 +21,20 @@ namespace ProjectPi.Security
         /// </summary>
         /// <param name="id">會員id</param>
         /// <returns>JwtToken</returns>
-        public string GenerateToken(int id, string Account, string Name)
+        public string GenerateToken(int id, string account, string name, Guid guid)
         {
             // 自訂字串，驗證用，用來加密送出的 key (放在 Web.config 的 appSettings)
             string secretKey = WebConfigurationManager.AppSettings["TokenKey"]; // 從 appSettings 取出
-            var counselor = _db.Counselors.Find(id); // 進 DB 取出想要夾帶的基本資料
+            //var counselor = _db.Counselors.Find(id); // 進 DB 取出想要夾帶的基本資料
 
             // payload 需透過 token 傳遞的資料 (可夾帶常用且不重要的資料)
             var payload = new Dictionary<string, object>
             {
-                { "Id", counselor.Id },
-                { "Account", counselor.Account },
-                { "Name", counselor.Name },
-                { "Exp", DateTime.Now.AddMinutes(30).ToString() } // JwtToken 時效設定 30 分
+                { "Id", id },
+                { "Account", account },
+                { "Name", name },
+                { "Guid", guid },
+                { "Exp", DateTime.Now.AddDays(1).ToString() } // JwtToken 時效設定 1 天
             };
 
             // 產生 JwtToken
