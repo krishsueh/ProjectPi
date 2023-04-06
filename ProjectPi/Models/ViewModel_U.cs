@@ -93,5 +93,19 @@ namespace ProjectPi.Models
             [DataType(DataType.Password)]
             public string Password { get; set; }
         }
+
+        /// <summary>
+        /// 修改基本資料
+        /// </summary>
+        public class Profile
+        {
+            /// <summary>
+            /// 個案姓名
+            /// </summary>
+            [Required]
+            [MaxLength(50)]
+            [Display(Name = "姓名")]
+            public string Name { get; set; }
+        }
     }
 }
