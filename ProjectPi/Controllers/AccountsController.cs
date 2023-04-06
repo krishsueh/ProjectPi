@@ -1,9 +1,11 @@
-﻿using NSwag.Annotations;
+﻿using Jose;
+using NSwag.Annotations;
 using ProjectPi.Models;
 using ProjectPi.Security;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.Entity;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -11,6 +13,7 @@ using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using System.Web.Configuration;
 using System.Web.Http;
 
 namespace ProjectPi.Controllers
@@ -329,6 +332,138 @@ namespace ProjectPi.Controllers
             }
             mailSender = null;
         }
+
+
+        /// <summary>
+        /// 登入後，重新設置密碼
+        /// </summary>
+        /// <param name="Password">密碼</param>
+        /// <param name="ConfirmPassword">二次確認密碼</param>
+        /// <returns></returns>
+        [HttpPost]
+        [JwtAuthFilter]
+        [Route("api/resetPassword")]
+        public IHttpActionResult PostResetPassword(string Password, string ConfirmPassword)
+        {
+            PiDbContext _db = new PiDbContext();
+            ApiResponse result = new ApiResponse();
+            var token = Request.Headers.Authorization.Parameter;
+            string secretKey = WebConfigurationManager.AppSettings["TokenKey"];
+            if (Password != ConfirmPassword)
+            {
+                return BadRequest("二次密碼輸入不一樣");
+            }
+
+
+            if (secretKey != null)
+            {
+                var payload = Jose.JWT.Decode<Dictionary<string, object>>(token, Encoding.UTF8.GetBytes(secretKey), JwsAlgorithm.HS512);
+                string _account = payload["Account"].ToString();
+                User user = _db.Users.Where(x => x.Account == _account).FirstOrDefault();
+                Counselor counselor = _db.Counselors.Where(x => x.Account == _account).FirstOrDefault();
+                if (user != null)
+                {
+                    string newPassword = BitConverter
+                          .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                          .Replace("-", null);
+                    if (user.Password == newPassword)
+                    {
+                        return BadRequest("密碼不能跟原本的相同");
+                    }
+                    user.Password = newPassword;
+                    result.Success = true;
+                    result.Message = "個案修改成功";
+                    if (ModelState.IsValid)
+                    {
+                        _db.Entry(user).State = EntityState.Modified;
+                        _db.SaveChanges();
+                    }
+                    return Ok(result);
+                }
+                else if (counselor != null)
+                {
+                    string newPassword = BitConverter
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                           .Replace("-", null);
+                    if (counselor.Password == newPassword)
+                    {
+                        return BadRequest("密碼不能跟原本的相同");
+                    }
+
+                    counselor.Password = newPassword;
+                    result.Success = true;
+                    result.Message = "諮商師修改成功";
+                    if (ModelState.IsValid)
+                    {
+                        _db.Entry(counselor).State = EntityState.Modified;
+                        _db.SaveChanges();
+                    }
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest("帳號不存在");
+                }
+            }
+            else return BadRequest("沒有token");
+        }
+
+
+        /// <summary>
+        /// 信箱重新設置密碼
+        /// </summary>
+        /// <param name="Password">密碼</param>
+        /// <param name="ConfirmPassword">二次確認密碼</param>
+        /// <param name="Guid">Guid</param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/resetPassword/guid")]
+        public IHttpActionResult PostResetPassword(string Password, string ConfirmPassword, Guid Guid)
+        {
+            PiDbContext _db = new PiDbContext();
+            ApiResponse result = new ApiResponse();
+            //判斷用哪一種方式重設密碼guid / token
+
+            if (Password != ConfirmPassword)
+            {
+                return BadRequest("二次密碼輸入不一樣");
+            }
+
+            User user = _db.Users.Where(x => x.Guid == Guid).FirstOrDefault();
+            Counselor counselor = _db.Counselors.Where(x => x.Guid == Guid).FirstOrDefault();
+            if (user != null)
+            {
+                user.Password = BitConverter
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                           .Replace("-", null);
+                if (ModelState.IsValid)
+                {
+                    _db.Entry(user).State = EntityState.Modified;
+                    _db.SaveChanges();
+                    result.Success = true;
+                    result.Message = "個案修改成功";
+                }
+                return Ok(result);
+            }
+            else if (counselor != null)
+            {
+                counselor.Password = BitConverter
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                           .Replace("-", null);
+                if (ModelState.IsValid)
+                {
+                    _db.Entry(counselor).State = EntityState.Modified;
+                    _db.SaveChanges();
+                    result.Success = true;
+                    result.Message = "諮商師修改成功";
+                }
+                return Ok(result);
+
+            }
+            else return BadRequest("Guid錯誤");
+        }
+
+        //**
     }
 }
 
