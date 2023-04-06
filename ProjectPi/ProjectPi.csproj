@@ -240,6 +240,10 @@
     <Compile Include="Migrations\202303310310443_addPiTable5.Designer.cs">
       <DependentUpon>202303310310443_addPiTable5.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202304060220122_addTimetableModel.cs" />
+    <Compile Include="Migrations\202304060220122_addTimetableModel.Designer.cs">
+      <DependentUpon>202304060220122_addTimetableModel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\Cart.cs" />
@@ -251,6 +255,7 @@
     <Compile Include="Models\Feature.cs" />
     <Compile Include="Models\MainField.cs" />
     <Compile Include="Models\PiDbContext.cs" />
+    <Compile Include="Models\Timetable.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\ViewModel.cs" />
     <Compile Include="Models\ViewModel_C.cs" />
@@ -358,6 +363,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202303310310443_addPiTable5.resx">
       <DependentUpon>202303310310443_addPiTable5.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202304060220122_addTimetableModel.resx">
+      <DependentUpon>202304060220122_addTimetableModel.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
