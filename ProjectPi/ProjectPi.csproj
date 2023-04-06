@@ -244,6 +244,10 @@
     <Compile Include="Migrations\202304060220122_addTimetableModel.Designer.cs">
       <DependentUpon>202304060220122_addTimetableModel.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202304060238410_delBase64CounselorModel.cs" />
+    <Compile Include="Migrations\202304060238410_delBase64CounselorModel.Designer.cs">
+      <DependentUpon>202304060238410_delBase64CounselorModel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\Cart.cs" />
@@ -366,6 +370,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202304060220122_addTimetableModel.resx">
       <DependentUpon>202304060220122_addTimetableModel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202304060238410_delBase64CounselorModel.resx">
+      <DependentUpon>202304060238410_delBase64CounselorModel.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
