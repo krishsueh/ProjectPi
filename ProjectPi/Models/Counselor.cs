@@ -64,7 +64,6 @@ namespace ProjectPi.Models
         /// <summary>
         /// 執業證照 Base64
         /// </summary>
-        [Required]
         [Display(Name = "執業證照Base64")]
         public string LicenseBase64 { get; set; }
 
