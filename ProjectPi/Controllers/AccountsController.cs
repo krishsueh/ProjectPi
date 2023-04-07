@@ -2,16 +2,20 @@
 using NSwag.Annotations;
 using ProjectPi.Models;
 using ProjectPi.Security;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Entity;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Configuration;
 using System.Web.Http;
@@ -282,7 +286,7 @@ namespace ProjectPi.Controllers
                     {
                         guid = hasUser.Guid.ToString();
                     }
-                        
+
 
                     // Google 發信帳號密碼
                     string sendFrom = ConfigurationManager.AppSettings["SendFrom"];
@@ -463,7 +467,76 @@ namespace ProjectPi.Controllers
             else return BadRequest("Guid錯誤");
         }
 
-        //**
+        /// <summary>
+        /// 儲存諮商師執照
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/uploadLicense")]
+        [HttpPost]
+        public async Task<IHttpActionResult> UploadLicense()
+        {
+            PiDbContext _db = new PiDbContext();
+
+            // 檢查請求是否包含 multipart/form-data.
+            if (!Request.Content.IsMimeMultipartContent())
+            {
+                throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
+            }
+
+            // 使用 HttpContext.Current.Server.MapPath 方法來獲取指定路徑的物理路徑
+            string root = HttpContext.Current.Server.MapPath(@"~/upload/license");
+
+            try
+            {
+                // 讀取 MIME 資料
+                var provider = new MultipartMemoryStreamProvider();
+                await Request.Content.ReadAsMultipartAsync(provider);
+
+                // 取得檔案副檔名，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                string fileNameData = provider.Contents.FirstOrDefault().Headers.ContentDisposition.FileName.Trim('\"');
+                string fileType = fileNameData.Remove(0, fileNameData.LastIndexOf('.')); // .jpg
+
+                // 定義檔案名稱
+                string fileName = "License" + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + fileType;
+
+                // 儲存圖片，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                var fileBytes = await provider.Contents.FirstOrDefault().ReadAsByteArrayAsync();
+                var filePath = Path.Combine(root, fileName);
+
+                // 創建文件流
+                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    // 寫入文件內容
+                    await fileStream.WriteAsync(fileBytes, 0, fileBytes.Length);
+                }
+
+                // 從form-data撈出Account，再將檔名寫入資料庫
+                string account = "";
+                foreach (var content in provider.Contents)
+                {
+                    var name = content.Headers.ContentDisposition.Name.Trim('"');
+                    if (name == "Account")
+                    {
+                        account = await content.ReadAsStringAsync();
+                        Counselor haveCounselor = _db.Counselors
+                                .Where(x => x.Account == account).FirstOrDefault();
+                        haveCounselor.LicenseImg = fileName;
+                        _db.SaveChanges();
+                        break;
+                    }
+                }
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功上傳諮商師執照";
+                result.Data = null;
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return BadRequest("執照上傳失敗或未上傳");
+            }
+        }
     }
 }
 
