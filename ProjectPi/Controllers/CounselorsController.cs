@@ -1,14 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
 using NSwag.Annotations;
 using ProjectPi.Models;
 using ProjectPi.Security;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace ProjectPi.Controllers
 {
@@ -76,7 +82,7 @@ namespace ProjectPi.Controllers
                 {
                     haveCounselor.Name = view.Name;
                     haveCounselor.LicenseImg = view.LicenseImg;
-                    haveCounselor.Photo = view.Photo;
+                    //haveCounselor.Photo = view.Photo;
                     haveCounselor.SellingPoint = view.SellingPoint;
                     haveCounselor.SelfIntroduction = view.SelfIntroduction;
                     haveCounselor.VideoLink = view.VideoLink;
@@ -92,6 +98,76 @@ namespace ProjectPi.Controllers
                 }
                 else
                     return BadRequest("無此帳號");
+            }
+        }
+
+        /// <summary>
+        /// 儲存諮商師個人頭像
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/uploadHeadshot")]
+        [JwtAuthFilter]
+        [HttpPost]
+        public async Task<IHttpActionResult> UploadHeadshot()
+        {
+            var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int counselorId = (int)counselorToken["Id"];
+            string counselorName = counselorToken["Name"].ToString();
+
+            // 檢查請求是否包含 multipart/form-data.
+            if (!Request.Content.IsMimeMultipartContent())
+            {
+                throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
+            }
+
+            // 使用 HttpContext.Current.Server.MapPath 方法來獲取指定路徑的物理路徑
+            // 檢查資料夾是否存在，若無則建立
+            string root = HttpContext.Current.Server.MapPath(@"~/upload/headshot");
+
+            try
+            {
+                // 讀取 MIME 資料
+                var provider = new MultipartMemoryStreamProvider();
+                await Request.Content.ReadAsMultipartAsync(provider);
+
+                // 取得檔案副檔名，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                string fileNameData = provider.Contents.FirstOrDefault().Headers.ContentDisposition.FileName.Trim('\"');
+                string fileType = fileNameData.Remove(0, fileNameData.LastIndexOf('.')); // .jpg
+
+                // 定義檔案名稱
+                string fileName = counselorId + "-" + counselorName + "-" + DateTime.Now.ToString("yyyyMMddHHmmss") + fileType;
+
+                // 儲存圖片，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                var fileBytes = await provider.Contents.FirstOrDefault().ReadAsByteArrayAsync();
+                var filePath = Path.Combine(root, fileName);
+
+                // 創建文件流
+                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    // 寫入文件內容
+                    await fileStream.WriteAsync(fileBytes, 0, fileBytes.Length);
+                }
+
+                // 使用 SixLabors.ImageSharp 調整圖片尺寸 (正方形大頭貼)
+                var image = SixLabors.ImageSharp.Image.Load<Rgba32>(filePath);
+                image.Mutate(x => x.Resize(640, 640));
+                image.Save(filePath);
+
+                // 將頭像路徑存入資料庫
+                Counselor haveCounselor = _db.Counselors
+                .Where(x => x.Id == counselorId).FirstOrDefault();
+                haveCounselor.Photo = fileName;
+                _db.SaveChanges();
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功上傳諮商師個人頭像";
+                result.Data = null;
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return BadRequest("個人頭像上傳失敗或未上傳");
             }
         }
 
