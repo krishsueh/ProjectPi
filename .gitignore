@@ -207,3 +207,9 @@ FakesAssemblies/
 
 # Visual Studio 6 workspace options file
 *.opt
+
+# 儲存上傳照片的資料夾
+upload/
+
+# Ignore applicationhost.config file
+.vs/ProjectPi/config/applicationhost.config
