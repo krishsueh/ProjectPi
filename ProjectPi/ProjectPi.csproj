@@ -270,6 +270,7 @@
     <Compile Include="Controllers\CounselorsController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\TestController.cs" />
+    <Compile Include="Controllers\TimetablesController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="Controllers\ZoomApiController.cs" />
     <Compile Include="Global.asax.cs">
