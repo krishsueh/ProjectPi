@@ -240,5 +240,59 @@ namespace ProjectPi.Models
             [Display(Name = "是否開放")]
             public bool Availability { get; set; }
         }
+
+        /// <summary>
+        /// 新增/修改 預約時段
+        /// </summary>
+        public class Timetable
+        {
+            /// <summary>
+            /// 開始日期
+            /// </summary>
+            [Display(Name = "開始日期")]
+            public DateTime StartDate { get; set; }
+
+            /// <summary>
+            /// 結束日期
+            /// </summary>
+            [Display(Name = "結束日期")]
+            public DateTime EndDate { get; set; }
+
+            /// <summary>
+            /// 一週資訊
+            /// </summary>
+            [Display(Name = "一週資訊")]
+            public WeekData[] WeekData { get; set; }
+        }
+        public class WeekData
+        {
+            /// <summary>
+            /// 星期
+            /// </summary>
+            [Display(Name = "星期")]
+            public string WeekDay { get; set; }
+
+            /// <summary>
+            /// 預約時間
+            /// </summary>
+            [Display(Name = "預約時間")]
+            public Hours[] Hours { get; set; }
+        }
+
+        public class Hours
+        {
+            /// <summary>
+            /// 時段
+            /// </summary>
+            [Display(Name = "時段")]
+            public string Time { get; set; }
+
+            /// <summary>
+            /// 該時段是否開放
+            /// </summary>
+            [Display(Name = "是否開放")]
+            public bool Available { get; set; }
+        }
+
     }
 }
