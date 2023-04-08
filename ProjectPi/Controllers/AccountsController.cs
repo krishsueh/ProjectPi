@@ -2,16 +2,20 @@
 using NSwag.Annotations;
 using ProjectPi.Models;
 using ProjectPi.Security;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Entity;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Configuration;
 using System.Web.Http;
@@ -269,6 +273,9 @@ namespace ProjectPi.Controllers
                     return BadRequest("Email格式不符");
                 else
                 {
+                    // 官網首頁
+                    string indexPath = Url.Content("https://pi-rocket-coding.vercel.app");
+
                     // 重設密碼頁面
                     string path = Url.Content("https://pi-rocket-coding.vercel.app/resetpassword");
 
@@ -282,15 +289,14 @@ namespace ProjectPi.Controllers
                     {
                         guid = hasUser.Guid.ToString();
                     }
-                        
+
 
                     // Google 發信帳號密碼
                     string sendFrom = ConfigurationManager.AppSettings["SendFrom"];
                     string password = ConfigurationManager.AppSettings["GmailPassword"];
-                    //string sendTo = view.Account.Trim().ToLower();
-                    string sendTo = "hbmanikin@gmail.com";//收件測試
+                    string sendTo = view.Account.Trim().ToLower();
                     string subject = "【拍拍】重設密碼連結";
-                    string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>請點選下列連結進入重設密碼頁面。<br><br>提醒您，若您未提出重設密碼的需求，請忽略此封信件。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + path + "?guid=" + guid + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>重設密碼</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='#' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</ span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
+                    string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>請點選下列連結進入重設密碼頁面。<br><br>提醒您，若您未提出重設密碼的需求，請忽略此封信件。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + path + "?guid=" + guid + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>重設密碼</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</ span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
                     string mailBodyEnd = "<p style='color: #424242; text-align: center;'>-----此為系統發出信件，請勿直接回覆，感謝您的配合。-----</p>";
 
                     SendGmailMail(sendFrom, sendTo, subject, mailBody + mailBodyEnd, password);
@@ -463,7 +469,76 @@ namespace ProjectPi.Controllers
             else return BadRequest("Guid錯誤");
         }
 
-        //**
+        /// <summary>
+        /// 儲存諮商師執照
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/uploadLicense")]
+        [HttpPost]
+        public async Task<IHttpActionResult> UploadLicense()
+        {
+            PiDbContext _db = new PiDbContext();
+
+            // 檢查請求是否包含 multipart/form-data.
+            if (!Request.Content.IsMimeMultipartContent())
+            {
+                throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
+            }
+
+            // 使用 HttpContext.Current.Server.MapPath 方法來獲取指定路徑的物理路徑
+            string root = HttpContext.Current.Server.MapPath(@"~/upload/license");
+
+            try
+            {
+                // 讀取 MIME 資料
+                var provider = new MultipartMemoryStreamProvider();
+                await Request.Content.ReadAsMultipartAsync(provider);
+
+                // 取得檔案副檔名，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                string fileNameData = provider.Contents.FirstOrDefault().Headers.ContentDisposition.FileName.Trim('\"');
+                string fileType = fileNameData.Remove(0, fileNameData.LastIndexOf('.')); // .jpg
+
+                // 定義檔案名稱
+                string fileName = "License" + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + fileType;
+
+                // 儲存圖片，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                var fileBytes = await provider.Contents.FirstOrDefault().ReadAsByteArrayAsync();
+                var filePath = Path.Combine(root, fileName);
+
+                // 創建文件流
+                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    // 寫入文件內容
+                    await fileStream.WriteAsync(fileBytes, 0, fileBytes.Length);
+                }
+
+                // 從form-data撈出Account，再將檔名寫入資料庫
+                string account = "";
+                foreach (var content in provider.Contents)
+                {
+                    var name = content.Headers.ContentDisposition.Name.Trim('"');
+                    if (name == "Account")
+                    {
+                        account = await content.ReadAsStringAsync();
+                        Counselor haveCounselor = _db.Counselors
+                                .Where(x => x.Account == account).FirstOrDefault();
+                        haveCounselor.LicenseImg = fileName;
+                        _db.SaveChanges();
+                        break;
+                    }
+                }
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功上傳諮商師執照";
+                result.Data = null;
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return BadRequest("執照上傳失敗或未上傳");
+            }
+        }
     }
 }
 
