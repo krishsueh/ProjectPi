@@ -146,7 +146,6 @@ namespace ProjectPi.Models
             /// <summary>
             /// 影片是否開放
             /// </summary>
-            [MaxLength(50)]
             [Display(Name = "影片開放")]
             public bool IsVideoOpen { get; set; }
         }
