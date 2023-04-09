@@ -97,8 +97,8 @@ namespace ProjectPi.Models
         }
         public class CounselorsData
         {
-            [Display(Name = "個人頭像")]
-            public string Photo { get; set; }
+            [Display(Name = "諮商師編號")]
+            public int Id { get; set; }
 
             [Display(Name = "姓名")]
             public string Name { get; set; }
@@ -108,6 +108,9 @@ namespace ProjectPi.Models
 
             [Display(Name = "自我介紹")]
             public string SelfIntroduction { get; set; }
+
+            [Display(Name = "個人頭像")]
+            public string Photo { get; set; }
         }
     }
 }

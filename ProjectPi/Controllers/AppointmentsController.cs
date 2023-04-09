@@ -21,9 +21,15 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [Route("api/profiles")]
         [HttpGet]
-        public IHttpActionResult GetProfiles(int page)
+        public IHttpActionResult GetProfiles(int page, string keyword)
         {
             var Counselors = _db.Counselors.AsQueryable();
+
+            //搜尋條件
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                Counselors = Counselors.Where(x => x.Name.Contains(keyword));
+            }
 
             //總頁數
             int pageNum = 0;
@@ -37,7 +43,7 @@ namespace ProjectPi.Controllers
             data.TotalPageNum = pageNum;
             data.CounselorsData = new List<ViewModel.CounselorsData>();
 
-            var counsleorList = _db.Counselors
+            var counsleorList = Counselors
                 .Select(x => new
                 {
                     x.Id,
@@ -56,10 +62,11 @@ namespace ProjectPi.Controllers
             foreach (var item in counsleorList)
             {
                 ViewModel.CounselorsData counselorsData = new ViewModel.CounselorsData();
-                counselorsData.Photo = path + item.Photo;
+                counselorsData.Id = item.Id;
                 counselorsData.Name = item.Name;
                 counselorsData.SellingPoint = item.SellingPoint;
                 counselorsData.SelfIntroduction = item.SelfIntroduction;
+                counselorsData.Photo = path + item.Photo;
 
                 data.CounselorsData.Add(counselorsData);
             }
