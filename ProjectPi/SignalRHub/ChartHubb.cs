@@ -13,10 +13,11 @@ namespace ProjectPi.SignalRHub
     public class ChartHubb : Hub
     {
         private static List<UserInfo> USERLIST = new List<UserInfo>();
-
+        PiDbContext _db = new PiDbContext();
         //连接
         public override Task OnConnected()
         {
+            
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
             if (currentUser == null)
             {
@@ -69,7 +70,24 @@ namespace ProjectPi.SignalRHub
         }
 
         /// <summary>
-        /// 发送信息给某人
+        /// 儲存訊息
+        /// </summary>
+
+        [HubMethodName("chatLog")]
+        public void ChatLog(int CounselorId, int UserId, string Content , string Type)
+        {
+            ChatRoom _chatroom = new ChatRoom();
+            _chatroom.CounselorId = CounselorId;
+            _chatroom.UserId = UserId;
+            _chatroom.Content = Content;
+            _chatroom.Type = Type;
+            _chatroom.InitDate = DateTime.Now;
+            _db.ChatRooms.Add(_chatroom);
+            _db.SaveChanges();
+          
+        }
+        /// <summary>
+        /// 指定人發送信息
         /// </summary>
         /// <param name="outsideID"></param>
         /// <param name="message"></param>
@@ -78,10 +96,18 @@ namespace ProjectPi.SignalRHub
         {
             var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
             var outsideUser = USERLIST.Where(x => x.ConnectionID == outsideID).FirstOrDefault();
-
+            var cookieHeader = Context.Headers["Cookie"];
+            
             //前端js定义function showMessage(speakerName , message)
             if (outsideUser != null)
             {
+                ChatRoom _chatroom = new ChatRoom();
+                _chatroom.CounselorId = 1;
+                _chatroom.UserId = 2;
+                _chatroom.Content = "Haha";
+                _chatroom.Type = "send";
+                _chatroom.InitDate = DateTime.Now;
+             
                 Clients.Client(outsideUser.ConnectionID).showMessage(myUser.UserName, message);
                 Clients.Client(myUser.ConnectionID).showMessage(myUser.UserName, message);
                 //对方  和  我方 的界面都要显示语录
@@ -91,6 +117,8 @@ namespace ProjectPi.SignalRHub
                 Clients.Client(myUser.ConnectionID).showMessage(outsideUser.UserName + outsideUser.ConnectionID, "离线");
             }
         }
+
+        
 
 
     }
