@@ -32,6 +32,9 @@ namespace ProjectPi.Models
             [Display(Name = "姓名")]
             public string Name { get; set; }
 
+            [Display(Name = "專長領域Tags")]
+            public string[] FieldTags { get; set; }
+
             [Display(Name = "自我介紹")]
             public string SelfIntroduction { get; set; }
 

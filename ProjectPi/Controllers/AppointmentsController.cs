@@ -113,6 +113,7 @@ namespace ProjectPi.Controllers
             ViewModel.counselorProfile data = new ViewModel.counselorProfile();
             data.Photo = path + counselorData.Photo;
             data.Name = counselorData.Name;
+            data.FieldTags = counselorFields.Select(x => x.Field).ToArray();
             data.SelfIntroduction = counselorData.SelfIntroduction;
             data.CertNumber = counselorData.CertNumber;
             data.VideoLink = counselorData.VideoLink;
