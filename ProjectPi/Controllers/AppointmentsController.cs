@@ -21,7 +21,7 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [Route("api/profiles")]
         [HttpGet]
-        public IHttpActionResult GetProfiles(int page, string keyword)
+        public IHttpActionResult GetProfiles(int page = 1, string keyword = "")
         {
             var Counselors = _db.Counselors.AsQueryable();
 
