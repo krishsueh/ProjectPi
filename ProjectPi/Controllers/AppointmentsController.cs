@@ -21,15 +21,19 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [Route("api/profiles")]
         [HttpGet]
-        public IHttpActionResult GetProfiles(int page = 1, string keyword = "")
+        public IHttpActionResult GetProfiles(int page = 1, string keyword = "", [FromUri] List<string> tags = null)
         {
             var Counselors = _db.Features.AsQueryable();
 
-            //搜尋條件
+            //搜尋姓名
             if (!string.IsNullOrEmpty(keyword))
-            {
                 Counselors = Counselors.Where(x => x.MyCounselor.Name.Contains(keyword));
-            }
+
+            //篩選諮商主題
+            //因為 tags 是一個 List<string>，如果沒有加上 tags.Any() 的判斷，即使 tags 是 null，程式也會執行下去，並嘗試在 tags 上呼叫 Contains() 方法，導致發生空值異常。
+            if (tags != null && tags.Any())
+                Counselors = Counselors.Where(x => tags.Contains(x.MyField.Field));
+
 
             //總頁數
             int pageNum = 0;
