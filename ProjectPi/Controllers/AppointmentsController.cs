@@ -23,12 +23,12 @@ namespace ProjectPi.Controllers
         [HttpGet]
         public IHttpActionResult GetProfiles(int page = 1, string keyword = "")
         {
-            var Counselors = _db.Counselors.AsQueryable();
+            var Counselors = _db.Features.AsQueryable();
 
             //搜尋條件
             if (!string.IsNullOrEmpty(keyword))
             {
-                Counselors = Counselors.Where(x => x.Name.Contains(keyword));
+                Counselors = Counselors.Where(x => x.MyCounselor.Name.Contains(keyword));
             }
 
             //總頁數
@@ -46,16 +46,17 @@ namespace ProjectPi.Controllers
             var counsleorList = Counselors
                 .Select(x => new
                 {
-                    x.Id,
-                    x.Photo,
-                    x.Name,
-                    x.SellingPoint,
-                    x.SelfIntroduction
+                    x.MyCounselor.Id,
+                    x.MyCounselor.Photo,
+                    x.MyCounselor.Name,
+                    x.MyCounselor.SellingPoint,
+                    x.MyCounselor.SelfIntroduction
                 })
                 .OrderBy(x => x.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToList()
+                .Distinct();
 
             //照片存取位置
             string path = "https://pi.rocket-coding.com/upload/headshot/";
