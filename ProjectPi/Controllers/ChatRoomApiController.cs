@@ -69,7 +69,7 @@ namespace ProjectPi.Controllers
             {
                 return BadRequest("聊天沒有此UserId紀錄");
             }
-            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderByDescending(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.InitDate });
+            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.InitDate });
             
             if (!chatlogList.Any()) return BadRequest("無聊天紀錄");
             try
@@ -121,8 +121,6 @@ namespace ProjectPi.Controllers
 
             if (Type.ToLower() == "user")
             {
-                
-
                 targetList = _db.ChatRooms
    .GroupBy(c => c.UserId)
    .Select(grp => new
@@ -150,7 +148,7 @@ namespace ProjectPi.Controllers
        x.ChatRoom.Type,
        x.ChatRoom.Content,
        x.ChatRoom.InitDate
-   });
+   }).OrderByDescending(x => x.InitDate);
             }
             else if (Type.ToLower() == "counselor")
             {
@@ -181,36 +179,61 @@ namespace ProjectPi.Controllers
         x.ChatRoom.Type,
         x.ChatRoom.Content,
         x.ChatRoom.InitDate
-    });
+    }).OrderByDescending(x => x.InitDate);
             }
             else return BadRequest("Type類型輸入錯誤");
             
             var lista = targetList.ToList();
             string msgg = "";
+            List<UserChatTarget> userChatTargetList = new List<UserChatTarget>();
             List<string> targetName =  new List<string>();
             foreach (var item in lista)
             {
-               if(Type.ToLower() == "user")
+                UserChatTarget userChatTarget = new UserChatTarget();
+                    
+                if (Type.ToLower() == "user")
                 {
-                    Counselor counselor = _db.Counselors.Where(x=>x.Id == item.Id).FirstOrDefault();
-                    if(counselor.Name != null)
-                        targetName.Add(counselor.Name) ;
+                    Counselor counselor = _db.Counselors.Where(x=>x.Id== item.CounselorId).FirstOrDefault();
+                    if (counselor != null)
+                    {
+                        userChatTarget.Name = counselor.Name;
+                        userChatTarget.Id = item.Id;
+                        userChatTarget.InitDate = item.InitDate;
+                        userChatTarget.UserId = item.UserId;
+                        userChatTarget.Content = item.Content;
+                        userChatTarget.CounselorId = item.CounselorId;
+                        userChatTarget.Type = item.Type;
+                        //targetName.Add(counselor.Name) ;
+                        userChatTargetList.Add(userChatTarget);
+                    }
                 }
                else if(Type.ToLower() == "counselor")
                 {
-                    User user = _db.Users.Where(x => x.Id == item.Id).FirstOrDefault();
-                    if(user.Name != null)
-                        targetName.Add(user.Name);
+                    User user = _db.Users.Where(x => x.Id == item.UserId).FirstOrDefault();
+                    if(user != null)
+                    {
+                        userChatTarget.Name = user.Name;
+                        userChatTarget.Id = item.Id;
+                        userChatTarget.InitDate = item.InitDate;
+                        userChatTarget.UserId = item.UserId;
+                        userChatTarget.Content = item.Content;
+                        userChatTarget.CounselorId = item.CounselorId;
+                        userChatTarget.Type = item.Type;
+                        userChatTargetList.Add(userChatTarget);
+                    }
                 }
             }
+            
 
+          
 
                 try
             {
 
                 result.Success = true;
-                result.Message = targetName[0];
-                result.Data = new { TargetList = lista };
+                result.Message = "得到所有人最後一則訊息";
+                result.Data = new { userChatTargetList };
+                
                 return Ok(result);
             }
             catch (Exception ex)
@@ -218,6 +241,27 @@ namespace ProjectPi.Controllers
                 return BadRequest("ERROR :" + ex);
             }
 
+        }
+
+        /// <summary>
+        /// 取得所有諮商師目標
+        /// </summary>
+        /// <param name="view"></param>
+        /// <response code="200">註冊成功</response>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/chatroom/getTatgetCounselor")]
+        [SwaggerResponse(typeof(ApiResponse))]
+        public IHttpActionResult GetTatgetCounselor()
+        {
+            ApiResponse result = new ApiResponse();
+            PiDbContext _db = new PiDbContext();
+
+            var counselorList = _db.Counselors.Select(x=>new {x.Id,x.Name });
+            result.Success = true;
+            result.Message = "取得諮商師目標";
+            result.Data = new { counselorList };
+            return Ok(result);
         }
         //**
 

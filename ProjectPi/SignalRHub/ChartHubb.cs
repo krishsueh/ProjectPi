@@ -66,7 +66,7 @@ namespace ProjectPi.SignalRHub
                 currentUser.UserName = inputName;
             }
             //广播给全体客户端
-            this.ShowAllUser();
+            //this.ShowAllUser();
         }
 
         /// <summary>
@@ -86,40 +86,52 @@ namespace ProjectPi.SignalRHub
             _db.SaveChanges();
           
         }
+        
+        /// <summary>
+        /// 連線完要註冊
+        /// </summary>
+        /// <param name="outsideID"></param>
+        /// <param name="message"></param>
+        [HubMethodName("setUserId")]
+        public void SetUserId(int id)
+        {
+            var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
+            if (currentUser != null)
+            {
+                currentUser.Id = id;
+            }
+        }
         /// <summary>
         /// 指定人發送信息
         /// </summary>
         /// <param name="outsideID"></param>
         /// <param name="message"></param>
         [HubMethodName("sendTo")]
-        public void SendTo(string outsideID, string message)
+        public void SendTo(int outsideID, string message)
         {
             var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
-            var outsideUser = USERLIST.Where(x => x.ConnectionID == outsideID).FirstOrDefault();
-            var cookieHeader = Context.Headers["Cookie"];
+            var outsideUser = USERLIST.Where(x => x.Id == outsideID).FirstOrDefault();
             
+            Clients.Client(myUser.ConnectionID).showMessage(myUser.UserName, message);
+            Clients.Client(outsideUser.ConnectionID).showLastMsg(myUser.Id);
             //前端js定义function showMessage(speakerName , message)
             if (outsideUser != null)
             {
-                ChatRoom _chatroom = new ChatRoom();
-                _chatroom.CounselorId = 1;
-                _chatroom.UserId = 2;
-                _chatroom.Content = "Haha";
-                _chatroom.Type = "send";
-                _chatroom.InitDate = DateTime.Now;
-             
+                
                 Clients.Client(outsideUser.ConnectionID).showMessage(myUser.UserName, message);
-                Clients.Client(myUser.ConnectionID).showMessage(myUser.UserName, message);
+                Clients.Client(outsideUser.ConnectionID).showLastMsg(outsideID);
                 //对方  和  我方 的界面都要显示语录
             }
+            /*
+             離線訊息不用渲染OR 提示
             else
             {
                 Clients.Client(myUser.ConnectionID).showMessage(outsideUser.UserName + outsideUser.ConnectionID, "离线");
             }
+            */
         }
 
         
-
 
     }
 }
