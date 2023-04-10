@@ -21,7 +21,7 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [Route("api/profiles")]
         [HttpGet]
-        public IHttpActionResult GetProfiles(int page = 1, string keyword = "", [FromUri] List<string> tags = null)
+        public IHttpActionResult GetProfiles(int page = 1, string keyword = "", string tags = "")
         {
             var Counselors = _db.Features.AsQueryable();
 
@@ -29,10 +29,31 @@ namespace ProjectPi.Controllers
             if (!string.IsNullOrEmpty(keyword))
                 Counselors = Counselors.Where(x => x.MyCounselor.Name.Contains(keyword));
 
-            //篩選諮商主題
+            //篩選諮商主題 ?tags=126
+            if (!string.IsNullOrEmpty(tags))
+            {
+                //int[] fieldIds = [1, 2, 6]
+                int[] fieldIds = new int[tags.Length];
+                try
+                {
+                    for (int i = 0; i < tags.Length; i++)
+                    {
+                        fieldIds[i] = int.Parse(tags[i].ToString());
+                    }
+
+                    Counselors = Counselors.Where(x => fieldIds.Contains(x.FieldId));
+                }
+                catch
+                {
+                    return BadRequest("數值錯誤");
+                }
+            }
+
+            //使用字串篩選主題
             //因為 tags 是一個 List<string>，如果沒有加上 tags.Any() 的判斷，即使 tags 是 null，程式也會執行下去，並嘗試在 tags 上呼叫 Contains() 方法，導致發生空值異常。
-            if (tags != null && tags.Any())
-                Counselors = Counselors.Where(x => tags.Contains(x.MyField.Field));
+            //[FromUri] List<string> tags = null
+            //if (tags != null && tags.Any())
+            //    Counselors = Counselors.Where(x => tags.Contains(x.MyField.Field));
 
 
             //總頁數
@@ -104,74 +125,81 @@ namespace ProjectPi.Controllers
                 })
                 .FirstOrDefault();
 
-            // 諮商師專業領域
-            var counselorFields = _db.Features
-                .Where(x => x.CounselorId == id)
-                .Select(x => new
-                {
-                    x.FieldId,
-                    x.MyField.Field,
-                    x.Feature1,
-                    x.Feature2,
-                    x.Feature3,
-                    x.Feature4,
-                    x.Feature5,
-                })
-                .ToList();
-
-            //照片存取位置
-            string path = "https://pi.rocket-coding.com/upload/headshot/";
-
-            ViewModel.counselorProfile data = new ViewModel.counselorProfile();
-            data.Photo = path + counselorData.Photo;
-            data.Name = counselorData.Name;
-            data.FieldTags = counselorFields.Select(x => x.Field).ToArray();
-            data.SelfIntroduction = counselorData.SelfIntroduction;
-            data.CertNumber = counselorData.CertNumber;
-            data.VideoLink = counselorData.VideoLink;
-            data.Fields = new List<ViewModel.Fields>();
-
-            foreach (var fieldItem in counselorFields)
+            if (counselorData == null)
             {
-                ViewModel.Fields fields = new ViewModel.Fields();
-                fields.Field = fieldItem.Field;
-                fields.Features = new ViewModel.Features
-                {
-                    Feature1 = fieldItem.Feature1,
-                    Feature2 = fieldItem.Feature2,
-                    Feature3 = fieldItem.Feature3,
-                    Feature4 = fieldItem.Feature4,
-                    Feature5 = fieldItem.Feature5
-                };
-                fields.Courses = new List<ViewModel.Courses>();
-
-                // 諮商師課程資訊
-                var counselorCourses = _db.Products
-                    .Where(x => x.CounselorId == id && x.FieldId == fieldItem.FieldId && x.Availability == true)
+                return BadRequest("不存在此諮商師");
+            }
+            else
+            {
+                // 諮商師專業領域
+                var counselorFields = _db.Features
+                    .Where(x => x.CounselorId == id)
                     .Select(x => new
                     {
-                        x.Item,
-                        x.Price
+                        x.FieldId,
+                        x.MyField.Field,
+                        x.Feature1,
+                        x.Feature2,
+                        x.Feature3,
+                        x.Feature4,
+                        x.Feature5,
                     })
                     .ToList();
 
-                foreach (var courseItem in counselorCourses)
-                {
-                    ViewModel.Courses courses = new ViewModel.Courses();
-                    courses.Item = courseItem.Item;
-                    courses.Price = courseItem.Price;
+                //照片存取位置
+                string path = "https://pi.rocket-coding.com/upload/headshot/";
 
-                    fields.Courses.Add(courses);
+                ViewModel.counselorProfile data = new ViewModel.counselorProfile();
+                data.Photo = path + counselorData.Photo;
+                data.Name = counselorData.Name;
+                data.FieldTags = counselorFields.Select(x => x.Field).ToArray();
+                data.SelfIntroduction = counselorData.SelfIntroduction;
+                data.CertNumber = counselorData.CertNumber;
+                data.VideoLink = counselorData.VideoLink;
+                data.Fields = new List<ViewModel.Fields>();
+
+                foreach (var fieldItem in counselorFields)
+                {
+                    ViewModel.Fields fields = new ViewModel.Fields();
+                    fields.Field = fieldItem.Field;
+                    fields.Features = new ViewModel.Features
+                    {
+                        Feature1 = fieldItem.Feature1,
+                        Feature2 = fieldItem.Feature2,
+                        Feature3 = fieldItem.Feature3,
+                        Feature4 = fieldItem.Feature4,
+                        Feature5 = fieldItem.Feature5
+                    };
+                    fields.Courses = new List<ViewModel.Courses>();
+
+                    // 諮商師課程資訊
+                    var counselorCourses = _db.Products
+                        .Where(x => x.CounselorId == id && x.FieldId == fieldItem.FieldId && x.Availability == true)
+                        .Select(x => new
+                        {
+                            x.Item,
+                            x.Price
+                        })
+                        .ToList();
+
+                    foreach (var courseItem in counselorCourses)
+                    {
+                        ViewModel.Courses courses = new ViewModel.Courses();
+                        courses.Item = courseItem.Item;
+                        courses.Price = courseItem.Price;
+
+                        fields.Courses.Add(courses);
+                    }
+
+                    data.Fields.Add(fields);
                 }
 
-                data.Fields.Add(fields);
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得諮商師頁面";
+                result.Data = data;
+                return Ok(result);
             }
-
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功取得諮商師頁面";
-            result.Data = data;
-            return Ok(result);
         }
     }
 }
