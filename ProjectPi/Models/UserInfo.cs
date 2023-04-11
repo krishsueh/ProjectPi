@@ -7,6 +7,7 @@ namespace ProjectPi.Models
 {
     public class UserInfo
     {
+        public int Id { get; set; }
         public string ConnectionID { get; set; }
         public string UserName { get; set; }
 
@@ -16,5 +17,19 @@ namespace ProjectPi.Models
             this.ConnectionID = cid;
             this.UserName = unm;
         }
+    }
+
+    public class UserChatTarget
+    {
+
+        public int Id { get; set; }
+        public int CounselorId { get; set; }
+        public int UserId { get; set; }
+        public string Type { get; set; }
+        public string Content { get; set; }
+        public string OutName { get; set; }
+        //public bool UserRead { get; set; }
+        //public bool CounselorRead { get; set; }
+        public DateTime InitDate { get; set; }
     }
 }
