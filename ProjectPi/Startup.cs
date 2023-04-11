@@ -1,4 +1,6 @@
-﻿using Microsoft.Owin;
+﻿using Microsoft.AspNet.SignalR;
+using Microsoft.Owin;
+using Microsoft.Owin.Cors;
 using NSwag;
 using NSwag.AspNet.Owin;
 using NSwag.Generation.Processors.Security;
@@ -24,7 +26,8 @@ namespace ProjectPi
         {
             // 如需如何設定應用程式的詳細資訊，請瀏覽 https://go.microsoft.com/fwlink/?LinkID=316888
             var config = new HttpConfiguration();
-
+            app.UseCors(CorsOptions.AllowAll);
+            app.MapSignalR(new HubConfiguration { EnableJSONP = true });
             // 針對 JSON 資料使用 camel (JSON 回應會改 camel，但 Swagger 提示不會)
             //config.Formatters.JsonFormatter.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 

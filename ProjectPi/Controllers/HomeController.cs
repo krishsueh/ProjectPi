@@ -14,5 +14,13 @@ namespace ProjectPi.Controllers
 
             return View();
         }
+
+        public ActionResult ChatRoom()
+        {
+            ViewBag.Title = "ChatRoom";
+
+            return View();
+        }
+
     }
 }
