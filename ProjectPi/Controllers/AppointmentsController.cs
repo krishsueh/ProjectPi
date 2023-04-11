@@ -105,11 +105,24 @@ namespace ProjectPi.Controllers
                 data.CounselorsData.Add(counselorsData);
             }
 
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功取得諮商師總覽";
-            result.Data = data;
-            return Ok(result);
+            if (counsleorList.Any())
+            {
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得諮商師總覽";
+                result.Data = data;
+                return Ok(result);
+
+            }
+            else
+            {
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "找不到符合篩選條件的諮商師";
+                result.Data = null;
+                return Ok(result);
+            }
+            
         }
 
         /// <summary>
