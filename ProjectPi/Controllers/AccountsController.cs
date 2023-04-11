@@ -451,7 +451,7 @@ namespace ProjectPi.Controllers
                            .Replace("-", null);
                 if(user.Password == newPassword)
                 {
-                    BadRequest("不能與舊密碼相同");
+                    return BadRequest("不能與舊密碼相同");
                 }
                 user.Password = newPassword;
                 if (ModelState.IsValid)
@@ -470,7 +470,7 @@ namespace ProjectPi.Controllers
                           .Replace("-", null);
                 if (counselor.Password == newPassword)
                 {
-                    BadRequest("不能與舊密碼相同");
+                    return BadRequest("不能與舊密碼相同");
                 }
                 counselor.Password = newPassword;
                 if (ModelState.IsValid)
