@@ -357,7 +357,7 @@ namespace ProjectPi.Controllers
             string secretKey = WebConfigurationManager.AppSettings["TokenKey"];
             if (Password != ConfirmPassword)
             {
-                return BadRequest("二次密碼輸入不一樣");
+                return BadRequest("二次密碼輸入不符");
             }
 
 
@@ -374,11 +374,11 @@ namespace ProjectPi.Controllers
                           .Replace("-", null);
                     if (user.Password == newPassword)
                     {
-                        return BadRequest("密碼不能跟原本的相同");
+                        return BadRequest("不能與舊密碼相同");
                     }
                     user.Password = newPassword;
                     result.Success = true;
-                    result.Message = "個案修改成功";
+                    result.Message = "密碼重設成功";
                     if (ModelState.IsValid)
                     {
                         _db.Entry(user).State = EntityState.Modified;
@@ -393,12 +393,12 @@ namespace ProjectPi.Controllers
                            .Replace("-", null);
                     if (counselor.Password == newPassword)
                     {
-                        return BadRequest("密碼不能跟原本的相同");
+                        return BadRequest("不能與舊密碼相同");
                     }
 
                     counselor.Password = newPassword;
                     result.Success = true;
-                    result.Message = "諮商師修改成功";
+                    result.Message = "密碼重設成功";
                     if (ModelState.IsValid)
                     {
                         _db.Entry(counselor).State = EntityState.Modified;
@@ -432,7 +432,7 @@ namespace ProjectPi.Controllers
 
             if (Password != ConfirmPassword)
             {
-                return BadRequest("二次密碼輸入不一樣");
+                return BadRequest("二次密碼輸入不符");
             }
 
             User user = _db.Users.Where(x => x.Guid == Guid).FirstOrDefault();
@@ -447,7 +447,7 @@ namespace ProjectPi.Controllers
                     _db.Entry(user).State = EntityState.Modified;
                     _db.SaveChanges();
                     result.Success = true;
-                    result.Message = "個案修改成功";
+                    result.Message = "密碼重設成功";
                 }
                 return Ok(result);
             }
@@ -461,7 +461,7 @@ namespace ProjectPi.Controllers
                     _db.Entry(counselor).State = EntityState.Modified;
                     _db.SaveChanges();
                     result.Success = true;
-                    result.Message = "諮商師修改成功";
+                    result.Message = "密碼重設成功";
                 }
                 return Ok(result);
 
