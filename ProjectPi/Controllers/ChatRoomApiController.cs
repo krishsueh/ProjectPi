@@ -223,13 +223,8 @@ namespace ProjectPi.Controllers
                     }
                 }
             }
-            
-
-          
-
                 try
             {
-
                 result.Success = true;
                 result.Message = "得到所有人最後一則訊息";
                 result.Data = new { userChatTargetList };
