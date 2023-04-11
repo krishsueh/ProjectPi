@@ -17,7 +17,7 @@ namespace ProjectPi.SignalRHub
         //连接
         public override Task OnConnected()
         {
-            
+
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
             if (currentUser == null)
             {
@@ -74,7 +74,7 @@ namespace ProjectPi.SignalRHub
         /// </summary>
 
         [HubMethodName("chatLog")]
-        public void ChatLog(int CounselorId, int UserId, string Content , string Type)
+        public void ChatLog(int CounselorId, int UserId, string Content, string Type)
         {
             ChatRoom _chatroom = new ChatRoom();
             _chatroom.CounselorId = CounselorId;
@@ -84,9 +84,9 @@ namespace ProjectPi.SignalRHub
             _chatroom.InitDate = DateTime.Now;
             _db.ChatRooms.Add(_chatroom);
             _db.SaveChanges();
-          
+
         }
-        
+
         /// <summary>
         /// 連線完要註冊
         /// </summary>
@@ -110,16 +110,15 @@ namespace ProjectPi.SignalRHub
         public void SendTo(int outsideID, string message)
         {
             var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
-            var outsideUser = USERLIST.Where(x => x.Id == outsideID).FirstOrDefault();
-            
-            Clients.Client(myUser.ConnectionID).showMessage(myUser.UserName, message);
-            Clients.Client(outsideUser.ConnectionID).showLastMsg(myUser.Id);
+            var outsideUser = USERLIST.Where(x => x.ConnectionID != Context.ConnectionId).Where(x => x.Id == outsideID).FirstOrDefault();
+            Clients.Client(myUser.ConnectionID).showMessage(myUser.Id, message);
+            Clients.Client(myUser.ConnectionID).showLastMsg();
             //前端js定义function showMessage(speakerName , message)
             if (outsideUser != null)
             {
-                
-                Clients.Client(outsideUser.ConnectionID).showMessage(myUser.UserName, message);
-                Clients.Client(outsideUser.ConnectionID).showLastMsg(outsideID);
+                Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id, message);
+                Clients.Client(outsideUser.ConnectionID).showLastMsg();
+                Clients.Client(outsideUser.ConnectionID).showIconUnRead();
                 //对方  和  我方 的界面都要显示语录
             }
             /*
@@ -131,7 +130,7 @@ namespace ProjectPi.SignalRHub
             */
         }
 
-        
+
 
     }
 }

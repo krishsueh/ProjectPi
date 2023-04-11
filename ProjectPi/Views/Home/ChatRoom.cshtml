@@ -23,47 +23,38 @@
 
     <script type="text/javascript">
 
-        $(function () {
-
-       
-
-            //這裡要改成使用者的名字，預設user
-            $('#userName').val("user");
-
+        function hubConnect() {
             //連線後台hub
             chat = $.connection.chartHubb;
             console.info(chat);
 
-            //監聽後台 廣撥用
-            /*
-            chat.client.broadcastUserList = function (data) {
-                if (data) {
-                    var json = $.parseJSON(data);
-                    console.info(json);
+            //刷新ICON未讀訊息 如果收到訊息但沒有點及ICON狀態下的話 ，使用這個function
+            chat.client.showIconUnread = function () {
 
-                    $('#user-list-group').html('');
-                    for (var i = 0; i < json.length; i++) {
-                        var mhtml = '<button type="button" class="list-group-item" title="' + json[i].ConnectionID + '" onclick="listGroupItemClick(this);" >' + json[i].UserName + '</button>';
-                        $('#user-list-group').append(mhtml);
-                    }
-                }
-            } */
-             //end broadcastUserList
-            //顯示訊息的地方 Method 
-            chat.client.showLastMsg = function (outid) {
+            }
+            //刷新聊天室的訊息
+            chat.client.showLastMsg = function () {
                 //var outid = $('#sid').text();
+                var myNumber = document.getElementById("myNumber").value;
                 var myType = document.getElementById("myType").value;
-                
                 const test = async () => {
                     try {
                         //這裡要改API參數 1.ID 2. 是user OR counselor
-                        const res = await axios.get('https://localhost:44344/api/chatroom/lastMsgTarget?Id=' + outid + '&Type=' + myType);
+                        const res = await axios.get('https://localhost:44344/api/chatroom/lastMsgTarget?Id=' + myNumber + '&Type=' + myType);
                         $('#user-list-group').html('');
                         for (var i = 0; i < res.data.Data.userChatTargetList.length; i++) {
-                            if (myType == 'user') var id = res.data.Data.userChatTargetList[i].CounselorId;
-                            else var id = res.data.Data.userChatTargetList[i].UserId
+                            var read = "未讀*";
+                            if (myType == 'user') {
+                                var id = res.data.Data.userChatTargetList[i].CounselorId;
+                                if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                            }
+                            else {
+                                var id = res.data.Data.userChatTargetList[i].UserId;
+                                if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                            }
+
                             var mhtml = '<button type="button" class="list-group-item" title="' + id
-                                + '" onclick="listGroupItemClick(this);" >' + res.data.Data.userChatTargetList[i].Name + '</button>' + "<p>" + " 最後一句內容 " + res.data.Data.userChatTargetList[i].Content + "</p>";
+                                + '" onclick="listGroupItemClick(this);" >' + res.data.Data.userChatTargetList[i].OutName + '</button>' + "<p>" + read + " 最後一句內容 " + res.data.Data.userChatTargetList[i].Content + "</p>";
                             $('#user-list-group').append(mhtml);
                         }
 
@@ -74,22 +65,25 @@
                 }
                 test();
             }
-            //顯示訊息的地方 Method 
-            chat.client.showMessage = function (speakerName, message) {
+
+            //顯示訊息的地方 Method
+            chat.client.showMessage = function (id, message) {
                 var msg = '';
-                var targetName = $('#sname').text();
-                console.log("63  speakerName = " + speakerName + "  targetName = " + targetName);
-                if (speakerName == $('#curUserName').text()) {
-                    msg = '<p><span class="label label-success"> ' + speakerName + '</span>' + message + '</p>';
+                var myNumberID = document.getElementById("myNumber").value;
+                //var outId = document.getElementById("sid").value;
+                var outId = $('#sid').text();
+                console.log("83  myNumberID = " + myNumberID + "  outId = " + outId + " id = " + id);
+                if (myNumberID == id) {
+                    msg = '<p><span class="label label-success"> 我 </span>' + message + '</p>';
                 }
                 else {
-                    if (targetName == speakerName)
-                        msg = '<p><span class="label label-info"> ' + speakerName + '</span>' + message + '</p>';
+                    if (outId == id)
+                        msg = '<p><span class="label label-info"> 對方 </span>' + message + '</p>';
                 }
                 $('#contextDIV').append(msg);
                 $('#message').val('');
                 $('#message').val('').focus();
-            }   //end showMessage
+            }   //end showMessage   //end showMessage
 
             //發送按鈕
             $('#sendmessage').click(function () {
@@ -101,12 +95,10 @@
                     var myType = document.getElementById("myType").value;
                     var sendType = '';
                     //判斷是諮商師還是USER
-                    if (myType == 'user')
-                    {
+                    if (myType == 'user') {
                         sendType = 'send';
                     }
-                    else
-                    {
+                    else {
                         sendType = 'accept';
                         var index = outid;
                         outid = myNumberID;
@@ -114,13 +106,11 @@
                     }
 
                     const data = {
-                        "CounselorId":outid,
+                        "CounselorId": outid,
                         "UserId": myNumberID,
                         "Type": sendType,
                         "Content": outmessage
                     }; // 填入需要發送的資料
-                    //const url = 'https://localhost:44344/api/chatroom/chatlogs?CounselorId=' + outid + '&UserId=1&Content=' + outmessage + '&Type=send'; // 填入API的URL
-                    //console.log('成功取得回應：', url);
                     axios.post('https://localhost:44344/api/chatroom/chatlogs', data)
                         .then((response) => {
                             console.log('回應：', response);
@@ -135,13 +125,10 @@
                     else {
                         chat.server.sendTo(myNumberID, outmessage);
                     }
-                   
                     //chat.server.chatLog(1, 2, outmessage, "send");
-                    
-                   
                 }
                 else {
-                    alert('请选择接收消息的用户（或者没有输入任何内容）');
+                    alert('請選擇目標以及內容');
                 }
 
             });  //end click
@@ -149,21 +136,22 @@
             //當連線成功,註冊
             $.connection.hub.start().done(function () {
                 //$('#curUserName').text($('#userName').val());
-                chat.server.setUserName($('#userName').val());
+                var myNumber = document.getElementById("myNumber").value;
+                chat.server.setUserId(myNumber);
+
             });
-        });   //end page ready
+        };   //end page ready
 
 
         //聊天對象點擊之後，刷新聊天室內容
         function listGroupItemClick(that) {
             var myNumberID = document.getElementById("myNumber").value;
-            var tname = $(that).text();
             var tid = $(that).attr('title');
-            
+
             $('#contextDIV').html('');
-        
-            var myName = $('#curUserName').text();
-            $('#sname').text(tname);
+
+
+
             $('#sid').text(tid);
             var myType = document.getElementById("myType").value;
             if (myType == 'counselor') {
@@ -171,17 +159,17 @@
                 var myNumberID = tid;
                 var tid = index;
             }
-          
+
             const test = async () => {
                 try {
-                    const res = await axios.get('https://localhost:44344/api/chatroom/GetChatlogs?CounselorId=' + tid + '&UserId= ' + myNumberID);
+                    const res = await axios.get('https://localhost:44344/api/chatroom/GetChatlogs?CounselorId=' + tid + '&UserId=' + myNumberID + '&UserType=' + myType);
                     console.log(res.data.Data.ChatlogList[0]);
                     for (var i = 0; i < res.data.Data.ChatlogList.length; i++) {
                         if (res.data.Data.ChatlogList[i].Type == 'send') {
-                            msg = '<p><span class="label label-success"> ' + myName+ '</span>' + res.data.Data.ChatlogList[i].Content + '</p>';
+                            msg = '<p><span class="label label-success">  我 </span>' + res.data.Data.ChatlogList[i].Content + '</p>';
                         }
                         else {
-                            msg = '<p><span class="label label-info"> ' + tname + '</span>' + res.data.Data.ChatlogList[i].Content + '</p>';
+                            msg = '<p><span class="label label-info"> 對方</span>' + res.data.Data.ChatlogList[i].Content + '</p>';
                         }
                         $('#contextDIV').append(msg);
 
@@ -192,7 +180,7 @@
             }
             test();
 
-         //end listGroupItemClick
+            //end listGroupItemClick
         }
 
         // 按下enter=按下按鈕發送訊息
@@ -204,46 +192,52 @@
 
 
 
-        //按下按鈕出現聊天對象
+        //按下按鈕(ICON)出現聊天對象
         function getTarget() {
-            var testT = $('#test').text();
-            //var idText = $('#InputCurUserId').text();
-            var myName = document.getElementById("myName").value;
             var myNumber = document.getElementById("myNumber").value;
             var myType = document.getElementById("myType").value;
-
-            chat.server.setUserName(myName);
-            chat.server.setUserId(myNumber);
-
             $("#curUserType").text(myType);
-            $('#curUserName').text(myName);
             $("#curUserId").text(myNumber);
+
             const test = async () => {
                 try {
-                    //這裡要改API參數 1.ID 2. 是user OR counselor
+                    //這裡要改API參數
+                    //1.ID
+                    //2.是user OR counselor
+
                     const res = await axios.get('https://localhost:44344/api/chatroom/lastMsgTarget?Id=' + myNumber + '&Type=' + myType);
+
+                    //渲染畫面
                     $('#user-list-group').html('');
                     for (var i = 0; i < res.data.Data.userChatTargetList.length; i++) {
-                        if (myType == 'user') var id = res.data.Data.userChatTargetList[i].CounselorId;
-                        else var id = res.data.Data.userChatTargetList[i].UserId
+                        var read = "未讀*";
+                        if (myType == 'user') {
+
+                            var id = res.data.Data.userChatTargetList[i].CounselorId;
+                            if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                        }
+                        else {
+                            var id = res.data.Data.userChatTargetList[i].UserId;
+                            if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                        }
+
                         var mhtml = '<button type="button" class="list-group-item" title="' + id
-                            + '" onclick="listGroupItemClick(this);" >' + res.data.Data.userChatTargetList[i].Name+ '</button>' +"<p>" + " 最後一句內容 " + res.data.Data.userChatTargetList[i].Content+"</p>";
+                            + '" onclick="listGroupItemClick(this);" >' + res.data.Data.userChatTargetList[i].OutName + '</button>' + "<p>" + read + " 最後一句內容 " + res.data.Data.userChatTargetList[i].Content + "</p>";
                         $('#user-list-group').append(mhtml);
                     }
-
-                    console.log(res.data.Data.userChatTargetList[0]);
+                    console.log(res.data.Data.userChatTargetList);
                 } catch (error) {
                     console.log(error)
                 }
             }
             test();
-           
         }//end listGroupItemClick
 
+        //增加諮商師到USER的聊天室框框內
         function addTarget(that) {
             var tname = $(that).text();
             var tid = $(that).attr('title');
-          
+
 
             var mhtml = '<button type="button" class="list-group-item" title="' + tid
                 + '" onclick="listGroupItemClick(this);" >' + tname + '</button>';
@@ -251,8 +245,8 @@
             var childNodes = element.childNodes;
             var isHaveTarget = false;
 
-          
-            
+
+
             for (var i = 0; i < childNodes.length; i++) {
                 if (childNodes[i].title == tid) {
                     isHaveTarget = true;
@@ -260,9 +254,10 @@
                 }
             }
             if (isHaveTarget == false) $('#user-list-group').append(mhtml);
-            
+
         }
 
+        //得到所有諮商師的目標 ID
         function getCounselor() {
             var myType = document.getElementById("myType").value;
             if (myType != "user") return;
@@ -278,13 +273,13 @@
                         $('#btn').append(mhtml);
                     }
 
-                  
+
                 } catch (error) {
                     console.log(error)
                 }
             }
             test();
-     
+
         }
     </script>
 
@@ -292,16 +287,12 @@
 <body>
     <button class="col-sm-12" onclick="getTarget()">打開ICON出現曾經聊天過的對象</button>
     <button class="col-sm-12" onclick="getCounselor()" id="btn">f2</button>
-    <button class="col-sm-12">分隔線</button>
+    <button class="col-sm-12" onclick="hubConnect()">點我連線</button>
     <div class="container">
         <div class="row">
             <div class="col-md-12 col-sm-12">
                 <div class="well well-sm">
                     <div class="text-center">
-                        當前名字：
-                        <input id="myName" />
-                        <span id="curUserName"></span>
-                        <br />
                         當前編號：
                         <input type="number" id="myNumber">
                         <span id="curUserId"></span>
@@ -318,7 +309,7 @@
         <div class="row">
             <div class="col-md-2 col-sm-4">
                 <div id="user-list-group" class="list-group">
-                    
+
                 </div>
                 <!--hiden value-->
                 <div style="display:none;">
@@ -331,7 +322,7 @@
                     <!--CHART text-->
                     <div class="panel panel-primary">
                         <div class="panel-heading">
-                            对话框：
+                            對話框：
                             <span id="sname"></span>
                             【<span id="sid"></span>】
                         </div>
@@ -349,7 +340,7 @@
                                     <div class="input-group">
                                         <input type="text" id="message" name="message" class="form-control" />
                                         <span class="input-group-btn">
-                                            <input type="button" class="btn btn-default" id="sendmessage" name="sendmessage" value="发送" />
+                                            <input type="button" class="btn btn-default" id="sendmessage" name="sendmessage" value="發送" />
                                         </span>
                                     </div>
                                 </div>

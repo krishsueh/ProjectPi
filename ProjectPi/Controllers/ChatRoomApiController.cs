@@ -34,6 +34,22 @@ namespace ProjectPi.Controllers
                 _chatroom.Content = ChatRoom.Content;
                 _chatroom.Type = ChatRoom.Type;
                 _chatroom.InitDate = DateTime.Now;
+                /*
+                if (_chatroom.Type == "send")
+                {
+                    _chatroom.UserRead = true;
+                    _chatroom.CounselorRead = false;
+                }
+                else if (_chatroom.Type == "accept")
+                {
+                    _chatroom.UserRead = false;
+                    _chatroom.CounselorRead = true;
+                }
+                else
+                {
+                    _chatroom.UserRead = false;
+                    _chatroom.CounselorRead = false;
+                }*/
                 result.Success = true;
                 result.Message = "聊天訊息存入成功";
                 _db.ChatRooms.Add(_chatroom);
@@ -56,7 +72,7 @@ namespace ProjectPi.Controllers
         [HttpGet]
         [Route("api/chatroom/GetChatlogs")]
         [SwaggerResponse(typeof(ApiResponse))]
-        public IHttpActionResult GetChatlogs(int CounselorId, int UserId)
+        public IHttpActionResult GetChatlogs(int CounselorId, int UserId, string UserType)
         {
             PiDbContext _db = new PiDbContext();
             ApiResponse result = new ApiResponse();
@@ -69,12 +85,29 @@ namespace ProjectPi.Controllers
             {
                 return BadRequest("聊天沒有此UserId紀錄");
             }
+            //修改已讀
+            /*
+            if (UserType.ToLower() == "user")
+            {
+                _db.ChatRooms
+                    .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                    .ToList()
+                    .ForEach(c => c.UserRead = true);
+            }
+            else if (UserType.ToLower() == "counselor")
+            {
+                _db.ChatRooms
+                    .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                    .ToList()
+                    .ForEach(c => c.CounselorRead = true);
+            }
+            _db.SaveChanges();
+            */
             var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.InitDate });
-            
+
             if (!chatlogList.Any()) return BadRequest("無聊天紀錄");
             try
             {
-
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
                 result.Data = new { ChatlogList = chatlogList };
@@ -108,8 +141,11 @@ namespace ProjectPi.Controllers
                 x.UserId,
                 x.Type,
                 x.Content,
-                x.InitDate
+                x.InitDate,
+                //x.UserRead,
+                //x.CounselorRead
             });
+
             if (!_db.ChatRooms.Where(x => x.CounselorId == Id).Any() && Type.ToLower() == "counselor")
             {
                 return BadRequest("聊天沒有此CounselorId紀錄");
@@ -147,7 +183,10 @@ namespace ProjectPi.Controllers
        x.ChatRoom.UserId,
        x.ChatRoom.Type,
        x.ChatRoom.Content,
-       x.ChatRoom.InitDate
+       x.ChatRoom.InitDate,
+       //x.ChatRoom.UserRead,
+       //x.ChatRoom.CounselorRead
+
    }).OrderByDescending(x => x.InitDate);
             }
             else if (Type.ToLower() == "counselor")
@@ -178,57 +217,64 @@ namespace ProjectPi.Controllers
         x.ChatRoom.UserId,
         x.ChatRoom.Type,
         x.ChatRoom.Content,
-        x.ChatRoom.InitDate
+        x.ChatRoom.InitDate,
+        //x.ChatRoom.UserRead,
+        //x.ChatRoom.CounselorRead
     }).OrderByDescending(x => x.InitDate);
             }
             else return BadRequest("Type類型輸入錯誤");
-            
+
+
             var lista = targetList.ToList();
             string msgg = "";
             List<UserChatTarget> userChatTargetList = new List<UserChatTarget>();
-            List<string> targetName =  new List<string>();
+            List<string> targetName = new List<string>();
             foreach (var item in lista)
             {
                 UserChatTarget userChatTarget = new UserChatTarget();
-                    
+
                 if (Type.ToLower() == "user")
                 {
-                    Counselor counselor = _db.Counselors.Where(x=>x.Id== item.CounselorId).FirstOrDefault();
+                    Counselor counselor = _db.Counselors.Where(x => x.Id == item.CounselorId).FirstOrDefault();
                     if (counselor != null)
                     {
-                        userChatTarget.Name = counselor.Name;
+                        userChatTarget.OutName = counselor.Name;
                         userChatTarget.Id = item.Id;
                         userChatTarget.InitDate = item.InitDate;
                         userChatTarget.UserId = item.UserId;
                         userChatTarget.Content = item.Content;
                         userChatTarget.CounselorId = item.CounselorId;
+                        //userChatTarget.UserRead = item.UserRead;
+                        //userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTarget.Type = item.Type;
-                        //targetName.Add(counselor.Name) ;
+
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
-               else if(Type.ToLower() == "counselor")
+                else if (Type.ToLower() == "counselor")
                 {
                     User user = _db.Users.Where(x => x.Id == item.UserId).FirstOrDefault();
-                    if(user != null)
+                    if (user != null)
                     {
-                        userChatTarget.Name = user.Name;
+                        userChatTarget.OutName = user.Name;
                         userChatTarget.Id = item.Id;
                         userChatTarget.InitDate = item.InitDate;
                         userChatTarget.UserId = item.UserId;
                         userChatTarget.Content = item.Content;
                         userChatTarget.CounselorId = item.CounselorId;
                         userChatTarget.Type = item.Type;
+                        //userChatTarget.UserRead = item.UserRead;
+                        //userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
             }
-                try
+
+            try
             {
                 result.Success = true;
                 result.Message = "得到所有人最後一則訊息";
                 result.Data = new { userChatTargetList };
-                
                 return Ok(result);
             }
             catch (Exception ex)
@@ -252,7 +298,7 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse();
             PiDbContext _db = new PiDbContext();
 
-            var counselorList = _db.Counselors.Select(x=>new {x.Id,x.Name });
+            var counselorList = _db.Counselors.Select(x => new { x.Id, x.Name });
             result.Success = true;
             result.Message = "取得諮商師目標";
             result.Data = new { counselorList };
