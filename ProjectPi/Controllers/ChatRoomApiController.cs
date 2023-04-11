@@ -67,7 +67,7 @@ namespace ProjectPi.Controllers
         /// 取得聊天內容
         /// </summary>
         /// <param name="view"></param>
-        /// <response code="200">註冊成功</response>
+        /// <response code="200">取得全部聊天內容</response>
         /// <returns></returns>
         [HttpGet]
         [Route("api/chatroom/GetChatlogs")]
@@ -79,11 +79,16 @@ namespace ProjectPi.Controllers
 
             if (!_db.ChatRooms.Where(x => x.CounselorId == CounselorId).Any())
             {
-                return BadRequest("聊天沒有此CounselorId紀錄");
+                result.Success = true;
+                result.Message = "沒有聊天訊息";
+                result.Data = new { };
+                return Ok(result);
             }
             if (!_db.ChatRooms.Where(x => x.UserId == UserId).Any())
             {
-                return BadRequest("聊天沒有此UserId紀錄");
+                result.Success = true;
+                result.Message = "沒有聊天訊息";
+                return Ok(result);
             }
             //修改已讀
             /*
@@ -105,7 +110,12 @@ namespace ProjectPi.Controllers
             */
             var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.InitDate });
 
-            if (!chatlogList.Any()) return BadRequest("無聊天紀錄");
+            if (!chatlogList.Any())
+            {
+                result.Success = true;
+                result.Message = "沒有聊天訊息";
+                return Ok(result);
+            }
             try
             {
                 result.Success = true;
@@ -126,7 +136,7 @@ namespace ProjectPi.Controllers
         /// 取得聊天對象以及最後一句話
         /// </summary>
         /// <param name="view"></param>
-        /// <response code="200">註冊成功</response>
+        /// <response code="200">取得所有人聊天紀錄</response>
         /// <returns></returns>
         [HttpGet]
         [Route("api/chatroom/lastMsgTarget")]
@@ -148,11 +158,19 @@ namespace ProjectPi.Controllers
 
             if (!_db.ChatRooms.Where(x => x.CounselorId == Id).Any() && Type.ToLower() == "counselor")
             {
-                return BadRequest("聊天沒有此CounselorId紀錄");
+                {
+                    result.Success = true;
+                    result.Message = "沒有聊天訊息";
+                    return Ok(result);
+                }
             }
             if (!_db.ChatRooms.Where(x => x.UserId == Id).Any() && Type.ToLower() == "user")
             {
-                return BadRequest("聊天沒有此UserId紀錄");
+                {
+                    result.Success = true;
+                    result.Message = "沒有聊天訊息";
+                    return Ok(result);
+                }
             }
 
             if (Type.ToLower() == "user")
