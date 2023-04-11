@@ -92,7 +92,7 @@ namespace ProjectPi.Controllers
 
                     ApiResponse result = new ApiResponse { };
                     result.Success = true;
-                    result.Message = "成功修改諮商師基本資料";
+                    result.Message = "成功修改基本資料";
                     result.Data = null;
                     return Ok(result);
                 }
