@@ -349,13 +349,13 @@ namespace ProjectPi.Controllers
         [HttpPost]
         [JwtAuthFilter]
         [Route("api/resetPassword")]
-        public IHttpActionResult PostResetPassword(string Password, string ConfirmPassword)
+        public IHttpActionResult PostResetPassword(ViewModel.AccountReset _Password)
         {
             PiDbContext _db = new PiDbContext();
             ApiResponse result = new ApiResponse();
             var token = Request.Headers.Authorization.Parameter;
             string secretKey = WebConfigurationManager.AppSettings["TokenKey"];
-            if (Password != ConfirmPassword)
+            if (_Password.Password != _Password.ConfirmPassword)
             {
                 return BadRequest("二次密碼輸入不符");
             }
@@ -370,7 +370,7 @@ namespace ProjectPi.Controllers
                 if (user != null)
                 {
                     string newPassword = BitConverter
-                          .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                          .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                           .Replace("-", null);
                     if (user.Password == newPassword)
                     {
@@ -389,7 +389,7 @@ namespace ProjectPi.Controllers
                 else if (counselor != null)
                 {
                     string newPassword = BitConverter
-                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                            .Replace("-", null);
                     if (counselor.Password == newPassword)
                     {
@@ -411,7 +411,7 @@ namespace ProjectPi.Controllers
                     return BadRequest("帳號不存在");
                 }
             }
-            else return BadRequest("沒有token");
+            else return BadRequest("沒有登入");
         }
 
 
@@ -424,23 +424,23 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/resetPassword/guid")]
-        public IHttpActionResult PostResetPassword(string Password, string ConfirmPassword, Guid Guid)
+        public IHttpActionResult PostGuidSetPassword(ViewModel.AccountResetGuid _Password)
         {
             PiDbContext _db = new PiDbContext();
             ApiResponse result = new ApiResponse();
             //判斷用哪一種方式重設密碼guid / token
 
-            if (Password != ConfirmPassword)
+            if (_Password.Password != _Password.ConfirmPassword)
             {
                 return BadRequest("二次密碼輸入不符");
             }
 
-            User user = _db.Users.Where(x => x.Guid == Guid).FirstOrDefault();
-            Counselor counselor = _db.Counselors.Where(x => x.Guid == Guid).FirstOrDefault();
+            User user = _db.Users.Where(x => x.Guid == _Password.Guid).FirstOrDefault();
+            Counselor counselor = _db.Counselors.Where(x => x.Guid == _Password.Guid).FirstOrDefault();
             if (user != null)
             {
                 user.Password = BitConverter
-                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                            .Replace("-", null);
                 if (ModelState.IsValid)
                 {
@@ -454,7 +454,7 @@ namespace ProjectPi.Controllers
             else if (counselor != null)
             {
                 counselor.Password = BitConverter
-                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                            .Replace("-", null);
                 if (ModelState.IsValid)
                 {
@@ -466,7 +466,7 @@ namespace ProjectPi.Controllers
                 return Ok(result);
 
             }
-            else return BadRequest("Guid錯誤");
+            else return BadRequest("參數錯誤，請重新發送驗證信");
         }
 
         /// <summary>
