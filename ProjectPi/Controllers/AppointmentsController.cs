@@ -126,6 +126,110 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
+        /// 取得諮商師總覽 (手機版)
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/profilesRWD")]
+        [HttpGet]
+        public IHttpActionResult GetProfilesRWD(int page = 1, string keyword = "", string tag = "")
+        {
+            var Counselors = _db.Features.AsQueryable();
+
+            //搜尋姓名
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                page = 1;
+                Counselors = Counselors.Where(x => x.MyCounselor.Name.Contains(keyword));
+            }
+
+            //篩選諮商主題 (前端傳入 ?tag=126)
+            if (!string.IsNullOrEmpty(tag))
+            {
+                int[] fieldIds = new int[tag.Length];
+                try
+                {
+                    for (int i = 0; i < tag.Length; i++)
+                    {
+                        fieldIds[i] = int.Parse(tag[i].ToString());
+                    }
+                    page = 1;
+                    Counselors = Counselors.Where(x => fieldIds.Contains(x.FieldId));
+                }
+                catch
+                {
+                    return BadRequest("數值錯誤");
+                }
+            }
+
+            //沒有使用篩選功能的總筆數
+            var CounselorNum = Counselors
+                .Select(x => x.CounselorId)
+                .Distinct()
+                .Count();
+
+            //總頁數
+            int pageNum = 0;
+            int pageSize = 5; //手機版一頁只有5筆資料
+            if (CounselorNum % pageSize == 0)
+                pageNum = CounselorNum / pageSize;
+            else
+                pageNum = CounselorNum / pageSize + 1;
+
+            ViewModel.SearchingCounselors data = new ViewModel.SearchingCounselors();
+            data.TotalPageNum = pageNum;
+            data.CounselorsData = new List<ViewModel.CounselorsData>();
+
+            var counsleorList = Counselors
+                .Select(x => new
+                {
+                    x.MyCounselor.Id,
+                    x.MyCounselor.Photo,
+                    x.MyCounselor.Name,
+                    x.MyCounselor.SellingPoint,
+                    x.MyCounselor.SelfIntroduction
+                })
+                .Distinct()
+                .OrderBy(x => x.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+
+            //照片存取位置
+            string path = "https://pi.rocket-coding.com/upload/headshot/";
+            foreach (var item in counsleorList)
+            {
+                ViewModel.CounselorsData counselorsData = new ViewModel.CounselorsData();
+                counselorsData.Id = item.Id;
+                counselorsData.Name = item.Name;
+                counselorsData.SellingPoint = item.SellingPoint;
+                counselorsData.SelfIntroduction = item.SelfIntroduction;
+                counselorsData.Photo = path + item.Photo;
+
+                data.CounselorsData.Add(counselorsData);
+            }
+
+            if (counsleorList.Any())
+            {
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得諮商師總覽";
+                result.Data = data;
+                return Ok(result);
+
+            }
+            else
+            {
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "找不到符合篩選條件的諮商師";
+                result.Data = null;
+                return Ok(result);
+            }
+
+        }
+
+        /// <summary>
         /// 取得特定諮商師頁面
         /// </summary>
         /// <returns></returns>
