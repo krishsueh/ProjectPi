@@ -21,27 +21,40 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [Route("api/profiles")]
         [HttpGet]
-        public IHttpActionResult GetProfiles(int page = 1, string keyword = "", string tags = "")
+        public IHttpActionResult GetProfiles(int page = 1, string keyword = "", string tag = "")
         {
             var Counselors = _db.Features.AsQueryable();
 
+            //預設有上架課程的諮商師總人數為 0
+            int CounselorNum = 0;
+
             //搜尋姓名
             if (!string.IsNullOrEmpty(keyword))
-                Counselors = Counselors.Where(x => x.MyCounselor.Name.Contains(keyword));
-
-            //篩選諮商主題 ?tags=126
-            if (!string.IsNullOrEmpty(tags))
             {
-                //int[] fieldIds = [1, 2, 6]
-                int[] fieldIds = new int[tags.Length];
+                page = 1;
+                Counselors = Counselors.Where(x => x.MyCounselor.Name.Contains(keyword));
+                CounselorNum = _db.Features
+                .Select(x => x.CounselorId)
+                .Distinct()
+                .Count();
+            }
+
+            //篩選諮商主題 (前端傳入 ?tag=126)
+            if (!string.IsNullOrEmpty(tag))
+            {
+                int[] fieldIds = new int[tag.Length];
                 try
                 {
-                    for (int i = 0; i < tags.Length; i++)
+                    for (int i = 0; i < tag.Length; i++)
                     {
-                        fieldIds[i] = int.Parse(tags[i].ToString());
+                        fieldIds[i] = int.Parse(tag[i].ToString());
                     }
-
+                    page = 1;
                     Counselors = Counselors.Where(x => fieldIds.Contains(x.FieldId));
+                    CounselorNum = Counselors
+                        .Select(x => x.CounselorId)
+                        .Distinct()
+                        .Count();
                 }
                 catch
                 {
@@ -55,14 +68,13 @@ namespace ProjectPi.Controllers
             //if (tags != null && tags.Any())
             //    Counselors = Counselors.Where(x => tags.Contains(x.MyField.Field));
 
-
             //總頁數
             int pageNum = 0;
             int pageSize = 10;
-            if (Counselors.Count() % pageSize == 0)
-                pageNum = Counselors.Count() / pageSize;
+            if (CounselorNum % pageSize == 0)
+                pageNum = CounselorNum / pageSize;
             else
-                pageNum = Counselors.Count() / pageSize + 1;
+                pageNum = CounselorNum / pageSize + 1;
 
             ViewModel.SearchingCounselors data = new ViewModel.SearchingCounselors();
             data.TotalPageNum = pageNum;
@@ -77,11 +89,12 @@ namespace ProjectPi.Controllers
                     x.MyCounselor.SellingPoint,
                     x.MyCounselor.SelfIntroduction
                 })
+                .Distinct()
                 .OrderBy(x => x.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList()
-                .Distinct();
+                .ToList();
+
 
             //照片存取位置
             string path = "https://pi.rocket-coding.com/upload/headshot/";
