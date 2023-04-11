@@ -25,18 +25,11 @@ namespace ProjectPi.Controllers
         {
             var Counselors = _db.Features.AsQueryable();
 
-            //預設有上架課程的諮商師總人數為 0
-            int CounselorNum = 0;
-
             //搜尋姓名
             if (!string.IsNullOrEmpty(keyword))
             {
                 page = 1;
                 Counselors = Counselors.Where(x => x.MyCounselor.Name.Contains(keyword));
-                CounselorNum = _db.Features
-                .Select(x => x.CounselorId)
-                .Distinct()
-                .Count();
             }
 
             //篩選諮商主題 (前端傳入 ?tag=126)
@@ -51,10 +44,6 @@ namespace ProjectPi.Controllers
                     }
                     page = 1;
                     Counselors = Counselors.Where(x => fieldIds.Contains(x.FieldId));
-                    CounselorNum = Counselors
-                        .Select(x => x.CounselorId)
-                        .Distinct()
-                        .Count();
                 }
                 catch
                 {
@@ -67,6 +56,12 @@ namespace ProjectPi.Controllers
             //[FromUri] List<string> tags = null
             //if (tags != null && tags.Any())
             //    Counselors = Counselors.Where(x => tags.Contains(x.MyField.Field));
+
+            //沒有使用篩選功能的總筆數
+            var CounselorNum = Counselors
+                .Select(x => x.CounselorId)
+                .Distinct()
+                .Count();
 
             //總頁數
             int pageNum = 0;
