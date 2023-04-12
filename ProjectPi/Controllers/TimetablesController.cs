@@ -55,43 +55,43 @@ namespace ProjectPi.Controllers
                     switch (dayOfWeek)
                     {
                         case DayOfWeek.Sunday:
-                            timetable.WeekDay = dayOfWeek.ToString();
+                            timetable.WeekDay = "日";
                             timetable.Date = nextDate;
                             timetable.Time = view.WeekData[0].Hours[j].Time;
                             timetable.Availability = view.WeekData[0].Hours[j].Available;
                             break;
                         case DayOfWeek.Monday:
-                            timetable.WeekDay = dayOfWeek.ToString();
+                            timetable.WeekDay = "一";
                             timetable.Date = nextDate;
                             timetable.Time = view.WeekData[1].Hours[j].Time;
                             timetable.Availability = view.WeekData[1].Hours[j].Available;
                             break;
                         case DayOfWeek.Tuesday:
-                            timetable.WeekDay = dayOfWeek.ToString();
+                            timetable.WeekDay = "二";
                             timetable.Date = nextDate;
                             timetable.Time = view.WeekData[2].Hours[j].Time;
                             timetable.Availability = view.WeekData[2].Hours[j].Available;
                             break;
                         case DayOfWeek.Wednesday:
-                            timetable.WeekDay = dayOfWeek.ToString();
+                            timetable.WeekDay = "三";
                             timetable.Date = nextDate;
                             timetable.Time = view.WeekData[3].Hours[j].Time;
                             timetable.Availability = view.WeekData[3].Hours[j].Available;
                             break;
                         case DayOfWeek.Thursday:
-                            timetable.WeekDay = dayOfWeek.ToString();
+                            timetable.WeekDay = "四";
                             timetable.Date = nextDate;
                             timetable.Time = view.WeekData[4].Hours[j].Time;
                             timetable.Availability = view.WeekData[4].Hours[j].Available;
                             break;
                         case DayOfWeek.Friday:
-                            timetable.WeekDay = dayOfWeek.ToString();
+                            timetable.WeekDay = "五";
                             timetable.Date = nextDate;
                             timetable.Time = view.WeekData[5].Hours[j].Time;
                             timetable.Availability = view.WeekData[5].Hours[j].Available;
                             break;
                         case DayOfWeek.Saturday:
-                            timetable.WeekDay = dayOfWeek.ToString();
+                            timetable.WeekDay = "六";
                             timetable.Date = nextDate;
                             timetable.Time = view.WeekData[6].Hours[j].Time;
                             timetable.Availability = view.WeekData[6].Hours[j].Available;
@@ -126,13 +126,13 @@ namespace ProjectPi.Controllers
             var latestDate = _db.Timetables
                 .Where(x => x.CounselorId == counselorId).Max(x => x.Date).ToShortDateString();
             object[] weekData = new object[7];
-            weekData[0] = new { WeekDay = "日", Hours = HoursData(counselorId, "Sunday") };
-            weekData[1] = new { WeekDay = "一", Hours = HoursData(counselorId, "Monday") };
-            weekData[2] = new { WeekDay = "二", Hours = HoursData(counselorId, "Tuesday") };
-            weekData[3] = new { WeekDay = "三", Hours = HoursData(counselorId, "Wednesday") };
-            weekData[4] = new { WeekDay = "四", Hours = HoursData(counselorId, "Thursday") };
-            weekData[5] = new { WeekDay = "五", Hours = HoursData(counselorId, "Friday") };
-            weekData[6] = new { WeekDay = "六", Hours = HoursData(counselorId, "Saturday") };
+            weekData[0] = new { WeekDay = "日", Hours = HoursData(counselorId, "日") };
+            weekData[1] = new { WeekDay = "一", Hours = HoursData(counselorId, "一") };
+            weekData[2] = new { WeekDay = "二", Hours = HoursData(counselorId, "二") };
+            weekData[3] = new { WeekDay = "三", Hours = HoursData(counselorId, "三") };
+            weekData[4] = new { WeekDay = "四", Hours = HoursData(counselorId, "四") };
+            weekData[5] = new { WeekDay = "五", Hours = HoursData(counselorId, "五") };
+            weekData[6] = new { WeekDay = "六", Hours = HoursData(counselorId, "六") };
 
             ApiResponse result = new ApiResponse { };
             result.Success = true;
