@@ -122,7 +122,7 @@ namespace ProjectPi.Controllers
                 result.Data = null;
                 return Ok(result);
             }
-            
+
         }
 
         /// <summary>
@@ -323,6 +323,44 @@ namespace ProjectPi.Controllers
                 result.Success = true;
                 result.Message = "成功取得諮商師頁面";
                 result.Data = data;
+                return Ok(result);
+            }
+        }
+
+        /// <summary>
+        /// 加入購物車(手刀預約)
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/cart")]
+        [JwtAuthFilter]
+        public IHttpActionResult PostCart(ViewModel_U.Product view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+
+            var findProduct = _db.Products
+                .Where(c => c.CounselorId == view.CounselorId && c.FieldId == view.FieldId && c.Item == view.Item)
+                .FirstOrDefault();
+
+            if (findProduct == null)
+            {
+                return BadRequest("查無此課程");
+            }
+            else
+            {
+                Cart cart = new Cart();
+                cart.UersId = userId;
+                cart.ProductId = findProduct.Id;
+
+                _db.Carts.Add(cart);
+                _db.SaveChanges();
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功加入購物車";
+                result.Data = null;
                 return Ok(result);
             }
         }
