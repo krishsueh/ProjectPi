@@ -364,5 +364,43 @@ namespace ProjectPi.Controllers
                 return Ok(result);
             }
         }
+
+        /// <summary>
+        /// 取得購物車內容
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/cart")]
+        [JwtAuthFilter]
+        public IHttpActionResult GetCart()
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+
+            var findCart = _db.Carts
+                .Where(c => c.UersId == userId)
+                .ToList();
+
+            if (!findCart.Any())
+            {
+                return BadRequest("購物車是空的，趕緊手刀預約吧!");
+            }
+            else
+            {
+                var data = findCart.Select(x => new
+                {
+                    Counselor = x.Products.CounselorId,
+                    Field = x.Products.MyField.Field,
+                    Item = x.Products.Item,
+                    Price = x.Products.Price
+                }).ToList();
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得購物車";
+                result.Data = data;
+                return Ok(result);
+            }
+        }
     }
 }
