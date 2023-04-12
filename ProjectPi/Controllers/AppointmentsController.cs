@@ -391,7 +391,7 @@ namespace ProjectPi.Controllers
             {
                 var data = findCart.Select(x => new
                 {
-                    Counselor = x.Products.CounselorId,
+                    Counselor = x.Products.MyCounselor.Name,
                     Field = x.Products.MyField.Field,
                     Item = x.Products.Item,
                     Price = x.Products.Price
