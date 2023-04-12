@@ -437,5 +437,37 @@ namespace ProjectPi.Controllers
             result.Data = null;
             return Ok(result);
         }
+
+        /// <summary>
+        /// 刪除已付款購物車商品
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/paidCart")]
+        [JwtAuthFilter]
+        [HttpDelete]
+        public IHttpActionResult DeletePaidCart()
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+
+            var cartItem = _db.Carts
+               .Where(c => c.UersId == userId)
+               .ToList();
+
+            if (!cartItem.Any())
+                return BadRequest("購物車無任何課程商品");
+            else
+            {
+                _db.Carts.RemoveRange(cartItem);
+                _db.SaveChanges();
+            }
+
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "成功刪除已付款購物車商品";
+            result.Data = null;
+            return Ok(result);
+        }
     }
 }
