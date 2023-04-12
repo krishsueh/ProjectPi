@@ -112,5 +112,33 @@ namespace ProjectPi.Models
             [Display(Name = "個人頭像")]
             public string Photo { get; set; }
         }
+
+        /// <summary>
+        /// 重設密碼
+        /// </summary>
+        public class AccountResetGuid
+        {
+            [Display(Name = "新密碼")]
+            public string Password { get; set; }
+            [Display(Name = "二次確認")]
+            public string ConfirmPassword { get; set; }
+
+            [Display(Name = "Guid")]
+            public Guid Guid { get; set; }
+
+        }
+        /// <summary>
+        /// 重設密碼
+        /// </summary>
+        public class AccountReset
+        {
+            [Display(Name = "新密碼")]
+            public string Password { get; set; }
+            [Display(Name = "二次確認")]
+            public string ConfirmPassword { get; set; }
+
+       
+
+        }
     }
 }
