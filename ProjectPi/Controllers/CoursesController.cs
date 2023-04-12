@@ -122,7 +122,7 @@ namespace ProjectPi.Controllers
                 .Where(c => c.CounselorId == counselorId && c.FieldId == id)
                 .FirstOrDefault();
 
-            if (hasProduct == null || hasFeature == null)
+            if (!hasProduct.Any() || hasFeature == null)
             {
                 return BadRequest("找不到課程資訊");
             }
@@ -138,6 +138,96 @@ namespace ProjectPi.Controllers
             result.Message = "成功刪除課程資訊";
             result.Data = null;
             return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得課程資訊
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/courses")]
+        [JwtAuthFilter]
+        [HttpGet]
+        public IHttpActionResult GetCourses()
+        {
+            var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int counselorId = (int)counselorToken["Id"];
+
+            var hasProduct = _db.Products
+                .Where(c => c.CounselorId == counselorId)
+                .ToList();
+
+            //使用 if (hasProduct == null) 來判斷該 List 是否為空是不正確的
+            //因為即使查詢沒有回傳任何資料，hasProduct 仍然是一個空的 List 物件，而不是 null
+            if (!hasProduct.Any())
+            {
+                return BadRequest("尚未新增課程資訊");
+            }
+            else
+            {
+                //"FieldIds": [value1, value2,...]
+                var fieldIds = _db.Products
+                    .Where(x => x.CounselorId == counselorId)
+                    .Select(x => x.FieldId)
+                    .Distinct()
+                    .ToArray();
+
+                //GroupBy 寫法
+                var data = new
+                {
+                    FieldIds = fieldIds,
+                    Courses = _db.Products
+                    .Where(x => x.CounselorId == counselorId)
+                    .GroupBy(x => x.FieldId)
+                    .Select(x => new
+                    {
+                        FieldId = x.Key,
+                        Course = x.Select(y => new
+                        {
+                            Item = y.Item,
+                            Quantity = y.Quantity,
+                            Price = y.Price,
+                            Availability = y.Availability
+                        }).ToList(),
+                        Feature = _db.Features
+                            .Where(y => y.CounselorId == counselorId && y.FieldId == x.Key)
+                            .Select(y => new
+                            {
+                                Feature1 = y.Feature1,
+                                Feature2 = y.Feature2,
+                                Feature3 = y.Feature3,
+                                Feature4 = y.Feature4,
+                                Feature5 = y.Feature5
+                            })
+                            .FirstOrDefault()
+                    })
+                    .ToList()
+                };
+
+                ////另一種寫法：
+                //var data = new
+                //{
+                //    FieldIds = fieldIds,
+                //    Courses = fieldIds.Select(fieldId => new
+                //    {
+                //        FieldId = fieldId,
+                //        Course = _db.Products
+                //        .Where(x => x.CounselorId == counselorId && x.FieldId == fieldId)
+                //        .Select(x => new
+                //        {
+                //            Item = x.Item,
+                //            Quantity = x.Quantity,
+                //            Price = x.Price,
+                //            Availability = x.Availability
+                //        }).ToList()
+                //    }).ToList()
+                //};
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得課程資訊";
+                result.Data = data;
+                return Ok(result);
+            }
         }
     }
 }
