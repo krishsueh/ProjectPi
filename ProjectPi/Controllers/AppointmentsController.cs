@@ -122,7 +122,7 @@ namespace ProjectPi.Controllers
                 result.Data = null;
                 return Ok(result);
             }
-            
+
         }
 
         /// <summary>
@@ -325,6 +325,117 @@ namespace ProjectPi.Controllers
                 result.Data = data;
                 return Ok(result);
             }
+        }
+
+        /// <summary>
+        /// 加入購物車(手刀預約)
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/cart")]
+        [JwtAuthFilter]
+        public IHttpActionResult PostCart(ViewModel_U.Product view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+
+            var findProduct = _db.Products
+                .Where(c => c.CounselorId == view.CounselorId && c.FieldId == view.FieldId && c.Item == view.Item)
+                .FirstOrDefault();
+
+            if (findProduct == null)
+                return BadRequest("查無此課程");
+            else if (findProduct.Price != view.Price)
+                return BadRequest("此課程方案價格錯誤");
+            else
+            {
+                Cart cart = new Cart();
+                cart.UersId = userId;
+                cart.ProductId = findProduct.Id;
+
+                _db.Carts.Add(cart);
+                _db.SaveChanges();
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功加入購物車";
+                result.Data = null;
+                return Ok(result);
+            }
+        }
+
+        /// <summary>
+        /// 取得購物車
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/cart")]
+        [JwtAuthFilter]
+        public IHttpActionResult GetCart()
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+
+            var findCart = _db.Carts
+                .Where(c => c.UersId == userId)
+                .ToList();
+
+            var totalAmount = _db.Carts
+                .Where(c => c.UersId == userId)
+                .Sum(x => x.Products.Price);
+
+            if (!findCart.Any())
+                return BadRequest("購物車是空的，趕緊手刀預約吧!");
+            else
+            {
+                var data = findCart.Select(x => new
+                {
+                    ProductId = x.ProductId,
+                    Counselor = x.Products.MyCounselor.Name,
+                    Field = x.Products.MyField.Field,
+                    Item = x.Products.Item,
+                    Price = x.Products.Price
+                }).ToList();
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得購物車";
+                result.Data = new { TotalAmount = totalAmount, CartList = data };
+                return Ok(result);
+            }
+        }
+
+        /// <summary>
+        /// 刪除購物車特定商品
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/cart")]
+        [JwtAuthFilter]
+        [HttpDelete]
+        public IHttpActionResult DeleteCart(ViewModel_U.DeleteProduct view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+
+            var cartItem = _db.Carts
+               .Where(c => c.UersId == userId && c.ProductId == view.ProductId)
+               .FirstOrDefault();
+
+            if (cartItem == null)
+                return BadRequest("購物車中無此課程商品");
+            else
+            {
+                _db.Carts.Remove(cartItem);
+                _db.SaveChanges();
+            }
+
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "成功刪除此課程商品";
+            result.Data = null;
+            return Ok(result);
         }
     }
 }
