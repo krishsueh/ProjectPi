@@ -47,7 +47,19 @@ namespace ProjectPi.Models
         /// </summary>
         [Display(Name = "建立時間")]
         public DateTime InitDate { get; set; }
+        /*
+        /// <summary>
+        /// 用戶已讀
+        /// </summary>
+        [Display(Name = "用戶已讀")]
+        public bool UserRead { get; set; }
 
+        /// <summary>
+        /// 用戶已讀
+        /// </summary>
+        [Display(Name = "諮商師已讀")]
+        public bool CounselorRead { get; set; }
+        */
         /// <summary>
         /// 將 InitDate 設為自動生成
         /// </summary>
