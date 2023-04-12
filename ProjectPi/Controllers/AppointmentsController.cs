@@ -391,6 +391,7 @@ namespace ProjectPi.Controllers
             {
                 var data = findCart.Select(x => new
                 {
+                    ProductId = x.ProductId,
                     Counselor = x.Products.MyCounselor.Name,
                     Field = x.Products.MyField.Field,
                     Item = x.Products.Item,
@@ -413,38 +414,28 @@ namespace ProjectPi.Controllers
         [Route("api/cart")]
         [JwtAuthFilter]
         [HttpDelete]
-        public IHttpActionResult DeleteCart(ViewModel_U.Product view)
+        public IHttpActionResult DeleteCart(ViewModel_U.DeleteProduct view)
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
 
-            var findProduct = _db.Products
-                .Where(c => c.CounselorId == view.CounselorId && c.FieldId == view.FieldId && c.Item == view.Item && c.Price == view.Price)
-                .FirstOrDefault();
+            var cartItem = _db.Carts
+               .Where(c => c.UersId == userId && c.ProductId == view.ProductId)
+               .FirstOrDefault();
 
-            if (findProduct == null)
-                return BadRequest("無此課程商品");
+            if (cartItem == null)
+                return BadRequest("購物車中無此課程商品");
             else
             {
-                var cartItem = _db.Carts
-                .Where(c => c.UersId == userId && c.ProductId == findProduct.Id)
-                .FirstOrDefault();
-
-                if (cartItem == null)
-                    return BadRequest("購物車中無此商品");
-                else
-                {
-                    _db.Carts.Remove(cartItem);
-                    _db.SaveChanges();
-                }
-
-                ApiResponse result = new ApiResponse { };
-                result.Success = true;
-                result.Message = "成功刪除此商品";
-                result.Data = null;
-                return Ok(result);
+                _db.Carts.Remove(cartItem);
+                _db.SaveChanges();
             }
-            
+
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "成功刪除此課程商品";
+            result.Data = null;
+            return Ok(result);
         }
     }
 }

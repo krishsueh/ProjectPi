@@ -137,5 +137,14 @@ namespace ProjectPi.Models
             [Display(Name = "方案價格")]
             public int Price { get; set; }
         }
+
+        public class DeleteProduct
+        {
+            /// <summary>
+            /// 商品編號
+            /// </summary>
+            [Display(Name = "商品編號")]
+            public int ProductId { get; set; }
+        }
     }
 }
