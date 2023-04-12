@@ -21,7 +21,7 @@ namespace ProjectPi.SignalRHub
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
             if (currentUser == null)
             {
-                UserInfo newUser = new UserInfo(Context.ConnectionId, "");
+                UserInfo newUser = new UserInfo(Context.ConnectionId, "", "user");
                 USERLIST.Add(newUser);
             }
 
@@ -93,12 +93,13 @@ namespace ProjectPi.SignalRHub
         /// <param name="outsideID"></param>
         /// <param name="message"></param>
         [HubMethodName("setUserId")]
-        public void SetUserId(int id)
+        public void SetUserId(int id , string userType)
         {
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
             if (currentUser != null)
             {
                 currentUser.Id = id;
+                currentUser.UserType = userType;
             }
         }
         /// <summary>
@@ -107,16 +108,17 @@ namespace ProjectPi.SignalRHub
         /// <param name="outsideID"></param>
         /// <param name="message"></param>
         [HubMethodName("sendTo")]
-        public void SendTo(int outsideID, string message)
+        public void SendTo(int outsideID, string message , string myType)
         {
             var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
-            var outsideUser = USERLIST.Where(x => x.ConnectionID != Context.ConnectionId).Where(x => x.Id == outsideID).FirstOrDefault();
-            Clients.Client(myUser.ConnectionID).showMessage(myUser.Id, message);
+            var outsideUser = USERLIST.FirstOrDefault(x => x.UserType != myType && x.Id == outsideID);
+            //var outsideUser = USERLIST.Where(x => x.ConnectionID != Context.ConnectionId).Where(x => x.Id == outsideID).FirstOrDefault();
+            Clients.Client(myUser.ConnectionID).showMessage(myUser.Id,message , myType);
             Clients.Client(myUser.ConnectionID).showLastMsg();
             //前端js定义function showMessage(speakerName , message)
             if (outsideUser != null)
             {
-                Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id, message);
+                Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id,message, myType);
                 Clients.Client(outsideUser.ConnectionID).showLastMsg();
                 Clients.Client(outsideUser.ConnectionID).showIconUnRead();
                 //对方  和  我方 的界面都要显示语录
