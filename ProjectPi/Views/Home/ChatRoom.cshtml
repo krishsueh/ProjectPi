@@ -46,11 +46,11 @@
                             var read = "未讀*";
                             if (myType == 'user') {
                                 var id = res.data.Data.userChatTargetList[i].CounselorId;
-                                if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                                //if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
                             }
                             else {
                                 var id = res.data.Data.userChatTargetList[i].UserId;
-                                if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                                //if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
                             }
 
                             var mhtml = '<button type="button" class="list-group-item" title="' + id
@@ -214,11 +214,11 @@
                         if (myType == 'user') {
 
                             var id = res.data.Data.userChatTargetList[i].CounselorId;
-                            if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                            //if(res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
                         }
                         else {
                             var id = res.data.Data.userChatTargetList[i].UserId;
-                            if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                            //if(res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
                         }
 
                         var mhtml = '<button type="button" class="list-group-item" title="' + id
