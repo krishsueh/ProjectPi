@@ -345,9 +345,9 @@ namespace ProjectPi.Controllers
                 .FirstOrDefault();
 
             if (findProduct == null)
-            {
                 return BadRequest("查無此課程");
-            }
+            else if (findProduct.Price != view.Price)
+                return BadRequest("此課程方案價格錯誤");
             else
             {
                 Cart cart = new Cart();
@@ -366,7 +366,7 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 取得購物車內容
+        /// 取得購物車
         /// </summary>
         /// <returns></returns>
         [HttpGet]
@@ -381,10 +381,12 @@ namespace ProjectPi.Controllers
                 .Where(c => c.UersId == userId)
                 .ToList();
 
+            var totalAmount = _db.Carts
+                .Where(c => c.UersId == userId)
+                .Sum(x => x.Products.Price);
+
             if (!findCart.Any())
-            {
                 return BadRequest("購物車是空的，趕緊手刀預約吧!");
-            }
             else
             {
                 var data = findCart.Select(x => new
@@ -398,9 +400,51 @@ namespace ProjectPi.Controllers
                 ApiResponse result = new ApiResponse { };
                 result.Success = true;
                 result.Message = "成功取得購物車";
-                result.Data = data;
+                result.Data = new { TotalAmount = totalAmount, CartList = data };
                 return Ok(result);
             }
+        }
+
+        /// <summary>
+        /// 刪除購物車特定商品
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/cart")]
+        [JwtAuthFilter]
+        [HttpDelete]
+        public IHttpActionResult DeleteCart(ViewModel_U.Product view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+
+            var findProduct = _db.Products
+                .Where(c => c.CounselorId == view.CounselorId && c.FieldId == view.FieldId && c.Item == view.Item && c.Price == view.Price)
+                .FirstOrDefault();
+
+            if (findProduct == null)
+                return BadRequest("無此課程商品");
+            else
+            {
+                var cartItem = _db.Carts
+                .Where(c => c.UersId == userId && c.ProductId == findProduct.Id)
+                .FirstOrDefault();
+
+                if (cartItem == null)
+                    return BadRequest("購物車中無此商品");
+                else
+                {
+                    _db.Carts.Remove(cartItem);
+                    _db.SaveChanges();
+                }
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功刪除此商品";
+                result.Data = null;
+                return Ok(result);
+            }
+            
         }
     }
 }
