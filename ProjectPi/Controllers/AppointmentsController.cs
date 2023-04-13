@@ -240,15 +240,30 @@ namespace ProjectPi.Controllers
             // 諮商師基本資料
             var counselorData = _db.Counselors
                 .Where(x => x.Id == id)
-                .Select(x => new
-                {
-                    x.Photo,
-                    x.Name,
-                    x.SelfIntroduction,
-                    x.CertNumber,
-                    x.VideoLink
-                })
                 .FirstOrDefault();
+
+            // 諮商師專業領域
+            var counselorFields = _db.Features
+                .Where(x => x.CounselorId == id).ToList()
+                .Select(x =>
+                new
+                {
+                    x.MyField.Field,
+                    Features = new string[5] { x.Feature1, x.Feature2, x.Feature3, x.Feature4, x.Feature5
+                    },
+                    Courses = _db.Products
+                    .Where(y => y.CounselorId == id && y.FieldId == x.FieldId && y.Availability == true)
+                    .Select(y => new
+                    {
+                        y.Item,
+                        y.Price
+                    })
+                    .ToList()
+                })
+                .ToList();
+
+            //照片存取位置
+            string path = "https://pi.rocket-coding.com/upload/headshot/";
 
             if (counselorData == null)
             {
@@ -256,68 +271,18 @@ namespace ProjectPi.Controllers
             }
             else
             {
-                // 諮商師專業領域
-                var counselorFields = _db.Features
-                    .Where(x => x.CounselorId == id)
-                    .Select(x => new
-                    {
-                        x.FieldId,
-                        x.MyField.Field,
-                        x.Feature1,
-                        x.Feature2,
-                        x.Feature3,
-                        x.Feature4,
-                        x.Feature5,
-                    })
-                    .ToList();
-
-                //照片存取位置
-                string path = "https://pi.rocket-coding.com/upload/headshot/";
-
-                ViewModel.counselorProfile data = new ViewModel.counselorProfile();
-                data.Photo = path + counselorData.Photo;
-                data.Name = counselorData.Name;
-                data.FieldTags = counselorFields.Select(x => x.Field).ToArray();
-                data.SelfIntroduction = counselorData.SelfIntroduction;
-                data.CertNumber = counselorData.CertNumber;
-                data.VideoLink = counselorData.VideoLink;
-                data.Fields = new List<ViewModel.Fields>();
-
-                foreach (var fieldItem in counselorFields)
+                var data = new
                 {
-                    ViewModel.Fields fields = new ViewModel.Fields();
-                    fields.Field = fieldItem.Field;
-                    fields.Features = new ViewModel.Features
-                    {
-                        Feature1 = fieldItem.Feature1,
-                        Feature2 = fieldItem.Feature2,
-                        Feature3 = fieldItem.Feature3,
-                        Feature4 = fieldItem.Feature4,
-                        Feature5 = fieldItem.Feature5
-                    };
-                    fields.Courses = new List<ViewModel.Courses>();
+                    Photo = path + counselorData.Photo,
+                    Name = counselorData.Name,
+                    FieldTags = _db.Features
+                        .Where(x => x.CounselorId == id).Select(x => x.MyField.Field).ToArray(),
+                    SelfIntroduction = counselorData.SelfIntroduction,
+                    CertNumber = counselorData.CertNumber,
+                    VideoLink = counselorData.VideoLink,
+                    Fields = counselorFields
 
-                    // 諮商師課程資訊
-                    var counselorCourses = _db.Products
-                        .Where(x => x.CounselorId == id && x.FieldId == fieldItem.FieldId && x.Availability == true)
-                        .Select(x => new
-                        {
-                            x.Item,
-                            x.Price
-                        })
-                        .ToList();
-
-                    foreach (var courseItem in counselorCourses)
-                    {
-                        ViewModel.Courses courses = new ViewModel.Courses();
-                        courses.Item = courseItem.Item;
-                        courses.Price = courseItem.Price;
-
-                        fields.Courses.Add(courses);
-                    }
-
-                    data.Fields.Add(fields);
-                }
+                };
 
                 ApiResponse result = new ApiResponse { };
                 result.Success = true;
@@ -461,7 +426,7 @@ namespace ProjectPi.Controllers
             {
                 foreach (var item in cartItems)
                 {
-                    //成立訂單
+                    //建立訂單
                     OrderRecord order = new OrderRecord();
                     switch (userId.ToString().Length)
                     {
@@ -482,15 +447,84 @@ namespace ProjectPi.Controllers
                     order.Item = item.Products.Item;
                     order.Quantity = item.Products.Quantity;
                     order.Price = item.Products.Price;
-                    order.OrderStatus = "待預約";
+                    order.OrderStatus = "已成立";
 
                     _db.OrderRecords.Add(order);
                     _db.SaveChanges();
+
+                    //建立預約明細
+                    var findOrders = _db.OrderRecords
+                        .Where(c => c.UserName == userName)
+                        .ToArray();
+
+                    foreach (var orderItem in findOrders)
+                    {
+                        if (orderItem.Quantity == 1)
+                        {
+                            Appointment appointment1 = new Appointment();
+                            appointment1.OrderId = orderItem.Id;
+                            appointment1.ReserveStatus = "待預約";
+                            _db.Appointments.Add(appointment1);
+                            _db.SaveChanges();
+                        }
+                        else if (orderItem.Quantity == 3)
+                        {
+                            for (int i = 0; i < 3; i++)
+                            {
+                                Appointment appointment3 = new Appointment();
+                                appointment3.OrderId = orderItem.Id;
+                                appointment3.ReserveStatus = "待預約";
+                                _db.Appointments.Add(appointment3);
+                                _db.SaveChanges();
+                            }
+                        }
+                        else if (orderItem.Quantity == 5)
+                        {
+                            for (int i = 0; i < 5; i++)
+                            {
+                                Appointment appointment5 = new Appointment();
+                                appointment5.OrderId = orderItem.Id;
+                                appointment5.ReserveStatus = "待預約";
+                                _db.Appointments.Add(appointment5);
+                                _db.SaveChanges();
+                            }
+                        }
+
+
+
+                        //switch (orderItem.Quantity)
+                        //{
+                        //    case 1:
+                        //        appointment.OrderId = orderItem.Id;
+                        //        appointment.ReserveStatus = "待預約";
+                        //        _db.Appointments.Add(appointment);
+                        //        _db.SaveChanges();
+                        //        break;
+                        //    case 3:
+                        //        for (int i = 0; i < 3; i++)
+                        //        {
+                        //            appointment.OrderId = orderItem.Id;
+                        //            appointment.ReserveStatus = "待預約";
+                        //            _db.Appointments.Add(appointment);
+                        //            _db.SaveChanges();
+                        //        }
+                        //        break;
+                        //    case 5:
+                        //        for (int i = 0; i < 5; i++)
+                        //        {
+                        //            appointment.OrderId = orderItem.Id;
+                        //            appointment.ReserveStatus = "待預約";
+                        //            _db.Appointments.Add(appointment);
+                        //            _db.SaveChanges();
+                        //        }
+                        //        break;
+                        //}
+                    }
                 }
 
-                //刪除已付款購物車商品
-                _db.Carts.RemoveRange(cartItems);
-                _db.SaveChanges();
+                ////刪除已付款購物車商品
+                //_db.Carts.RemoveRange(cartItems);
+                //_db.SaveChanges();
             }
 
             ApiResponse result = new ApiResponse { };
@@ -500,43 +534,43 @@ namespace ProjectPi.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// 取得待預約紀錄
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        [Route("api/appointment")]
-        [JwtAuthFilter]
-        public IHttpActionResult GetWaitAppointment()
-        {
-            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
-            int userId = (int)userToken["Id"];
-            string userName = (string)userToken["Name"];
+        ///// <summary>
+        ///// 取得待預約紀錄
+        ///// </summary>
+        ///// <returns></returns>
+        //[HttpGet]
+        //[Route("api/appointment")]
+        //[JwtAuthFilter]
+        //public IHttpActionResult GetWaitAppointment()
+        //{
+        //    var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+        //    int userId = (int)userToken["Id"];
+        //    string userName = (string)userToken["Name"];
 
-            var findAppointment = _db.OrderRecords
-                .Where(c => c.UserName == userName)
-                .GroupBy(c => c.OrderDate)
-                .ToList();
+        //    var findAppointment = _db.OrderRecords
+        //        .Where(c => c.UserName == userName)
+        //        .GroupBy(c => c.OrderDate)
+        //        .ToList();
 
 
-            if (!findAppointment.Any())
-                return BadRequest("尚無訂單紀錄");
-            else
-            {
-                var data = findAppointment.Select(x => new
-                {
-                    Counselor = x.Select(y => y.CounselorName).FirstOrDefault(),
-                    Field = x.Select(y => y.Field).FirstOrDefault(),
-                    Quantity = x.Select(y => y.Quantity).FirstOrDefault(),
-                }).ToList();
+        //    if (!findAppointment.Any())
+        //        return BadRequest("尚無訂單紀錄");
+        //    else
+        //    {
+        //        var data = findAppointment.Select(x => new
+        //        {
+        //            Counselor = x.Select(y => y.CounselorName).FirstOrDefault(),
+        //            Field = x.Select(y => y.Field).FirstOrDefault(),
+        //            Quantity = x.Select(y => y.Quantity).FirstOrDefault(),
+        //        }).ToList();
 
-                ApiResponse result = new ApiResponse { };
-                result.Success = true;
-                result.Message = "成功取得待預約紀錄";
-                result.Data = data;
-                return Ok(result);
-            }
-        }
+        //        ApiResponse result = new ApiResponse { };
+        //        result.Success = true;
+        //        result.Message = "成功取得待預約紀錄";
+        //        result.Data = data;
+        //        return Ok(result);
+        //    }
+        //}
 
 
     }
