@@ -439,35 +439,105 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 刪除已付款購物車商品
+        /// 結帳成立訂單
         /// </summary>
-        /// <param name="view"></param>
         /// <returns></returns>
-        [Route("api/paidCart")]
+        [Route("api/order")]
         [JwtAuthFilter]
-        [HttpDelete]
-        public IHttpActionResult DeletePaidCart()
+        [HttpPost]
+        public IHttpActionResult PostOrder()
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
+            string userName = (string)userToken["Name"];
 
-            var cartItem = _db.Carts
+            var cartItems = _db.Carts
                .Where(c => c.UersId == userId)
-               .ToList();
+               .ToArray();
 
-            if (!cartItem.Any())
+            if (!cartItems.Any())
                 return BadRequest("購物車無任何課程商品");
             else
             {
-                _db.Carts.RemoveRange(cartItem);
+                foreach (var item in cartItems)
+                {
+                    //成立訂單
+                    OrderRecord order = new OrderRecord();
+                    switch (userId.ToString().Length)
+                    {
+                        case 1:
+                            order.OrderNum = $"0000{userId}{DateTime.Now.ToString("yyyyMMddHHmm")}";
+                            break;
+                        case 2:
+                            order.OrderNum = $"000{userId}{DateTime.Now.ToString("yyyyMMddHHmm")}";
+                            break;
+                        case 3:
+                            order.OrderNum = $"00{userId}{DateTime.Now.ToString("yyyyMMddHHmm")}";
+                            break;
+                    }
+                    order.OrderDate = DateTime.Now;
+                    order.UserName = userName;
+                    order.CounselorName = item.Products.MyCounselor.Name;
+                    order.Field = item.Products.MyField.Field;
+                    order.Item = item.Products.Item;
+                    order.Quantity = item.Products.Quantity;
+                    order.Price = item.Products.Price;
+                    order.OrderStatus = "待預約";
+
+                    _db.OrderRecords.Add(order);
+                    _db.SaveChanges();
+                }
+
+                //刪除已付款購物車商品
+                _db.Carts.RemoveRange(cartItems);
                 _db.SaveChanges();
             }
 
             ApiResponse result = new ApiResponse { };
             result.Success = true;
-            result.Message = "成功刪除已付款購物車商品";
+            result.Message = "訂單已成立，請至會員中心選擇預約時段";
             result.Data = null;
             return Ok(result);
         }
+
+        /// <summary>
+        /// 取得待預約紀錄
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/appointment")]
+        [JwtAuthFilter]
+        public IHttpActionResult GetWaitAppointment()
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+            string userName = (string)userToken["Name"];
+
+            var findAppointment = _db.OrderRecords
+                .Where(c => c.UserName == userName)
+                .GroupBy(c => c.OrderDate)
+                .ToList();
+
+
+            if (!findAppointment.Any())
+                return BadRequest("尚無訂單紀錄");
+            else
+            {
+                var data = findAppointment.Select(x => new
+                {
+                    Counselor = x.Select(y => y.CounselorName).FirstOrDefault(),
+                    Field = x.Select(y => y.Field).FirstOrDefault(),
+                    Quantity = x.Select(y => y.Quantity).FirstOrDefault(),
+                }).ToList();
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得待預約紀錄";
+                result.Data = data;
+                return Ok(result);
+            }
+        }
+
+
     }
 }
