@@ -343,7 +343,7 @@ namespace ProjectPi.Controllers
 
                 var data = findCart.Select(x => new
                 {
-                    ProductId = x.ProductId,
+                    CartId = x.Id,
                     Counselor = x.Products.MyCounselor.Name,
                     Field = x.Products.MyField.Field,
                     Item = x.Products.Item,
@@ -444,35 +444,41 @@ namespace ProjectPi.Controllers
                 var findOrders = _db.OrderRecords
                     .Where(c => c.UserName == userName)
                     .ToList();
-                Appointment appointment = new Appointment();
-                foreach (var orderItem in findOrders)
+
+                if (!findOrders.Any())
+                    return BadRequest("查無訂單");
+                else
                 {
-                    switch (orderItem.Quantity)
+                    Appointment appointment = new Appointment();
+                    foreach (var orderItem in findOrders)
                     {
-                        case 1:
-                            appointment.OrderId = orderItem.Id;
-                            appointment.ReserveStatus = "待預約";
-                            _db.Appointments.Add(appointment);
-                            _db.SaveChanges();
-                            break;
-                        case 3:
-                            for (int i = 0; i < 3; i++)
-                            {
+                        switch (orderItem.Quantity)
+                        {
+                            case 1:
                                 appointment.OrderId = orderItem.Id;
                                 appointment.ReserveStatus = "待預約";
                                 _db.Appointments.Add(appointment);
                                 _db.SaveChanges();
-                            }
-                            break;
-                        case 5:
-                            for (int i = 0; i < 5; i++)
-                            {
-                                appointment.OrderId = orderItem.Id;
-                                appointment.ReserveStatus = "待預約";
-                                _db.Appointments.Add(appointment);
-                                _db.SaveChanges();
-                            }
-                            break;
+                                break;
+                            case 3:
+                                for (int i = 0; i < 3; i++)
+                                {
+                                    appointment.OrderId = orderItem.Id;
+                                    appointment.ReserveStatus = "待預約";
+                                    _db.Appointments.Add(appointment);
+                                    _db.SaveChanges();
+                                }
+                                break;
+                            case 5:
+                                for (int i = 0; i < 5; i++)
+                                {
+                                    appointment.OrderId = orderItem.Id;
+                                    appointment.ReserveStatus = "待預約";
+                                    _db.Appointments.Add(appointment);
+                                    _db.SaveChanges();
+                                }
+                                break;
+                        }
                     }
                 }
 
@@ -573,18 +579,37 @@ namespace ProjectPi.Controllers
         //[HttpPut]
         //[Route("api/appointmentTime")]
         //[JwtAuthFilter]
-        //public IHttpActionResult PostAppointmentTime()
+        //public IHttpActionResult PostAppointmentTime(ViewModel_U.AppointmentTime view)
         //{
         //    var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
         //    int userId = (int)userToken["Id"];
         //    string userName = (string)userToken["Name"];
 
         //    var findAppointment = _db.Appointments
-        //        .Where(x => x.MyOrder.UserName == userName)
-        //        .GroupBy(x => x.OrderId)
-        //        .ToList();
+        //        .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
+        //        .FirstOrDefault();
+
+        //    if (findAppointment == null)
+        //        return BadRequest("找無此筆預約紀錄");
+        //    else
+        //    {
+        //        int year = Convert.ToInt32(view.DateTimeValue.Year);
+        //        int month = Convert.ToInt32(view.DateTimeValue.Month);
+        //        int date = Convert.ToInt32(view.DateTimeValue.Date);
+        //        int hour = Convert.ToInt32(view.DateTimeValue.Hour.Split(':')[0]);
 
 
+        //        DateTime dateTimeValue = new DateTime(year, month, date, hour, 00, 0, DateTimeKind.Local); ;
+
+        //        findAppointment.AppointmentTime = dateTimeValue;
+        //        _db.SaveChanges();
+        //    }
+
+        //    ApiResponse result = new ApiResponse { };
+        //    result.Success = true;
+        //    result.Message = "預約完成，請待諮商師接收預約";
+        //    result.Data = null;
+        //    return Ok(result);
         //}
     }
 }

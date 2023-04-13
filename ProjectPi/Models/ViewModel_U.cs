@@ -132,6 +132,9 @@ namespace ProjectPi.Models
             public string Item { get; set; }
         }
 
+        /// <summary>
+        /// 刪除購物車
+        /// </summary>
         public class DeleteProduct
         {
             /// <summary>
@@ -139,6 +142,51 @@ namespace ProjectPi.Models
             /// </summary>
             [Display(Name = "商品編號")]
             public int ProductId { get; set; }
+        }
+
+        /// <summary>
+        /// 選擇預約時間
+        /// </summary>
+        public class AppointmentTime
+        {
+            /// <summary>
+            /// 預約編號
+            /// </summary>
+            [Display(Name = "預約編號")]
+            public int AppointmentId { get; set; }
+
+            /// <summary>
+            /// 預約時間
+            /// </summary>
+            [Display(Name = "預約時間")]
+            public DateTimeValue DateTimeValue { get; set; }
+        }
+        public class DateTimeValue
+        {
+            /// <summary>
+            /// 年
+            /// </summary>
+            [Display(Name = "年")]
+            public string Year { get; set; }
+
+            /// <summary>
+            /// 月
+            /// </summary>
+            [Display(Name = "月")]
+            public string Month { get; set; }
+
+            /// <summary>
+            /// 日
+            /// </summary>
+            [Display(Name = "日")]
+            public string Date { get; set; }
+
+            /// <summary>
+            /// 時間
+            /// </summary>
+            [Display(Name = "時間")]
+            public string Hour { get; set; }
+
         }
     }
 }
