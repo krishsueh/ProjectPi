@@ -10,12 +10,15 @@ namespace ProjectPi.Models
         public int Id { get; set; }
         public string ConnectionID { get; set; }
         public string UserName { get; set; }
+        
+        public string UserType { get; set; }
 
         //构造函数
-        public UserInfo(string cid, string unm)
+        public UserInfo(string cid, string unm, string UserType)
         {
             this.ConnectionID = cid;
             this.UserName = unm;
+            this.UserType = UserType;
         }
     }
 

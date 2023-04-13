@@ -107,5 +107,44 @@ namespace ProjectPi.Models
             [Display(Name = "姓名")]
             public string Name { get; set; }
         }
+
+        /// <summary>
+        /// 加入購物車
+        /// </summary>
+        public class Product
+        {
+            /// <summary>
+            /// 諮商師編號
+            /// </summary>
+            [Display(Name = "諮商師編號")]
+            public int CounselorId { get; set; }
+
+            /// <summary>
+            /// 專業領域編號
+            /// </summary>
+            [Display(Name = "專業領域編號")]
+            public int FieldId { get; set; }
+
+            /// <summary>
+            /// 課程方案
+            /// </summary>
+            [Display(Name = "課程方案")]
+            public string Item { get; set; }
+
+            /// <summary>
+            /// 方案價格
+            /// </summary>
+            [Display(Name = "方案價格")]
+            public int Price { get; set; }
+        }
+
+        public class DeleteProduct
+        {
+            /// <summary>
+            /// 商品編號
+            /// </summary>
+            [Display(Name = "商品編號")]
+            public int ProductId { get; set; }
+        }
     }
 }

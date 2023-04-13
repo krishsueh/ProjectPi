@@ -1,5 +1,4 @@
-﻿
-@{
+﻿@{
     Layout = null;
 }
 
@@ -27,14 +26,14 @@
             //連線後台hub
             chat = $.connection.chartHubb;
             console.info(chat);
-
             //刷新ICON未讀訊息 如果收到訊息但沒有點及ICON狀態下的話 ，使用這個function
             chat.client.showIconUnread = function () {
-
+                   //if( icon為被點即狀態的話) icon.picture = unRead.jpg;
+                //其他返回ICON圖案的時候都是 icon.picture = read.jpg
             }
             //刷新聊天室的訊息
             chat.client.showLastMsg = function () {
-                //var outid = $('#sid').text();
+              
                 var myNumber = document.getElementById("myNumber").value;
                 var myType = document.getElementById("myType").value;
                 const test = async () => {
@@ -46,13 +45,12 @@
                             var read = "未讀*";
                             if (myType == 'user') {
                                 var id = res.data.Data.userChatTargetList[i].CounselorId;
-                                if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                                //if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
                             }
                             else {
                                 var id = res.data.Data.userChatTargetList[i].UserId;
-                                if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                                //if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
                             }
-
                             var mhtml = '<button type="button" class="list-group-item" title="' + id
                                 + '" onclick="listGroupItemClick(this);" >' + res.data.Data.userChatTargetList[i].OutName + '</button>' + "<p>" + read + " 最後一句內容 " + res.data.Data.userChatTargetList[i].Content + "</p>";
                             $('#user-list-group').append(mhtml);
@@ -67,13 +65,14 @@
             }
 
             //顯示訊息的地方 Method
-            chat.client.showMessage = function (id, message) {
+            chat.client.showMessage = function (id, message , userType) {
                 var msg = '';
                 var myNumberID = document.getElementById("myNumber").value;
-                //var outId = document.getElementById("sid").value;
+                var myType = document.getElementById("myType").value;
                 var outId = $('#sid').text();
-                console.log("83  myNumberID = " + myNumberID + "  outId = " + outId + " id = " + id);
-                if (myNumberID == id) {
+                //console.log("83  myNumberID = " + myNumberID + "  outId = " + outId + " id = " + id);
+                 //渲染畫面
+                if (myNumberID == id && userType == myType) {
                     msg = '<p><span class="label label-success"> 我 </span>' + message + '</p>';
                 }
                 else {
@@ -120,12 +119,12 @@
                         });
 
                     if (myType == 'user') {
-                        chat.server.sendTo(outid, outmessage);
+                        chat.server.sendTo(outid, outmessage, myType);
                     }
                     else {
-                        chat.server.sendTo(myNumberID, outmessage);
+                        chat.server.sendTo(myNumberID, outmessage, myType);
                     }
-                    //chat.server.chatLog(1, 2, outmessage, "send");
+                    
                 }
                 else {
                     alert('請選擇目標以及內容');
@@ -137,7 +136,8 @@
             $.connection.hub.start().done(function () {
                 //$('#curUserName').text($('#userName').val());
                 var myNumber = document.getElementById("myNumber").value;
-                chat.server.setUserId(myNumber);
+                var myType = document.getElementById("myType").value;
+                chat.server.setUserId(myNumber, myType);
 
             });
         };   //end page ready
@@ -147,11 +147,7 @@
         function listGroupItemClick(that) {
             var myNumberID = document.getElementById("myNumber").value;
             var tid = $(that).attr('title');
-
             $('#contextDIV').html('');
-
-
-
             $('#sid').text(tid);
             var myType = document.getElementById("myType").value;
             if (myType == 'counselor') {
@@ -159,13 +155,13 @@
                 var myNumberID = tid;
                 var tid = index;
             }
-
+            // (res.data.Data.ChatlogList[i].Type == 'accept' && myType=='counselor')
             const test = async () => {
                 try {
                     const res = await axios.get('https://localhost:44344/api/chatroom/GetChatlogs?CounselorId=' + tid + '&UserId=' + myNumberID + '&UserType=' + myType);
-                    console.log(res.data.Data.ChatlogList[0]);
+                    console.log(res.data.Data.ChatlogList);
                     for (var i = 0; i < res.data.Data.ChatlogList.length; i++) {
-                        if (res.data.Data.ChatlogList[i].Type == 'send') {
+                        if ((res.data.Data.ChatlogList[i].Type == 'accept' && myType == 'counselor') || (res.data.Data.ChatlogList[i].Type == 'send' && myType == 'user')) {
                             msg = '<p><span class="label label-success">  我 </span>' + res.data.Data.ChatlogList[i].Content + '</p>';
                         }
                         else {
@@ -214,11 +210,11 @@
                         if (myType == 'user') {
 
                             var id = res.data.Data.userChatTargetList[i].CounselorId;
-                            if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                            //if(res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
                         }
                         else {
                             var id = res.data.Data.userChatTargetList[i].UserId;
-                            if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                            //if(res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
                         }
 
                         var mhtml = '<button type="button" class="list-group-item" title="' + id
