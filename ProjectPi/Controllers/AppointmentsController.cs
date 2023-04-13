@@ -333,14 +333,14 @@ namespace ProjectPi.Controllers
                 .Where(c => c.UersId == userId)
                 .ToList();
 
-            var totalAmount = _db.Carts
-                .Where(c => c.UersId == userId)
-                .Sum(x => x.Products.Price);
-
             if (!findCart.Any())
                 return BadRequest("購物車是空的，趕緊手刀預約吧!");
             else
             {
+                var totalAmount = _db.Carts
+                    .Where(c => c.UersId == userId)
+                    .Sum(x => x.Products.Price);
+
                 var data = findCart.Select(x => new
                 {
                     ProductId = x.ProductId,
@@ -491,6 +491,7 @@ namespace ProjectPi.Controllers
         /// <summary>
         /// 取得預約管理明細
         /// </summary>
+        /// <param name="status"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("api/appointmentRecords")]
@@ -515,7 +516,8 @@ namespace ProjectPi.Controllers
                     var data = findAppointment.Select(x => new
                     {
                         OrderId = x.Key,
-                        Appointments = x.Select(y => new {
+                        Appointments = x.Select(y => new
+                        {
                             AppointmentId = y.Id,
                             Counselor = y.MyOrder.CounselorName,
                             Field = y.MyOrder.Field,
@@ -533,7 +535,8 @@ namespace ProjectPi.Controllers
                     var data = findAppointment.Select(x => new
                     {
                         OrderId = x.Key,
-                        Appointments = x.Select(y => new {
+                        Appointments = x.Select(y => new
+                        {
                             AppointmentId = y.Id,
                             Counselor = y.MyOrder.CounselorName,
                             Field = y.MyOrder.Field,
@@ -564,78 +567,24 @@ namespace ProjectPi.Controllers
         }
 
         ///// <summary>
-        ///// 新增預約時段
+        ///// 個案選取預約時段
         ///// </summary>
         ///// <returns></returns>
-        //[HttpPost]
-        //[Route("api/appointment")]
+        //[HttpPut]
+        //[Route("api/appointmentTime")]
         //[JwtAuthFilter]
-        //public IHttpActionResult PostAppointmentTime(string status)
+        //public IHttpActionResult PostAppointmentTime()
         //{
         //    var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
         //    int userId = (int)userToken["Id"];
         //    string userName = (string)userToken["Name"];
 
         //    var findAppointment = _db.Appointments
-        //        .Where(x => x.MyOrder.UserName == userName && x.ReserveStatus == status)
+        //        .Where(x => x.MyOrder.UserName == userName)
         //        .GroupBy(x => x.OrderId)
         //        .ToList();
 
-        //    if (!findAppointment.Any())
-        //        return BadRequest("尚無訂單紀錄");
-        //    else
-        //    {
-        //        if (status == "待預約")
-        //        {
-        //            var data = findAppointment.Select(x => new
-        //            {
-        //                OrderId = x.Key,
-        //                Appointments = x.Select(y => new {
-        //                    AppointmentId = y.Id,
-        //                    Counselor = y.MyOrder.CounselorName,
-        //                    Field = y.MyOrder.Field,
-        //                })
-        //            }).ToList();
 
-        //            ApiResponse result = new ApiResponse { };
-        //            result.Success = true;
-        //            result.Message = "成功取得待預約明細";
-        //            result.Data = data;
-        //            return Ok(result);
-        //        }
-        //        else if (status == "待回覆" || status == "已成立" || status == "已取消")
-        //        {
-        //            var data = findAppointment.Select(x => new
-        //            {
-        //                OrderId = x.Key,
-        //                Appointments = x.Select(y => new {
-        //                    AppointmentId = y.Id,
-        //                    Counselor = y.MyOrder.CounselorName,
-        //                    Field = y.MyOrder.Field,
-        //                    Time = y.AppointmentTime //待修正
-        //                })
-        //            }).ToList();
-
-        //            ApiResponse result = new ApiResponse { };
-        //            result.Success = true;
-        //            switch (status)
-        //            {
-        //                case "待回覆":
-        //                    result.Message = "成功取得待回覆明細";
-        //                    break;
-        //                case "已成立":
-        //                    result.Message = "成功取得已成立明細";
-        //                    break;
-        //                case "已取消":
-        //                    result.Message = "成功取得已取消明細";
-        //                    break;
-        //            }
-        //            result.Data = data;
-        //            return Ok(result);
-        //        }
-        //        else
-        //            return BadRequest("無此狀態的明細");
-        //    }
         //}
     }
 }
