@@ -179,7 +179,7 @@ namespace ProjectPi.Models
             /// 日
             /// </summary>
             [Display(Name = "日")]
-            public string Date { get; set; }
+            public string Day { get; set; }
 
             /// <summary>
             /// 時間

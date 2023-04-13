@@ -500,7 +500,7 @@ namespace ProjectPi.Controllers
         /// <param name="status"></param>
         /// <returns></returns>
         [HttpGet]
-        [Route("api/appointmentRecords")]
+        [Route("api/apptRecords")]
         [JwtAuthFilter]
         public IHttpActionResult GetAppointment(string status)
         {
@@ -576,10 +576,10 @@ namespace ProjectPi.Controllers
         /// 選取預約時段
         /// </summary>
         /// <returns></returns>
-        [HttpPut]
-        [Route("api/appointmentTime")]
+        [HttpPost]
+        [Route("api/apptTime")]
         [JwtAuthFilter]
-        public IHttpActionResult PostAppointmentTime(ViewModel_U.AppointmentTime view)
+        public IHttpActionResult PostApptTime(ViewModel_U.AppointmentTime view)
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
@@ -590,14 +590,14 @@ namespace ProjectPi.Controllers
                 .FirstOrDefault();
 
             if (findAppointment == null)
-                return BadRequest("找無此筆預約紀錄");
+                return BadRequest("查無此筆預約紀錄");
             else
             {
-                int year = Convert.ToInt32(view.DateTimeValue.Year);
-                int month = Convert.ToInt32(view.DateTimeValue.Month);
-                int day = Convert.ToInt32(view.DateTimeValue.Date);
-                //int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
-                DateTime dateTimeValue = new DateTime(year, month, day, 05, 00, 0);
+                int year = int.Parse(view.DateTimeValue.Year);
+                int month = int.Parse(view.DateTimeValue.Month);
+                int day = int.Parse(view.DateTimeValue.Day);
+                int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
+                DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
 
                 findAppointment.AppointmentTime = dateTimeValue;
                 _db.SaveChanges();
@@ -606,6 +606,76 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse { };
             result.Success = true;
             result.Message = "預約完成，請待諮商師接收預約";
+            result.Data = null;
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 修改預約時段
+        /// </summary>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("api/apptTime")]
+        [JwtAuthFilter]
+        public IHttpActionResult PutApptTime(ViewModel_U.AppointmentTime view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+            string userName = (string)userToken["Name"];
+
+            var findAppointment = _db.Appointments
+                .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
+                .FirstOrDefault();
+
+            if (findAppointment == null)
+                return BadRequest("查無此筆預約紀錄");
+            else
+            {
+                int year = int.Parse(view.DateTimeValue.Year);
+                int month = int.Parse(view.DateTimeValue.Month);
+                int day = int.Parse(view.DateTimeValue.Day);
+                int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
+                DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
+
+                findAppointment.AppointmentTime = dateTimeValue;
+                _db.SaveChanges();
+            }
+
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "成功修改預約時段";
+            result.Data = null;
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 完成訂單
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/finishAppt")]
+        [JwtAuthFilter]
+        public IHttpActionResult PostApptStatus(ViewModel_U.AppointmentTime view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+            string userName = (string)userToken["Name"];
+
+            var findAppointment = _db.Appointments
+                .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
+                .FirstOrDefault();
+
+            if (findAppointment == null)
+                return BadRequest("查無此筆預約紀錄");
+            else
+            {
+                findAppointment.ReserveStatus = "已完成";
+                _db.SaveChanges();
+            }
+
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "完成訂單";
             result.Data = null;
             return Ok(result);
         }
