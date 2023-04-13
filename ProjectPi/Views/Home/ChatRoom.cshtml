@@ -27,7 +27,8 @@
             chat = $.connection.chartHubb;
             console.info(chat);
             //刷新ICON未讀訊息 如果收到訊息但沒有點及ICON狀態下的話 ，使用這個function
-            chat.client.showIconUnread = function () {
+            chat.client.showIconUnread = function (strVar) {
+                console.log("31行 " + strVar);
                    //if( icon為被點即狀態的話) icon.picture = unRead.jpg;
                 //其他返回ICON圖案的時候都是 icon.picture = read.jpg
             }
@@ -132,6 +133,8 @@
 
             });  //end click
 
+
+         
             //當連線成功,註冊
             $.connection.hub.start().done(function () {
                 //$('#curUserName').text($('#userName').val());
@@ -140,6 +143,7 @@
                 chat.server.setUserId(myNumber, myType);
 
             });
+        
         };   //end page ready
 
 
@@ -277,6 +281,11 @@
             test();
 
         }
+
+        function hubStopConnect() {
+            $.connection.hub.stop();
+            console.log("註冊成功285");
+        }
     </script>
 
 </head>
@@ -284,6 +293,7 @@
     <button class="col-sm-12" onclick="getTarget()">打開ICON出現曾經聊天過的對象</button>
     <button class="col-sm-12" onclick="getCounselor()" id="btn">f2</button>
     <button class="col-sm-12" onclick="hubConnect()">點我連線</button>
+    <button class="col-sm-12" onclick="hubStopConnect()">點我斷開連線</button>
     <div class="container">
         <div class="row">
             <div class="col-md-12 col-sm-12">

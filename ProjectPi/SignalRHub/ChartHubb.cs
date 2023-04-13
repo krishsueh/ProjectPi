@@ -115,12 +115,14 @@ namespace ProjectPi.SignalRHub
             //var outsideUser = USERLIST.Where(x => x.ConnectionID != Context.ConnectionId).Where(x => x.Id == outsideID).FirstOrDefault();
             Clients.Client(myUser.ConnectionID).showMessage(myUser.Id,message , myType);
             Clients.Client(myUser.ConnectionID).showLastMsg();
+            Clients.Client(myUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString());
+
             //前端js定义function showMessage(speakerName , message)
             if (outsideUser != null)
             {
                 Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id,message, myType);
                 Clients.Client(outsideUser.ConnectionID).showLastMsg();
-                Clients.Client(outsideUser.ConnectionID).showIconUnRead();
+                Clients.Client(outsideUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString());
                 //对方  和  我方 的界面都要显示语录
             }
             /*
