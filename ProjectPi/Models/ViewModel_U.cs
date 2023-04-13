@@ -130,12 +130,6 @@ namespace ProjectPi.Models
             /// </summary>
             [Display(Name = "課程方案")]
             public string Item { get; set; }
-
-            /// <summary>
-            /// 方案價格
-            /// </summary>
-            [Display(Name = "方案價格")]
-            public int Price { get; set; }
         }
 
         public class DeleteProduct
