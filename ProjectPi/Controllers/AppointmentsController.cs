@@ -334,7 +334,7 @@ namespace ProjectPi.Controllers
                 .ToList();
 
             if (!findCart.Any())
-                return BadRequest("購物車是空的，趕緊手刀預約吧!");
+                return Ok("購物車是空的，趕緊手刀預約吧!");
             else
             {
                 var totalAmount = _db.Carts
@@ -573,7 +573,7 @@ namespace ProjectPi.Controllers
         }
 
         ///// <summary>
-        ///// 個案選取預約時段
+        ///// 選取預約時段
         ///// </summary>
         ///// <returns></returns>
         //[HttpPut]
@@ -593,13 +593,11 @@ namespace ProjectPi.Controllers
         //        return BadRequest("找無此筆預約紀錄");
         //    else
         //    {
-        //        int year = Convert.ToInt32(view.DateTimeValue.Year);
-        //        int month = Convert.ToInt32(view.DateTimeValue.Month);
-        //        int date = Convert.ToInt32(view.DateTimeValue.Date);
-        //        int hour = Convert.ToInt32(view.DateTimeValue.Hour.Split(':')[0]);
-
-
-        //        DateTime dateTimeValue = new DateTime(year, month, date, hour, 00, 0, DateTimeKind.Local); ;
+        //        int year = int.Parse(view.DateTimeValue.Year);
+        //        int month = int.Parse(view.DateTimeValue.Month);
+        //        //int day = Con(view.DateTimeValue.Date);
+        //        int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
+        //        DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
 
         //        findAppointment.AppointmentTime = dateTimeValue;
         //        _db.SaveChanges();
