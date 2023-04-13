@@ -242,26 +242,6 @@ namespace ProjectPi.Controllers
                 .Where(x => x.Id == id)
                 .FirstOrDefault();
 
-            // 諮商師專業領域
-            var counselorFields = _db.Features
-                .Where(x => x.CounselorId == id).ToList()
-                .Select(x =>
-                new
-                {
-                    x.MyField.Field,
-                    Features = new string[5] { x.Feature1, x.Feature2, x.Feature3, x.Feature4, x.Feature5
-                    },
-                    Courses = _db.Products
-                    .Where(y => y.CounselorId == id && y.FieldId == x.FieldId && y.Availability == true)
-                    .Select(y => new
-                    {
-                        y.Item,
-                        y.Price
-                    })
-                    .ToList()
-                })
-                .ToList();
-
             //照片存取位置
             string path = "https://pi.rocket-coding.com/upload/headshot/";
 
@@ -280,8 +260,17 @@ namespace ProjectPi.Controllers
                     SelfIntroduction = counselorData.SelfIntroduction,
                     CertNumber = counselorData.CertNumber,
                     VideoLink = counselorData.VideoLink,
-                    Fields = counselorFields
+                    Fields = _db.Features
+                    .Where(x => x.CounselorId == id).GroupBy(x => x.FieldId).ToList()
+                    .Select(x => new
+                    {
+                        Field = _db.Features.Where(y => y.CounselorId == id && y.FieldId == x.Key).Select(y => y.MyField.Field).FirstOrDefault(),
 
+                        Features = _db.Features.Where(y => y.CounselorId == id && y.FieldId == x.Key).ToList().Select(y => new string[5] { y.Feature1, y.Feature2, y.Feature3, y.Feature4, y.Feature5 }).FirstOrDefault(),
+
+                        Courses = _db.Products
+                        .Where(y => y.CounselorId == id && y.FieldId == x.Key && y.Availability == true).Select(y => new { y.Item, y.Price }).ToList()
+                    })
                 };
 
                 ApiResponse result = new ApiResponse { };
