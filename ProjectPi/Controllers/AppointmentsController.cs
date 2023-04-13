@@ -372,7 +372,7 @@ namespace ProjectPi.Controllers
             int userId = (int)userToken["Id"];
 
             var cartItem = _db.Carts
-               .Where(c => c.UersId == userId && c.ProductId == view.ProductId)
+               .Where(c => c.UersId == userId && c.Id == view.CartId)
                .FirstOrDefault();
 
             if (cartItem == null)
@@ -572,42 +572,42 @@ namespace ProjectPi.Controllers
             }
         }
 
-        ///// <summary>
-        ///// 選取預約時段
-        ///// </summary>
-        ///// <returns></returns>
-        //[HttpPut]
-        //[Route("api/appointmentTime")]
-        //[JwtAuthFilter]
-        //public IHttpActionResult PostAppointmentTime(ViewModel_U.AppointmentTime view)
-        //{
-        //    var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
-        //    int userId = (int)userToken["Id"];
-        //    string userName = (string)userToken["Name"];
+        /// <summary>
+        /// 選取預約時段
+        /// </summary>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("api/appointmentTime")]
+        [JwtAuthFilter]
+        public IHttpActionResult PostAppointmentTime(ViewModel_U.AppointmentTime view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+            string userName = (string)userToken["Name"];
 
-        //    var findAppointment = _db.Appointments
-        //        .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
-        //        .FirstOrDefault();
+            var findAppointment = _db.Appointments
+                .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
+                .FirstOrDefault();
 
-        //    if (findAppointment == null)
-        //        return BadRequest("找無此筆預約紀錄");
-        //    else
-        //    {
-        //        int year = int.Parse(view.DateTimeValue.Year);
-        //        int month = int.Parse(view.DateTimeValue.Month);
-        //        //int day = Con(view.DateTimeValue.Date);
-        //        int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
-        //        DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
+            if (findAppointment == null)
+                return BadRequest("找無此筆預約紀錄");
+            else
+            {
+                int year = Convert.ToInt32(view.DateTimeValue.Year);
+                int month = Convert.ToInt32(view.DateTimeValue.Month);
+                int day = Convert.ToInt32(view.DateTimeValue.Date);
+                //int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
+                DateTime dateTimeValue = new DateTime(year, month, day, 05, 00, 0);
 
-        //        findAppointment.AppointmentTime = dateTimeValue;
-        //        _db.SaveChanges();
-        //    }
+                findAppointment.AppointmentTime = dateTimeValue;
+                _db.SaveChanges();
+            }
 
-        //    ApiResponse result = new ApiResponse { };
-        //    result.Success = true;
-        //    result.Message = "預約完成，請待諮商師接收預約";
-        //    result.Data = null;
-        //    return Ok(result);
-        //}
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "預約完成，請待諮商師接收預約";
+            result.Data = null;
+            return Ok(result);
+        }
     }
 }

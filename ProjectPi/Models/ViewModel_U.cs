@@ -138,10 +138,10 @@ namespace ProjectPi.Models
         public class DeleteProduct
         {
             /// <summary>
-            /// 商品編號
+            /// 購物車編號
             /// </summary>
-            [Display(Name = "商品編號")]
-            public int ProductId { get; set; }
+            [Display(Name = "購物車編號")]
+            public int CartId { get; set; }
         }
 
         /// <summary>
