@@ -413,10 +413,10 @@ namespace ProjectPi.Controllers
                 return BadRequest("購物車無任何課程商品");
             else
             {
+                //建立訂單
+                OrderRecord order = new OrderRecord();
                 foreach (var item in cartItems)
                 {
-                    //建立訂單
-                    OrderRecord order = new OrderRecord();
                     switch (userId.ToString().Length)
                     {
                         case 1:
@@ -440,80 +440,47 @@ namespace ProjectPi.Controllers
 
                     _db.OrderRecords.Add(order);
                     _db.SaveChanges();
+                }
 
-                    //建立預約明細
-                    var findOrders = _db.OrderRecords
-                        .Where(c => c.UserName == userName)
-                        .ToArray();
-
-                    foreach (var orderItem in findOrders)
+                //建立預約明細
+                var findOrders = _db.OrderRecords
+                    .Where(c => c.UserName == userName)
+                    .ToList();
+                Appointment appointment = new Appointment();
+                foreach (var orderItem in findOrders)
+                {
+                    switch (orderItem.Quantity)
                     {
-                        if (orderItem.Quantity == 1)
-                        {
-                            Appointment appointment1 = new Appointment();
-                            appointment1.OrderId = orderItem.Id;
-                            appointment1.ReserveStatus = "待預約";
-                            _db.Appointments.Add(appointment1);
+                        case 1:
+                            appointment.OrderId = orderItem.Id;
+                            appointment.ReserveStatus = "待預約";
+                            _db.Appointments.Add(appointment);
                             _db.SaveChanges();
-                        }
-                        else if (orderItem.Quantity == 3)
-                        {
+                            break;
+                        case 3:
                             for (int i = 0; i < 3; i++)
                             {
-                                Appointment appointment3 = new Appointment();
-                                appointment3.OrderId = orderItem.Id;
-                                appointment3.ReserveStatus = "待預約";
-                                _db.Appointments.Add(appointment3);
+                                appointment.OrderId = orderItem.Id;
+                                appointment.ReserveStatus = "待預約";
+                                _db.Appointments.Add(appointment);
                                 _db.SaveChanges();
                             }
-                        }
-                        else if (orderItem.Quantity == 5)
-                        {
+                            break;
+                        case 5:
                             for (int i = 0; i < 5; i++)
                             {
-                                Appointment appointment5 = new Appointment();
-                                appointment5.OrderId = orderItem.Id;
-                                appointment5.ReserveStatus = "待預約";
-                                _db.Appointments.Add(appointment5);
+                                appointment.OrderId = orderItem.Id;
+                                appointment.ReserveStatus = "待預約";
+                                _db.Appointments.Add(appointment);
                                 _db.SaveChanges();
                             }
-                        }
-
-
-
-                        //switch (orderItem.Quantity)
-                        //{
-                        //    case 1:
-                        //        appointment.OrderId = orderItem.Id;
-                        //        appointment.ReserveStatus = "待預約";
-                        //        _db.Appointments.Add(appointment);
-                        //        _db.SaveChanges();
-                        //        break;
-                        //    case 3:
-                        //        for (int i = 0; i < 3; i++)
-                        //        {
-                        //            appointment.OrderId = orderItem.Id;
-                        //            appointment.ReserveStatus = "待預約";
-                        //            _db.Appointments.Add(appointment);
-                        //            _db.SaveChanges();
-                        //        }
-                        //        break;
-                        //    case 5:
-                        //        for (int i = 0; i < 5; i++)
-                        //        {
-                        //            appointment.OrderId = orderItem.Id;
-                        //            appointment.ReserveStatus = "待預約";
-                        //            _db.Appointments.Add(appointment);
-                        //            _db.SaveChanges();
-                        //        }
-                        //        break;
-                        //}
+                            break;
                     }
                 }
 
-                ////刪除已付款購物車商品
-                //_db.Carts.RemoveRange(cartItems);
-                //_db.SaveChanges();
+                //刪除已付款購物車商品
+                _db.Carts.RemoveRange(cartItems);
+                _db.SaveChanges();
             }
 
             ApiResponse result = new ApiResponse { };
