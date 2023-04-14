@@ -3,6 +3,7 @@ using ProjectPi.Models;
 using ProjectPi.Security;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -162,6 +163,167 @@ namespace ProjectPi.Controllers
               .Distinct();
 
             return findTime;
+        }
+
+        /// <summary>
+        /// 諮商師頁面的預約時段
+        /// </summary>
+        /// <param name="id">諮商師ID</param>
+        /// <returns></returns>
+        [Route("api/timetableBrowser")]
+        [HttpGet]
+        public IHttpActionResult GetTimetableBrowser(int id)
+        {
+            var findTimes = _db.Timetables
+                .Where(x => x.CounselorId == id)
+                .GroupBy(x => x.Date)
+                .ToList();
+
+            var dateList = findTimes
+                .Select(x => new
+                {
+                    Year = x.Key.ToShortDateString().Split('/')[0],
+                    Month = x.Key.ToShortDateString().Split('/')[1],
+                    Date = x.Key.ToShortDateString().Split('/')[2],
+                    WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(x.Key.DayOfWeek)[2],
+                    //Hours = x.Select(y => new {
+                    //    Time = y.Time,
+                    //    Availability = y.Availability,
+                    //}).ToList()
+                })
+                .ToList();
+
+            int year, month, day;
+            //諮商師可以的第一天
+            year = int.Parse(dateList.FirstOrDefault().Year);
+            month = int.Parse(dateList.FirstOrDefault().Month);
+            day = int.Parse(dateList.FirstOrDefault().Date);
+            DateTime firstDayOfAvailable = new DateTime(year, month, day);
+
+            //諮商師可以的最後一天
+            year = int.Parse(dateList.LastOrDefault().Year);
+            month = int.Parse(dateList.LastOrDefault().Month);
+            day = int.Parse(dateList.LastOrDefault().Date);
+            DateTime lastDayOfAvailable = new DateTime(year, month, day);
+
+            //日立顯示的第一天
+            DateTime today = new DateTime(2023, 5, 30);
+
+            //計算需要補足的天數 2 天
+            int interval = (firstDayOfAvailable - today).Days;
+
+            //產出開頭需補足資料
+            var frontFalseDates = new List<object>();
+            for (int i = 0; i < interval; i++)
+            {
+                var falseDates = new
+                {
+                    Year = today.AddDays(i).ToShortDateString().Split('/')[0],
+                    Month = today.AddDays(i).ToShortDateString().Split('/')[1],
+                    Date = today.AddDays(i).ToShortDateString().Split('/')[2],
+                    WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2]
+                };
+
+                frontFalseDates.Add(falseDates);
+            }
+
+            //將 falseDates 塞入資料裡
+            var newDataList = frontFalseDates.Take(interval).Concat(dateList).ToArray();
+
+            //計算 newDataList 總共有幾天
+            int newDataListLength = newDataList.Count(); //  17
+
+            //判斷 newDataList 總天數是否能被 7 整除
+            //如果不行，則需要在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天 
+            if (newDataListLength % 7 == 0)
+                return Ok(newDataList);
+            else
+            {
+                //須補足的天數
+                int days = 7 - (newDataListLength % 7);
+
+                var endFalseDates = new List<object>();
+                //產出結尾需補足資料
+                for (int i = 0; i < days; i++)
+                {
+                    var falseDates = new
+                    {
+                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
+                        Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
+                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
+                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2]
+                    };
+
+                    endFalseDates.Add(falseDates);
+                }
+
+                //再將 falseDates 塞入資料裡
+                var allDataList = newDataList.Concat(endFalseDates.Take(days)).ToArray();
+
+                return Ok(allDataList);
+            }
+
+
+
+
+            //如果 Today 5/30 < 可約第一天 6/1，interval = 2
+            // 要在 6/1 ~ 6/15 這包資料前面追加 2 天假資料
+            // 假資料 + 真資料的陣列長度如果 %7 != 0，則 可約的最後一天後面要再補假假資料
+
+            //如果 Today 6/3 > 可約第一天 6/1，interval = -2
+            // 6/1 ~ 6/15 這包資料裡，要跳過前 Skip(interval天)  ( 6/1 & 6/2 ) 後，取 7 筆資料
+
+
+
+
+            ////總天數
+            //var howManyDates = dateList.Count();
+
+            ////總周數
+            //int weekNum = 0;
+            //int pageSize = 5;
+            //if (howManyDates % pageSize == 0)
+            //    weekNum = howManyDates / pageSize;
+            //else
+            //    weekNum = howManyDates / pageSize + 1;
+
+            //if (dateList.FirstOrDefault().WeekDay.ToString() == "四")
+            //{
+            //    var data = dateList.Take(3).ToList();
+            //    return Ok(data);
+            //}
+            //else
+            //{
+            //    return BadRequest("失敗");
+            //}
+
+
+            //ApiResponse result = new ApiResponse { };
+            //result.Success = true;
+            //result.Message = "成功取得預約時段";
+            //result.Data = dateList;
+            //return Ok(weekNum);
+
+            //分頁功能
+            //ViewModel.SearchingCounselors data = new ViewModel.SearchingCounselors();
+            //data.TotalPageNum = pageNum;
+            //data.CounselorsData = new List<ViewModel.CounselorsData>();
+
+            //var counsleorList = Counselors
+            //    .Select(x => new
+            //    {
+            //        x.MyCounselor.Id,
+            //        x.MyCounselor.Photo,
+            //        x.MyCounselor.Name,
+            //        x.MyCounselor.SellingPoint,
+            //        x.MyCounselor.SelfIntroduction
+            //    })
+            //    .Distinct()
+            //    .OrderBy(x => x.Id)
+            //    .Skip((page - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .ToList();
+
         }
 
     }
