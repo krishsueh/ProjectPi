@@ -286,6 +286,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\AccountsController.cs" />
     <Compile Include="Controllers\AppointmentsController.cs" />
+    <Compile Include="Controllers\BackendManagementApiController.cs" />
     <Compile Include="Controllers\ChatRoomApiController.cs" />
     <Compile Include="Controllers\CounselorsController.cs" />
     <Compile Include="Controllers\CoursesController.cs" />
@@ -333,6 +334,8 @@
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\Cart.cs" />
     <Compile Include="Models\ChatRoom.cs" />
+    <Compile Include="Models\CryptoUtil.cs" />
+    <Compile Include="Models\NewebPay.cs" />
     <Compile Include="Models\OrderRecord.cs" />
     <Compile Include="Models\Product.cs" />
     <Compile Include="Models\Appointment.cs" />
