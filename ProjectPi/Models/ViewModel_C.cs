@@ -293,5 +293,17 @@ namespace ProjectPi.Models
             public bool Available { get; set; }
         }
 
+        /// <summary>
+        /// 接收預約
+        /// </summary>
+        public class Appt
+        {
+            /// <summary>
+            /// 預約編號
+            /// </summary>
+            [Display(Name = "預約編號")]
+            public int AppointmentId { get; set; }
+        }
+
     }
 }

@@ -232,6 +232,7 @@ namespace ProjectPi.Controllers
         /// <summary>
         /// 取得特定諮商師頁面
         /// </summary>
+        /// <param name="id">諮商師編號</param>
         /// <returns></returns>
         [Route("api/profile")]
         [HttpGet]
@@ -246,9 +247,7 @@ namespace ProjectPi.Controllers
             string path = "https://pi.rocket-coding.com/upload/headshot/";
 
             if (counselorData == null)
-            {
-                return BadRequest("不存在此諮商師");
-            }
+                return NotFound();
             else
             {
                 var data = new
@@ -495,14 +494,14 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 取得預約管理明細
+        /// 取得預約管理明細 (個案)
         /// </summary>
         /// <param name="status"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("api/apptRecords")]
         [JwtAuthFilter]
-        public IHttpActionResult GetAppointment(string status)
+        public IHttpActionResult GetApptRecords(string status)
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
@@ -644,6 +643,97 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse { };
             result.Success = true;
             result.Message = "成功修改預約時段";
+            result.Data = null;
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得預約管理明細 (諮商師)
+        /// </summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("api/usersAppts")]
+        [JwtAuthFilter]
+        public IHttpActionResult GetUsersAppts(string status)
+        {
+            var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int counselorId = (int)counselorToken["Id"];
+            string counselorName = (string)counselorToken["Name"];
+
+            var findAppointment = _db.Appointments
+                .Where(x => x.MyOrder.CounselorName == counselorName && x.ReserveStatus == status)
+                .GroupBy(x => x.OrderId)
+                .ToList();
+
+            if (!findAppointment.Any())
+                return BadRequest("尚無訂單紀錄");
+            else
+            {
+                if (status != "待回覆" && status == "已成立" && status == "已取消")
+                    return BadRequest("無此狀態的明細");
+                else
+                {
+                    var data = findAppointment.Select(x => new
+                    {
+                        OrderId = x.Key,
+                        Appointments = x.Select(y => new
+                        {
+                            AppointmentId = y.Id,
+                            User = y.MyOrder.UserName,
+                            Field = y.MyOrder.Field,
+                            Time = y.AppointmentTime //待修正
+                        })
+                    }).ToList();
+
+                    ApiResponse result = new ApiResponse { };
+                    result.Success = true;
+                    switch (status)
+                    {
+                        case "待回覆":
+                            result.Message = "成功取得待回覆明細";
+                            break;
+                        case "已成立":
+                            result.Message = "成功取得已成立明細";
+                            break;
+                        case "已取消":
+                            result.Message = "成功取得已取消明細";
+                            break;
+                    }
+                    result.Data = data;
+                    return Ok(result);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 接受個案預約
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/acceptAppt")]
+        [JwtAuthFilter]
+        public IHttpActionResult PostApptStatus(ViewModel_C.Appt view)
+        {
+            var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int counselorId = (int)counselorToken["Id"];
+            string counselorName = (string)counselorToken["Name"];
+
+            var findAppointment = _db.Appointments
+                .Where(x => x.MyOrder.CounselorName == counselorName && x.Id == view.AppointmentId)
+                .FirstOrDefault();
+
+            if (findAppointment == null)
+                return BadRequest("查無此筆預約紀錄");
+            else
+            {
+                findAppointment.ReserveStatus = "已成立";
+                _db.SaveChanges();
+            }
+
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "已成立此筆預約";
             result.Data = null;
             return Ok(result);
         }
