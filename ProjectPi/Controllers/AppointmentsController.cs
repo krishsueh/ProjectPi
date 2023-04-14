@@ -513,6 +513,7 @@ namespace ProjectPi.Controllers
             var findAppointment = _db.Appointments
                 .Where(x => x.MyOrder.UserName == userName && x.ReserveStatus == status)
                 .GroupBy(x => x.OrderId)
+                .OrderByDescending(c => c.Key)
                 .ToList();
 
             if (!findAppointment.Any())
@@ -667,6 +668,7 @@ namespace ProjectPi.Controllers
             var findAppointment = _db.Appointments
                 .Where(x => x.MyOrder.CounselorName == counselorName && x.ReserveStatus == status)
                 .GroupBy(x => x.OrderId)
+                .OrderByDescending(x => x.Key)
                 .ToList();
 
             if (!findAppointment.Any())
