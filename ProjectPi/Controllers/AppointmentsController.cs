@@ -433,7 +433,7 @@ namespace ProjectPi.Controllers
                     order.Item = item.Products.Item;
                     order.Quantity = item.Products.Quantity;
                     order.Price = item.Products.Price;
-                    order.OrderStatus = "已成立";
+                    order.OrderStatus = "未付款";
 
                     _db.OrderRecords.Add(order);
                     _db.SaveChanges();
@@ -442,7 +442,10 @@ namespace ProjectPi.Controllers
                 //建立預約明細
                 var findOrders = _db.OrderRecords
                     .Where(c => c.UserName == userName)
-                    .ToList();
+                    .GroupBy(c => c.OrderNum)
+                    .OrderByDescending(c => c.Key)
+                    .ToList()
+                    .FirstOrDefault();
 
                 if (!findOrders.Any())
                     return BadRequest("查無訂單");
