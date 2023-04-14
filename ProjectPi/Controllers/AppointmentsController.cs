@@ -603,6 +603,7 @@ namespace ProjectPi.Controllers
                 DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
 
                 findAppointment.AppointmentTime = dateTimeValue;
+                findAppointment.ReserveStatus = "待回覆";
                 _db.SaveChanges();
             }
 
@@ -641,6 +642,7 @@ namespace ProjectPi.Controllers
                 DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
 
                 findAppointment.AppointmentTime = dateTimeValue;
+                findAppointment.ReserveStatus = "待回覆";
                 _db.SaveChanges();
             }
 
