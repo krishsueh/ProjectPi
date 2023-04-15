@@ -32,10 +32,10 @@ namespace ProjectPi.Controllers
             string decryptTradeInfo = CryptoUtil.DecryptAESHex(data.TradeInfo, hashKey, hashIV);
             PaymentResult result = JsonConvert.DeserializeObject<PaymentResult>(decryptTradeInfo);
             // 取出交易記錄資料庫的訂單ID
-            string[] orderNo = result.Result.MerchantOrderNo.Split('_');
-            int userId = Convert.ToInt32(orderNo[1]);
+            string orderNo = result.Result.MerchantOrderNo;
+//            int userId = Convert.ToInt32(orderNo);
             // 用取得的"訂單ID"修改資料庫此筆訂單的付款狀態為 true
-            List<OrderRecord> orderRecord = _db.OrderRecords.Where(x => x.OrderNum == orderNo[0]).ToList();
+            List<OrderRecord> orderRecord = _db.OrderRecords.Where(x => x.OrderNum == orderNo).ToList();
             foreach (var item in orderRecord)
             {
                 item.OrderStatus = "已成立";

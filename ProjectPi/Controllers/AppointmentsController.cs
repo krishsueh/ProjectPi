@@ -463,14 +463,14 @@ namespace ProjectPi.Controllers
                 // tradeInfo 內容，導回的網址都需為 https 
                 string respondType = "JSON"; // 回傳格式
                 string timeStamp = ((int)(DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds).ToString();
-                string merchantOrderNo = order.OrderNum+"_"+userId; // 底線後方為訂單ID，解密比對用，不可重覆(規則參考文件)
+                string merchantOrderNo = order.OrderNum; // 底線後方為訂單ID，解密比對用，不可重覆(規則參考文件)
                 string amt = "訂單金額";
                 amt = total.ToString();
                 string itemDesc = "商品資訊";
                 itemDesc = sBuilder.ToString();
                 string tradeLimit = "600"; // 交易限制秒數
                 string notifyURL = @"http://pi.rocket-coding.com/api/getPaymentData"; // NotifyURL 填後端接收藍新付款結果的 API 位置，如 : /api/users/getpaymentdata
-                string returnURL = "https://pi-rocket-coding-rckurc8tt-roceil.vercel.app/usercenter/reservation";  // 前端可用 Status: SUCCESS 來判斷付款成功，網址夾帶可拿來取得活動內容
+                string returnURL = "https://pi-rocket-coding-eqpxw7idj-roceil.vercel.app/usercenter/reservation";  // 前端可用 Status: SUCCESS 來判斷付款成功，網址夾帶可拿來取得活動內容
                 User user = _db.Users.Where(x => x.Id == userId).FirstOrDefault();
                 string email = user.Account; // 通知付款完成用
                 string loginType = "0"; // 0不須登入藍新金流會員
@@ -498,7 +498,9 @@ namespace ProjectPi.Controllers
                 // SHA256 加密
                 tradeSha = CryptoUtil.EncryptSHA256($"HashKey={hashKey}&{tradeInfo}&HashIV={hashIV}");
 
-               
+                //刪除已付款購物車商品
+                _db.Carts.RemoveRange(cartItems);
+                _db.SaveChanges();
                 // 送出金流串接用資料，給前端送藍新用
                 return Ok(new
                 {
