@@ -22,6 +22,12 @@ namespace ProjectPi.Models
         public string Account { get; set; }
 
         /// <summary>
+        /// 預約管理分頁數
+        /// </summary>
+        [Display(Name = "頁數")]
+        public int PageNum { get; set; }
+
+        /// <summary>
         /// 取得諮商師總覽
         /// </summary>
         public class SearchingCounselors

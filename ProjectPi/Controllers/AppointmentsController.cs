@@ -105,24 +105,19 @@ namespace ProjectPi.Controllers
                 data.CounselorsData.Add(counselorsData);
             }
 
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
             if (counsleorList.Any())
             {
-                ApiResponse result = new ApiResponse { };
-                result.Success = true;
                 result.Message = "成功取得諮商師總覽";
                 result.Data = data;
-                return Ok(result);
-
             }
             else
             {
-                ApiResponse result = new ApiResponse { };
-                result.Success = true;
                 result.Message = "找不到符合篩選條件的諮商師";
                 result.Data = null;
-                return Ok(result);
             }
-
+            return Ok(result);
         }
 
         /// <summary>
@@ -209,24 +204,19 @@ namespace ProjectPi.Controllers
                 data.CounselorsData.Add(counselorsData);
             }
 
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
             if (counsleorList.Any())
             {
-                ApiResponse result = new ApiResponse { };
-                result.Success = true;
                 result.Message = "成功取得諮商師總覽";
                 result.Data = data;
-                return Ok(result);
-
             }
             else
             {
-                ApiResponse result = new ApiResponse { };
-                result.Success = true;
                 result.Message = "找不到符合篩選條件的諮商師";
                 result.Data = null;
-                return Ok(result);
             }
-
+            return Ok(result);
         }
 
         /// <summary>
@@ -499,62 +489,84 @@ namespace ProjectPi.Controllers
         /// <summary>
         /// 取得預約管理明細 (個案)
         /// </summary>
-        /// <param name="status"></param>
+        /// <param name="status">預約單狀態</param>
+        /// <param name="view">頁數</param>
         /// <returns></returns>
         [HttpGet]
         [Route("api/apptRecords")]
         [JwtAuthFilter]
-        public IHttpActionResult GetApptRecords(string status)
+        public IHttpActionResult GetApptRecords(string status, ViewModel view)
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
             string userName = (string)userToken["Name"];
 
             var findAppointment = _db.Appointments
-                .Where(x => x.MyOrder.UserName == userName && x.ReserveStatus == status)
-                .GroupBy(x => x.OrderId)
-                .OrderByDescending(c => c.Key)
-                .ToList();
+                    .Where(x => x.MyOrder.UserName == userName && x.ReserveStatus == status)
+                    .OrderByDescending(x => x.OrderId)
+                    .ToList();
 
             if (!findAppointment.Any())
                 return BadRequest("尚無訂單紀錄");
             else
             {
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
                 if (status == "待預約")
                 {
-                    var data = findAppointment.Select(x => new
+                    var dataList = findAppointment.Select(x => new
                     {
-                        OrderId = x.Key,
-                        Appointments = x.Select(y => new
-                        {
-                            AppointmentId = y.Id,
-                            Counselor = y.MyOrder.CounselorName,
-                            Field = y.MyOrder.Field,
-                        })
+                        OrderId = x.OrderId,
+                        AppointmentId = x.Id,
+                        Counselor = x.MyOrder.CounselorName,
+                        Field = x.MyOrder.Field,
                     }).ToList();
 
-                    ApiResponse result = new ApiResponse { };
-                    result.Success = true;
+                    //分頁功能
+                    int pageNum = 0;
+                    int pageSize = 5;
+                    if (dataList.Count() % pageSize == 0)
+                        pageNum = dataList.Count() / pageSize;
+                    else
+                        pageNum = dataList.Count() / pageSize + 1;
+
+                    var pagination = dataList
+                        .Skip((view.PageNum - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+
                     result.Message = "成功取得待預約明細";
-                    result.Data = data;
+                    result.Data = new
+                    {
+                        TotalPageNum = pageNum,
+                        List = pagination
+                    };
                     return Ok(result);
                 }
                 else if (status == "待回覆" || status == "已成立" || status == "已取消")
                 {
-                    var data = findAppointment.Select(x => new
+                    var dataList = findAppointment.Select(x => new
                     {
-                        OrderId = x.Key,
-                        Appointments = x.Select(y => new
-                        {
-                            AppointmentId = y.Id,
-                            Counselor = y.MyOrder.CounselorName,
-                            Field = y.MyOrder.Field,
-                            Time = y.AppointmentTime //待修正
-                        })
+                        OrderId = x.OrderId,
+                        AppointmentId = x.Id,
+                        Counselor = x.MyOrder.CounselorName,
+                        Field = x.MyOrder.Field,
+                        Time = x.AppointmentTime
                     }).ToList();
 
-                    ApiResponse result = new ApiResponse { };
-                    result.Success = true;
+                    //分頁功能
+                    int pageNum = 0;
+                    int pageSize = 5;
+                    if (dataList.Count() % pageSize == 0)
+                        pageNum = dataList.Count() / pageSize;
+                    else
+                        pageNum = dataList.Count() / pageSize + 1;
+
+                    var pagination = dataList
+                        .Skip((view.PageNum - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+
                     switch (status)
                     {
                         case "待回覆":
@@ -567,7 +579,11 @@ namespace ProjectPi.Controllers
                             result.Message = "成功取得已取消明細";
                             break;
                     }
-                    result.Data = data;
+                    result.Data = new
+                    {
+                        TotalPageNum = pageNum,
+                        List = pagination
+                    };
                     return Ok(result);
                 }
                 else
@@ -656,12 +672,13 @@ namespace ProjectPi.Controllers
         /// <summary>
         /// 取得預約管理明細 (諮商師)
         /// </summary>
-        /// <param name="status"></param>
+        /// <param name="status">預約單狀態</param>
+        /// <param name="view">頁數</param>
         /// <returns></returns>
         [HttpGet]
         [Route("api/usersAppts")]
         [JwtAuthFilter]
-        public IHttpActionResult GetUsersAppts(string status)
+        public IHttpActionResult GetUsersAppts(string status, ViewModel view)
         {
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
@@ -669,8 +686,7 @@ namespace ProjectPi.Controllers
 
             var findAppointment = _db.Appointments
                 .Where(x => x.MyOrder.CounselorName == counselorName && x.ReserveStatus == status)
-                .GroupBy(x => x.OrderId)
-                .OrderByDescending(x => x.Key)
+                .OrderByDescending(x => x.OrderId)
                 .ToList();
 
             if (!findAppointment.Any())
@@ -681,17 +697,27 @@ namespace ProjectPi.Controllers
                     return BadRequest("無此狀態的明細");
                 else
                 {
-                    var data = findAppointment.Select(x => new
+                    var dataList = findAppointment.Select(x => new
                     {
-                        OrderId = x.Key,
-                        Appointments = x.Select(y => new
-                        {
-                            AppointmentId = y.Id,
-                            User = y.MyOrder.UserName,
-                            Field = y.MyOrder.Field,
-                            Time = y.AppointmentTime //待修正
-                        })
+                        OrderId = x.OrderId,
+                        AppointmentId = x.Id,
+                        User = x.MyOrder.UserName,
+                        Field = x.MyOrder.Field,
+                        Time = x.AppointmentTime
                     }).ToList();
+
+                    //分頁功能
+                    int pageNum = 0;
+                    int pageSize = 5;
+                    if (dataList.Count() % pageSize == 0)
+                        pageNum = dataList.Count() / pageSize;
+                    else
+                        pageNum = dataList.Count() / pageSize + 1;
+
+                    var pagination = dataList
+                        .Skip((view.PageNum - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
 
                     ApiResponse result = new ApiResponse { };
                     result.Success = true;
@@ -707,7 +733,11 @@ namespace ProjectPi.Controllers
                             result.Message = "成功取得已取消明細";
                             break;
                     }
-                    result.Data = data;
+                    result.Data = new
+                    {
+                        TotalPageNum = pageNum,
+                        List = pagination
+                    };
                     return Ok(result);
                 }
             }
