@@ -42,6 +42,20 @@ namespace ProjectPi.Controllers
             }
             _db.SaveChanges();
             // 用取得的"訂單ID"寄出付款完成訂單成立，商品準備出貨通知信
+
+            foreach(var item in orderRecord)
+            {
+                Appointment appointment = new Appointment();
+                for(int i=0;i< item.Quantity;i++)
+                {
+                    appointment.OrderId = item.Id;
+                    appointment.ReserveStatus = "待預約";
+                    _db.Appointments.Add(appointment);
+                    _db.SaveChanges();
+                }
+
+            }
+            /*
             //建立預約明細
             var findOrders = _db.OrderRecords
                 .Where(c => c.UserName == orderRecord[0].UserName)
@@ -87,7 +101,7 @@ namespace ProjectPi.Controllers
                 }
             }
 
-
+            */
             return response;
         }
     }

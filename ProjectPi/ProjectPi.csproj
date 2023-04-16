@@ -347,6 +347,7 @@
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\UserInfo.cs" />
     <Compile Include="Models\ViewModel.cs" />
+    <Compile Include="Models\ViewModel_Appointments.cs" />
     <Compile Include="Models\ViewModel_C.cs" />
     <Compile Include="Models\ViewModel_U.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
