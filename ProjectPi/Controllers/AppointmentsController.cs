@@ -458,7 +458,7 @@ namespace ProjectPi.Controllers
                 itemDesc = sBuilder.ToString();
                 string tradeLimit = "600"; // 交易限制秒數
                 string notifyURL = @"http://pi.rocket-coding.com/api/getPaymentData"; // NotifyURL 填後端接收藍新付款結果的 API 位置，如 : /api/users/getpaymentdata
-                string returnURL = "https://pi-rocket-coding.vercel.app/success";  // 前端可用 Status: SUCCESS 來判斷付款成功，網址夾帶可拿來取得活動內容
+                string returnURL = "https://pi-rocket-coding-6ue32qlw0-roceil.vercel.app/api/success";  // 前端可用 Status: SUCCESS 來判斷付款成功，網址夾帶可拿來取得活動內容
                 User user = _db.Users.Where(x => x.Id == userId).FirstOrDefault();
                 string email = user.Account; // 通知付款完成用
                 string loginType = "0"; // 0不須登入藍新金流會員
