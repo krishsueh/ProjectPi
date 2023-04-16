@@ -181,10 +181,11 @@ namespace ProjectPi.Controllers
         /// 諮商師頁面的預約時段
         /// </summary>
         /// <param name="id">諮商師ID</param>
+        /// /// <param name="page">頁碼</param>
         /// <returns></returns>
         [Route("api/timetableBrowser")]
         [HttpGet]
-        public IHttpActionResult GetTimetableBrowser(int id)
+        public IHttpActionResult GetTimetableBrowser(int id, int page)
         {
             var findTimes = _db.Timetables
                 .Where(x => x.CounselorId == id)
@@ -242,19 +243,16 @@ namespace ProjectPi.Controllers
             }
 
             //將 falseDates 塞入資料裡
-            var newDataList = frontFalseDates.Take(interval).Concat(dateList).ToArray();
-
-            //計算 newDataList 總共有幾天
-            int newDataListLength = newDataList.Count();
+            var newDateList = frontFalseDates.Take(interval).Concat(dateList).ToArray();
 
             //判斷 newDataList 總天數是否能被 7 整除
             //如果不行，則需要在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天 
-            if (newDataListLength % 7 == 0)
-                return Ok(newDataList);
+            if (newDateList.Count() % 7 == 0)
+                return Ok(newDateList);
             else
             {
                 //須補足的天數
-                int days = 7 - (newDataListLength % 7);
+                int days = 7 - (newDateList.Count() % 7);
 
                 var endFalseDates = new List<object>();
                 //產出結尾需補足資料
@@ -273,12 +271,12 @@ namespace ProjectPi.Controllers
                 }
 
                 //再將 falseDates 塞入資料裡
-                var allDataList = newDataList.Concat(endFalseDates.Take(days)).ToArray();
+                var allDateList = newDateList.Concat(endFalseDates.Take(days)).ToArray();
 
                 ApiResponse result = new ApiResponse { };
                 result.Success = true;
                 result.Message = "成功取得預約時段";
-                result.Data = allDataList;
+                result.Data = Pagination(page, allDateList);
                 return Ok(result);
             }
 
@@ -331,19 +329,16 @@ namespace ProjectPi.Controllers
             //int interval = (int)Math.Ceiling(timeSpan.TotalDays);
             //interval = Math.Abs(interval);
 
-            //var newDataList = dateList.Skip(interval).Take(dateList.Count() - interval).ToList();
-
-            ////計算 newDataList 總共有幾天
-            //int newDataListLength = newDataList.Count();
+            //var newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).ToList();
 
             ////判斷 newDataList 總天數是否能被 7 整除
             ////如果不行，則需要在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天 
-            //if (newDataListLength % 7 == 0)
-            //    return Ok(newDataList);
+            //if (newDateList.Count() % 7 == 0)
+            //    return Ok(newDateList);
             //else
             //{
             //    //須補足的天數
-            //    int days = 7 - (newDataListLength % 7);
+            //    int days = 7 - (newDateList.Count() % 7);
 
             //    var endFalseDates = new List<object>();
             //    //產出結尾需補足資料
@@ -355,19 +350,19 @@ namespace ProjectPi.Controllers
             //            Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
             //            Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
             //            WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
-            //            Hours = FalseData()
+            //            //Hours = FalseDate()
             //        };
 
             //        endFalseDates.Add(falseDates);
             //    }
 
             //    //再將 falseDates 塞入資料裡
-            //    var allDataList = newDataList.Concat(endFalseDates.Take(days)).ToArray();
+            //    var allDateList = newDateList.Concat(endFalseDates.Take(days)).ToArray();
 
             //    ApiResponse result = new ApiResponse { };
             //    result.Success = true;
             //    result.Message = "成功取得預約時段";
-            //    result.Data = Pagination(view.Page, allDataList);
+            //    result.Data = Pagination(page, allDateList);
             //    return Ok(result);
             //}
         }
@@ -378,22 +373,17 @@ namespace ProjectPi.Controllers
         /// <param name="page">前端傳入的分頁數</param>
         /// <param name="allDataList">可預約時段加入無用日期後的資料</param>
         /// <returns></returns>
-        public static object Pagination(int page, object[] allDataList)
+        public static object Pagination(int page, object[] allDateList)
         {
-            //分頁功能
-            int pageNum = 0;
             int pageSize = 7;
-            if (allDataList.Count() % pageSize == 0)
-                pageNum = allDataList.Count() / pageSize;
-            else
-                pageNum = allDataList.Count() / pageSize + 1;
+            int pageNum = allDateList.Count() / pageSize;
 
-            var pagination = allDataList
+            var pagination = allDateList
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            return pagination;
+            return new { PageNum = pageNum, Pagination = pagination };
         }
 
         /// <summary>
