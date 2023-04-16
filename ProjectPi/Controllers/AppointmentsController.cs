@@ -490,12 +490,12 @@ namespace ProjectPi.Controllers
         /// 取得預約管理明細 (個案)
         /// </summary>
         /// <param name="status">預約單狀態</param>
-        /// <param name="view">頁數</param>
+        /// <param name="page">頁數</param>
         /// <returns></returns>
         [HttpGet]
         [Route("api/apptRecords")]
         [JwtAuthFilter]
-        public IHttpActionResult GetApptRecords(string status, ViewModel view)
+        public IHttpActionResult GetApptRecords(string status, int page)
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
@@ -531,7 +531,7 @@ namespace ProjectPi.Controllers
                         pageNum = dataList.Count() / pageSize + 1;
 
                     var pagination = dataList
-                        .Skip((view.PageNum - 1) * pageSize)
+                        .Skip((page - 1) * pageSize)
                         .Take(pageSize)
                         .ToList();
 
@@ -563,7 +563,7 @@ namespace ProjectPi.Controllers
                         pageNum = dataList.Count() / pageSize + 1;
 
                     var pagination = dataList
-                        .Skip((view.PageNum - 1) * pageSize)
+                        .Skip((page - 1) * pageSize)
                         .Take(pageSize)
                         .ToList();
 
@@ -673,12 +673,12 @@ namespace ProjectPi.Controllers
         /// 取得預約管理明細 (諮商師)
         /// </summary>
         /// <param name="status">預約單狀態</param>
-        /// <param name="view">頁數</param>
+        /// <param name="page">頁數</param>
         /// <returns></returns>
         [HttpGet]
         [Route("api/usersAppts")]
         [JwtAuthFilter]
-        public IHttpActionResult GetUsersAppts(string status, ViewModel view)
+        public IHttpActionResult GetUsersAppts(string status, int page)
         {
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
@@ -715,7 +715,7 @@ namespace ProjectPi.Controllers
                         pageNum = dataList.Count() / pageSize + 1;
 
                     var pagination = dataList
-                        .Skip((view.PageNum - 1) * pageSize)
+                        .Skip((page - 1) * pageSize)
                         .Take(pageSize)
                         .ToList();
 
