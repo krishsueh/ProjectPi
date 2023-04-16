@@ -165,6 +165,18 @@ namespace ProjectPi.Controllers
             return findTime;
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// 諮商師頁面的預約時段
         /// </summary>
@@ -206,11 +218,13 @@ namespace ProjectPi.Controllers
             day = int.Parse(dateList.LastOrDefault().Date);
             DateTime lastDayOfAvailable = new DateTime(year, month, day);
 
-            //日立顯示的第一天
-            DateTime today = new DateTime(2023, 5, 30);
+            //日曆顯示的第一天
+            DateTime today = DateTime.Now;
 
-            //計算需要補足的天數 2 天
-            int interval = (firstDayOfAvailable - today).Days;
+            //計算需要補足的天數
+            TimeSpan timeSpan = firstDayOfAvailable - today;
+            int interval = (int)Math.Ceiling(timeSpan.TotalDays);
+            interval = Math.Abs(interval);
 
             //產出開頭需補足資料
             var frontFalseDates = new List<object>();
@@ -231,7 +245,7 @@ namespace ProjectPi.Controllers
             var newDataList = frontFalseDates.Take(interval).Concat(dateList).ToArray();
 
             //計算 newDataList 總共有幾天
-            int newDataListLength = newDataList.Count(); //  17
+            int newDataListLength = newDataList.Count();
 
             //判斷 newDataList 總天數是否能被 7 整除
             //如果不行，則需要在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天 
@@ -251,7 +265,8 @@ namespace ProjectPi.Controllers
                         Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
                         Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
                         Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
-                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2]
+                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
+                        //Hours = FalseDate()
                     };
 
                     endFalseDates.Add(falseDates);
@@ -260,72 +275,162 @@ namespace ProjectPi.Controllers
                 //再將 falseDates 塞入資料裡
                 var allDataList = newDataList.Concat(endFalseDates.Take(days)).ToArray();
 
-                return Ok(allDataList);
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得預約時段";
+                result.Data = allDataList;
+                return Ok(result);
             }
 
 
 
 
-            //如果 Today 5/30 < 可約第一天 6/1，interval = 2
-            // 要在 6/1 ~ 6/15 這包資料前面追加 2 天假資料
-            // 假資料 + 真資料的陣列長度如果 %7 != 0，則 可約的最後一天後面要再補假假資料
-
-            //如果 Today 6/3 > 可約第一天 6/1，interval = -2
-            // 6/1 ~ 6/15 這包資料裡，要跳過前 Skip(interval天)  ( 6/1 & 6/2 ) 後，取 7 筆資料
 
 
 
 
-            ////總天數
-            //var howManyDates = dateList.Count();
+            ///////////////////////////////////////////////////////////////////////// Firstdate < Today
 
-            ////總周數
-            //int weekNum = 0;
-            //int pageSize = 5;
-            //if (howManyDates % pageSize == 0)
-            //    weekNum = howManyDates / pageSize;
-            //else
-            //    weekNum = howManyDates / pageSize + 1;
+            //var findTimes = _db.Timetables
+            // .Where(x => x.CounselorId == id)
+            // .GroupBy(x => x.Date)
+            // .ToList();
 
-            //if (dateList.FirstOrDefault().WeekDay.ToString() == "四")
-            //{
-            //    var data = dateList.Take(3).ToList();
-            //    return Ok(data);
-            //}
-            //else
-            //{
-            //    return BadRequest("失敗");
-            //}
-
-
-            //ApiResponse result = new ApiResponse { };
-            //result.Success = true;
-            //result.Message = "成功取得預約時段";
-            //result.Data = dateList;
-            //return Ok(weekNum);
-
-            //分頁功能
-            //ViewModel.SearchingCounselors data = new ViewModel.SearchingCounselors();
-            //data.TotalPageNum = pageNum;
-            //data.CounselorsData = new List<ViewModel.CounselorsData>();
-
-            //var counsleorList = Counselors
+            //var dateList = findTimes
             //    .Select(x => new
             //    {
-            //        x.MyCounselor.Id,
-            //        x.MyCounselor.Photo,
-            //        x.MyCounselor.Name,
-            //        x.MyCounselor.SellingPoint,
-            //        x.MyCounselor.SelfIntroduction
+            //        Year = x.Key.ToShortDateString().Split('/')[0],
+            //        Month = x.Key.ToShortDateString().Split('/')[1],
+            //        Date = x.Key.ToShortDateString().Split('/')[2],
+            //        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(x.Key.DayOfWeek)[2],
+            //        //Hours = x.Select(y => new {
+            //        //    Time = y.Time,
+            //        //    Availability = y.Availability,
+            //        //}).ToList()
             //    })
-            //    .Distinct()
-            //    .OrderBy(x => x.Id)
-            //    .Skip((page - 1) * pageSize)
-            //    .Take(pageSize)
             //    .ToList();
 
+            //int year, month, day;
+            ////諮商師可以的第一天
+            //year = int.Parse(dateList.FirstOrDefault().Year);
+            //month = int.Parse(dateList.FirstOrDefault().Month);
+            //day = int.Parse(dateList.FirstOrDefault().Date);
+            //DateTime firstDayOfAvailable = new DateTime(year, month, day);
+
+            ////諮商師可以的最後一天
+            //year = int.Parse(dateList.LastOrDefault().Year);
+            //month = int.Parse(dateList.LastOrDefault().Month);
+            //day = int.Parse(dateList.LastOrDefault().Date);
+            //DateTime lastDayOfAvailable = new DateTime(year, month, day);
+
+            ////日曆顯示的第一天
+            //DateTime today = DateTime.Now;
+
+            ////計算需從資料裡扣除的天數
+            //TimeSpan timeSpan = firstDayOfAvailable - today;
+            //int interval = (int)Math.Ceiling(timeSpan.TotalDays);
+            //interval = Math.Abs(interval);
+
+            //var newDataList = dateList.Skip(interval).Take(dateList.Count() - interval).ToList();
+
+            ////計算 newDataList 總共有幾天
+            //int newDataListLength = newDataList.Count();
+
+            ////判斷 newDataList 總天數是否能被 7 整除
+            ////如果不行，則需要在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天 
+            //if (newDataListLength % 7 == 0)
+            //    return Ok(newDataList);
+            //else
+            //{
+            //    //須補足的天數
+            //    int days = 7 - (newDataListLength % 7);
+
+            //    var endFalseDates = new List<object>();
+            //    //產出結尾需補足資料
+            //    for (int i = 0; i < days; i++)
+            //    {
+            //        var falseDates = new
+            //        {
+            //            Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
+            //            Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
+            //            Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
+            //            WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
+            //            Hours = FalseData()
+            //        };
+
+            //        endFalseDates.Add(falseDates);
+            //    }
+
+            //    //再將 falseDates 塞入資料裡
+            //    var allDataList = newDataList.Concat(endFalseDates.Take(days)).ToArray();
+
+            //    ApiResponse result = new ApiResponse { };
+            //    result.Success = true;
+            //    result.Message = "成功取得預約時段";
+            //    result.Data = Pagination(view.Page, allDataList);
+            //    return Ok(result);
+            //}
         }
 
+        /// <summary>
+        /// 分頁功能
+        /// </summary>
+        /// <param name="page">前端傳入的分頁數</param>
+        /// <param name="allDataList">可預約時段加入無用日期後的資料</param>
+        /// <returns></returns>
+        public static object Pagination(int page, object[] allDataList)
+        {
+            //分頁功能
+            int pageNum = 0;
+            int pageSize = 7;
+            if (allDataList.Count() % pageSize == 0)
+                pageNum = allDataList.Count() / pageSize;
+            else
+                pageNum = allDataList.Count() / pageSize + 1;
+
+            var pagination = allDataList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return pagination;
+        }
+
+        /// <summary>
+        /// 取得無效日期的全天時段
+        /// </summary>
+        /// <returns></returns>
+        public static object FalseDate()
+        {
+            var Hours = new[]
+            {
+                new { Time = "00:00", Available = false },
+                new { Time = "01:00", Available = false },
+                new { Time = "02:00", Available = false },
+                new { Time = "03:00", Available = false },
+                new { Time = "04:00", Available = false },
+                new { Time = "05:00", Available = false },
+                new { Time = "06:00", Available = false },
+                new { Time = "07:00", Available = false },
+                new { Time = "08:00", Available = false },
+                new { Time = "09:00", Available = false },
+                new { Time = "10:00", Available = false },
+                new { Time = "11:00", Available = false },
+                new { Time = "12:00", Available = false },
+                new { Time = "13:00", Available = false },
+                new { Time = "14:00", Available = false },
+                new { Time = "15:00", Available = false },
+                new { Time = "16:00", Available = false },
+                new { Time = "17:00", Available = false },
+                new { Time = "18:00", Available = false },
+                new { Time = "19:00", Available = false },
+                new { Time = "20:00", Available = false },
+                new { Time = "21:00", Available = false },
+                new { Time = "22:00", Available = false },
+                new { Time = "23:00", Available = false }
+            };
+            return Hours;
+        }
     }
 
 }
