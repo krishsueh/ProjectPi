@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Web;
 using System.Web.Http;
 
 namespace ProjectPi.Controllers
@@ -458,7 +459,7 @@ namespace ProjectPi.Controllers
                 itemDesc = sBuilder.ToString();
                 string tradeLimit = "600"; // 交易限制秒數
                 string notifyURL = @"http://pi.rocket-coding.com/api/getPaymentData"; // NotifyURL 填後端接收藍新付款結果的 API 位置，如 : /api/users/getpaymentdata
-                string returnURL = "https://pi-rocket-coding-6ue32qlw0-roceil.vercel.app/api/success";  // 前端可用 Status: SUCCESS 來判斷付款成功，網址夾帶可拿來取得活動內容
+                string returnURL = "https://pi-rocket-coding.vercel.app/api/bluepay/return";  // 前端可用 Status: SUCCESS 來判斷付款成功，網址夾帶可拿來取得活動內容
                 User user = _db.Users.Where(x => x.Id == userId).FirstOrDefault();
                 string email = user.Account; // 通知付款完成用
                 string loginType = "0"; // 0不須登入藍新金流會員
@@ -510,10 +511,58 @@ namespace ProjectPi.Controllers
 
 
         }
+        /// <summary>
+        /// 結帳成立訂單
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/GetOrderSuccess")]
+        [HttpGet]
+        public IHttpActionResult GetOrderSuccess(string merchantOrderNo= "00009202304161757")
+        {
+            
+
+            //string paramValue = HttpContext.Current.Request.QueryString["merchantOrderNo"];
+            string paramValue = "00009202304161757";
+            OrderRecord orderRecord = _db.OrderRecords.Where(x => x.OrderNum == paramValue).FirstOrDefault();
+            ApiResponse result = new ApiResponse();
+/*
+            if (paramValue != null)
+            {
+                return Redirect("https://pi-rocket-coding-i2eiimv5q-roceil.vercel.app/");
+            }
+*/
+            if(orderRecord == null)
+            {
+                result.Success = true;
+                result.Message = "沒有訂單紀錄";
+            }
+            else
+            {
+                result.Success = true;
+                result.Message = "有訂單紀錄";
+                result.Data = new { OrderStatus=orderRecord.OrderStatus };
+            }
+
+            if(orderRecord.OrderStatus == "已成立")
+            {
+                return Ok(result);
+                return Redirect("https://pi-rocket-coding-i2eiimv5q-roceil.vercel.app/usercenter/reservation");
+            }
+            else if(orderRecord.OrderStatus == "未付款") 
+            {
+                return Ok(result);
+                return Redirect("https://www.google.com/");
+            }
+            else
+            {
+                return Ok(result);
+                return Redirect("https://pi-rocket-coding-i2eiimv5q-roceil.vercel.app/");
+            }
+
+        }
+        
 
 
-
-   
 
     /// <summary>
     /// 取得預約管理明細 (個案)
@@ -521,7 +570,7 @@ namespace ProjectPi.Controllers
     /// <param name="status">預約單狀態</param>
     /// <param name="page">頁數</param>
     /// <returns></returns>
-    [HttpGet]
+        [HttpGet]
         [Route("api/apptRecords")]
         [JwtAuthFilter]
         public IHttpActionResult GetApptRecords(string status, int page)
