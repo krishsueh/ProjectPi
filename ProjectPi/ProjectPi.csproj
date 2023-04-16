@@ -332,6 +332,7 @@
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ApiResponse.cs" />
+    <Compile Include="Models\BackEndManger.cs" />
     <Compile Include="Models\Cart.cs" />
     <Compile Include="Models\ChatRoom.cs" />
     <Compile Include="Models\CryptoUtil.cs" />
