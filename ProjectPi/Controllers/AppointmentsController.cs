@@ -543,7 +543,7 @@ namespace ProjectPi.Controllers
                     };
                     return Ok(result);
                 }
-                else if (status == "待回覆" || status == "已成立" || status == "已取消")
+                else if (status == "待回覆" || status == "已成立" || status == "已完成" || status == "已取消")
                 {
                     var dataList = findAppointment.Select(x => new
                     {
@@ -574,6 +574,9 @@ namespace ProjectPi.Controllers
                             break;
                         case "已成立":
                             result.Message = "成功取得已成立明細";
+                            break;
+                        case "已完成":
+                            result.Message = "成功取得已完成明細";
                             break;
                         case "已取消":
                             result.Message = "成功取得已取消明細";
