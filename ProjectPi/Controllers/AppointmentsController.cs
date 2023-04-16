@@ -511,56 +511,7 @@ namespace ProjectPi.Controllers
 
 
         }
-        /// <summary>
-        /// 結帳成立訂單
-        /// </summary>
-        /// <returns></returns>
-        [Route("api/GetOrderSuccess")]
-        [HttpGet]
-        public IHttpActionResult GetOrderSuccess(string merchantOrderNo= "00009202304161757")
-        {
-            
-
-            //string paramValue = HttpContext.Current.Request.QueryString["merchantOrderNo"];
-            string paramValue = "00009202304161757";
-            OrderRecord orderRecord = _db.OrderRecords.Where(x => x.OrderNum == paramValue).FirstOrDefault();
-            ApiResponse result = new ApiResponse();
-/*
-            if (paramValue != null)
-            {
-                return Redirect("https://pi-rocket-coding-i2eiimv5q-roceil.vercel.app/");
-            }
-*/
-            if(orderRecord == null)
-            {
-                result.Success = true;
-                result.Message = "沒有訂單紀錄";
-            }
-            else
-            {
-                result.Success = true;
-                result.Message = "有訂單紀錄";
-                result.Data = new { OrderStatus=orderRecord.OrderStatus };
-            }
-
-            if(orderRecord.OrderStatus == "已成立")
-            {
-                return Ok(result);
-                return Redirect("https://pi-rocket-coding-i2eiimv5q-roceil.vercel.app/usercenter/reservation");
-            }
-            else if(orderRecord.OrderStatus == "未付款") 
-            {
-                return Ok(result);
-                return Redirect("https://www.google.com/");
-            }
-            else
-            {
-                return Ok(result);
-                return Redirect("https://pi-rocket-coding-i2eiimv5q-roceil.vercel.app/");
-            }
-
-        }
-        
+     
 
 
 
