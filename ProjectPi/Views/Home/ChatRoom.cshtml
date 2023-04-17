@@ -43,14 +43,15 @@
                         const res = await axios.get('https://localhost:44344/api/chatroom/lastMsgTarget?Id=' + myNumber + '&Type=' + myType);
                         $('#user-list-group').html('');
                         for (var i = 0; i < res.data.Data.userChatTargetList.length; i++) {
+                            console.log("46 = " + res.data.Data.userChatTargetList[i]);
                             var read = "未讀*";
                             if (myType == 'user') {
                                 var id = res.data.Data.userChatTargetList[i].CounselorId;
-                                //if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                                if (res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
                             }
                             else {
                                 var id = res.data.Data.userChatTargetList[i].UserId;
-                                //if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                                if (res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
                             }
                             var mhtml = '<button type="button" class="list-group-item" title="' + id
                                 + '" onclick="listGroupItemClick(this);" >' + res.data.Data.userChatTargetList[i].OutName + '</button>' + "<p>" + read + " 最後一句內容 " + res.data.Data.userChatTargetList[i].Content + "</p>";
@@ -209,16 +210,17 @@
 
                     //渲染畫面
                     $('#user-list-group').html('');
+                    console.log("213 = " + res.data.Data.userChatTargetList[i]);
                     for (var i = 0; i < res.data.Data.userChatTargetList.length; i++) {
                         var read = "未讀*";
                         if (myType == 'user') {
 
                             var id = res.data.Data.userChatTargetList[i].CounselorId;
-                            //if(res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
+                            if(res.data.Data.userChatTargetList[i].UserRead) read = "已讀";
                         }
                         else {
                             var id = res.data.Data.userChatTargetList[i].UserId;
-                            //if(res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
+                            if(res.data.Data.userChatTargetList[i].CounselorRead) read = "已讀";
                         }
 
                         var mhtml = '<button type="button" class="list-group-item" title="' + id
