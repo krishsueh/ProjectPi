@@ -185,9 +185,9 @@ namespace ProjectPi.Controllers
             var dateList = findTimes
                 .Select(x => new
                 {
-                    Year = x.Key.ToShortDateString().Split('/')[0],
+                    Year = x.Key.ToShortDateString().Split('/')[2],
                     Month = x.Key.ToShortDateString().Split('/')[1],
-                    Date = x.Key.ToShortDateString().Split('/')[2],
+                    Date = x.Key.ToShortDateString().Split('/')[0],
                     WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(x.Key.DayOfWeek)[2],
                     Hours = x.Select(y => new
                     {
@@ -219,9 +219,9 @@ namespace ProjectPi.Controllers
                 {
                     var falseDates = new
                     {
-                        Year = today.AddDays(i).ToShortDateString().Split('/')[0],
+                        Year = today.AddDays(i).ToShortDateString().Split('/')[2],
                         Month = today.AddDays(i).ToShortDateString().Split('/')[1],
-                        Date = today.AddDays(i).ToShortDateString().Split('/')[2],
+                        Date = today.AddDays(i).ToShortDateString().Split('/')[0],
                         WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i).DayOfWeek)[2],
                         Hours = FalseDate()
                     };
@@ -259,9 +259,9 @@ namespace ProjectPi.Controllers
                 {
                     var falseDates = new
                     {
-                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
+                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
                         Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
-                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
+                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
                         WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i + 1).DayOfWeek)[2],
                         Hours = FalseDate()
                     };
