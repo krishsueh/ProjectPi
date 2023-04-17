@@ -326,6 +326,9 @@ namespace ProjectPi.Controllers
                 .Where(c => c.UersId == userId)
                 .ToList();
 
+            //照片存取位置
+            string path = "https://pi.rocket-coding.com/upload/headshot/";
+
             if (!findCart.Any())
                 return Ok("購物車是空的，趕緊手刀預約吧!");
             else
@@ -339,6 +342,7 @@ namespace ProjectPi.Controllers
                     CartId = x.Id,
                     Counselor = x.Products.MyCounselor.Name,
                     Field = x.Products.MyField.Field,
+                    FieldImg = path + x.Products.MyField.FieldImg,
                     Item = x.Products.Item,
                     Price = x.Products.Price
                 }).ToList();
