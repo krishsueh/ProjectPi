@@ -195,18 +195,11 @@ namespace ProjectPi.Controllers
                 })
                 .ToList();
 
-            int year, month, day;
             // 諮商師可約的第一天
-            year = int.Parse(dateList.FirstOrDefault().Year);
-            month = int.Parse(dateList.FirstOrDefault().Month);
-            day = int.Parse(dateList.FirstOrDefault().Date);
-            DateTime firstDayOfAvailable = new DateTime(year, month, day);
+            DateTime firstDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Min(x => x.Date);
 
             // 諮商師可約的最後一天
-            year = int.Parse(dateList.LastOrDefault().Year);
-            month = int.Parse(dateList.LastOrDefault().Month);
-            day = int.Parse(dateList.LastOrDefault().Date);
-            DateTime lastDayOfAvailable = new DateTime(year, month, day);
+            DateTime lastDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Max(x => x.Date);
 
             // 日曆顯示的第一天
             DateTime today = DateTime.Today;
@@ -227,7 +220,8 @@ namespace ProjectPi.Controllers
                         Year = today.AddDays(i).ToShortDateString().Split('/')[0],
                         Month = today.AddDays(i).ToShortDateString().Split('/')[1],
                         Date = today.AddDays(i).ToShortDateString().Split('/')[2],
-                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2]
+                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2],
+                        Hours = FalseDate()
                     };
 
                     frontFalseDates.Add(falseDates);
