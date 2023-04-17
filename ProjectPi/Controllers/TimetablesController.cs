@@ -175,6 +175,8 @@ namespace ProjectPi.Controllers
         [HttpGet]
         public IHttpActionResult GetTimetableBrowser(int id, int page)
         {
+            CultureInfo taiwanCulture = new CultureInfo("zh-TW");
+
             var findTimes = _db.Timetables
                 .Where(x => x.CounselorId == id)
                 .GroupBy(x => x.Date)
@@ -186,7 +188,7 @@ namespace ProjectPi.Controllers
                     Year = x.Key.ToShortDateString().Split('/')[0],
                     Month = x.Key.ToShortDateString().Split('/')[1],
                     Date = x.Key.ToShortDateString().Split('/')[2],
-                    WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(x.Key.DayOfWeek)[2],
+                    WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(x.Key.DayOfWeek)[2],
                     Hours = x.Select(y => new
                     {
                         Time = y.Time,
@@ -209,7 +211,7 @@ namespace ProjectPi.Controllers
 
             // 頭部資料處理
             var newDateList = new List<object>();
-            if ((firstDayOfAvailable - today).Days >=0)
+            if ((firstDayOfAvailable - today).Days >= 0)
             {
                 // 產出開頭需補足資料
                 var frontFalseDates = new List<object>();
@@ -220,7 +222,7 @@ namespace ProjectPi.Controllers
                         Year = today.AddDays(i).ToShortDateString().Split('/')[0],
                         Month = today.AddDays(i).ToShortDateString().Split('/')[1],
                         Date = today.AddDays(i).ToShortDateString().Split('/')[2],
-                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2],
+                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i).DayOfWeek)[2],
                         Hours = FalseDate()
                     };
 
@@ -247,7 +249,7 @@ namespace ProjectPi.Controllers
             else
             {
                 // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
-                
+
                 // 須補足的天數
                 int days = 7 - (newDateList.Count() % 7);
 
@@ -260,7 +262,7 @@ namespace ProjectPi.Controllers
                         Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
                         Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
                         Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
-                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
+                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i + 1).DayOfWeek)[2],
                         Hours = FalseDate()
                     };
 
