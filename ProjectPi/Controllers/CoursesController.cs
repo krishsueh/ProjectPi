@@ -181,6 +181,7 @@ namespace ProjectPi.Controllers
                     .Select(x => new
                     {
                         FieldId = x.Key,
+                        
                         Course = x.Select(y => new
                         {
                             Item = y.Item,
@@ -188,16 +189,10 @@ namespace ProjectPi.Controllers
                             Price = y.Price,
                             Availability = y.Availability
                         }).ToList(),
+
                         Feature = _db.Features
                             .Where(y => y.CounselorId == counselorId && y.FieldId == x.Key)
-                            .Select(y => new
-                            {
-                                Feature1 = y.Feature1,
-                                Feature2 = y.Feature2,
-                                Feature3 = y.Feature3,
-                                Feature4 = y.Feature4,
-                                Feature5 = y.Feature5
-                            })
+                            .Select(y => new List<string> { y.Feature1, y.Feature2, y.Feature3, y.Feature4, y.Feature5 })
                             .FirstOrDefault()
                     })
                     .ToList()
