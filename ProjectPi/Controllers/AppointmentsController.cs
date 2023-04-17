@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
+using System.Web;
 using System.Web.Http;
 
 namespace ProjectPi.Controllers
@@ -388,6 +390,8 @@ namespace ProjectPi.Controllers
         [HttpPost]
         public IHttpActionResult PostOrder()
         {
+            int total = 0;
+            StringBuilder sBuilder = new StringBuilder();
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
             string userName = (string)userToken["Name"];
@@ -404,6 +408,8 @@ namespace ProjectPi.Controllers
                 OrderRecord order = new OrderRecord();
                 foreach (var item in cartItems)
                 {
+
+
                     switch (userId.ToString().Length)
                     {
                         case 1:
@@ -419,34 +425,102 @@ namespace ProjectPi.Controllers
                     order.OrderDate = DateTime.Now;
                     order.UserName = userName;
                     order.CounselorName = item.Products.MyCounselor.Name;
+
                     order.Field = item.Products.MyField.Field;
                     order.Item = item.Products.Item;
                     order.Quantity = item.Products.Quantity;
                     order.Price = item.Products.Price;
+                    sBuilder.Append($"{order.Field}{order.Item}    {order.Price}\n");
+                    total += order.Price;
                     order.OrderStatus = "未付款";
 
                     _db.OrderRecords.Add(order);
                     _db.SaveChanges();
                 }
 
+                // 整理金流串接資料
+                // 加密用金鑰
+                string hashKey = "1jUogKMU7sfOyJBtARgJzUfCd3NzFlIS";
+                string hashIV = "CUUuIrArgfNETY1P";
+
+                // 金流接收必填資料
+                string merchantID = "MS148623457";
+                string tradeInfo = "";
+                string tradeSha = "";
+                string version = "2.0"; // 參考文件串接程式版本
+
+                // tradeInfo 內容，導回的網址都需為 https 
+                string respondType = "JSON"; // 回傳格式
+                string timeStamp = ((int)(DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds).ToString();
+                string merchantOrderNo = order.OrderNum; // 底線後方為訂單ID，解密比對用，不可重覆(規則參考文件)
+                string amt = "訂單金額";
+                amt = total.ToString();
+                string itemDesc = "商品資訊";
+                itemDesc = sBuilder.ToString();
+                string tradeLimit = "600"; // 交易限制秒數
+                string notifyURL = @"http://pi.rocket-coding.com/api/getPaymentData"; // NotifyURL 填後端接收藍新付款結果的 API 位置，如 : /api/users/getpaymentdata
+                string returnURL = "https://pi-rocket-coding.vercel.app/api/bluepay/return";  // 前端可用 Status: SUCCESS 來判斷付款成功，網址夾帶可拿來取得活動內容
+                User user = _db.Users.Where(x => x.Id == userId).FirstOrDefault();
+                string email = user.Account; // 通知付款完成用
+                string loginType = "0"; // 0不須登入藍新金流會員
+
+                // 將 model 轉換為List<KeyValuePair<string, string>>
+                List<KeyValuePair<string, string>> tradeData = new List<KeyValuePair<string, string>>() {
+        new KeyValuePair<string, string>("MerchantID", merchantID),
+        new KeyValuePair<string, string>("RespondType", respondType),
+        new KeyValuePair<string, string>("TimeStamp", timeStamp),
+        new KeyValuePair<string, string>("Version", version),
+        new KeyValuePair<string, string>("MerchantOrderNo", merchantOrderNo),
+        new KeyValuePair<string, string>("Amt", amt),
+        new KeyValuePair<string, string>("ItemDesc", itemDesc),
+        new KeyValuePair<string, string>("TradeLimit", tradeLimit),
+        new KeyValuePair<string, string>("NotifyURL", notifyURL),
+        new KeyValuePair<string, string>("ReturnURL", returnURL),
+        new KeyValuePair<string, string>("Email", email),
+        new KeyValuePair<string, string>("LoginType", loginType)
+    };
+
+                // 將 List<KeyValuePair<string, string>> 轉換為 key1=Value1&key2=Value2&key3=Value3...
+                var tradeQueryPara = string.Join("&", tradeData.Select(x => $"{x.Key}={x.Value}"));
+                // AES 加密
+                tradeInfo = CryptoUtil.EncryptAESHex(tradeQueryPara, hashKey, hashIV);
+                // SHA256 加密
+                tradeSha = CryptoUtil.EncryptSHA256($"HashKey={hashKey}&{tradeInfo}&HashIV={hashIV}");
+
                 //刪除已付款購物車商品
                 _db.Carts.RemoveRange(cartItems);
                 _db.SaveChanges();
+                // 送出金流串接用資料，給前端送藍新用
+                return Ok(new
+                {
+                    Status = true,
+                    PaymentData = new
+                    {
+                        MerchantID = merchantID,
+                        TradeInfo = tradeInfo,
+                        TradeSha = tradeSha,
+                        Version = version
+                    }
+                });
+
+
+
+
+
             }
 
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "訂單已成立，請至會員中心選擇預約時段";
-            result.Data = null;
-            return Ok(result);
-        }
 
-        /// <summary>
-        /// 取得預約管理明細 (個案)
-        /// </summary>
-        /// <param name="status">預約單狀態</param>
-        /// <param name="page">頁數</param>
-        /// <returns></returns>
+        }
+     
+
+
+
+    /// <summary>
+    /// 取得預約管理明細 (個案)
+    /// </summary>
+    /// <param name="status">預約單狀態</param>
+    /// <param name="page">頁數</param>
+    /// <returns></returns>
         [HttpGet]
         [Route("api/apptRecords")]
         [JwtAuthFilter]
@@ -764,5 +838,239 @@ namespace ProjectPi.Controllers
             result.Data = null;
             return Ok(result);
         }
+
+        /// <summary>
+        /// 出現課程管理已成立且預約
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/AppointmentsLogs")]
+        [JwtAuthFilter]
+        [HttpGet]
+        public IHttpActionResult GetAppointmentsLogs()
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+            Counselor counselor = _db.Counselors.Where(x => x.Id == userId).FirstOrDefault();
+            ApiResponse result = new ApiResponse();
+            List<AppointmentLogs> appointmentLogsList = new List<AppointmentLogs>();
+            List<Appointment> appointmentsList = new List<Appointment>();
+            var orderRecordsList = _db.OrderRecords.Where(x => x.CounselorName == counselor.Name && x.OrderStatus=="已成立").GroupBy(x=>x.UserName).Select(o=> new { UserName=o.Key , Field=o.Select(g=>g.Field), Id =o.Select(g=>g.Id)}).ToList();
+            var msg = "";
+            DateTime time= DateTime.Now;
+            string field = "";
+            msg = " orderRecordsList = " + orderRecordsList.Count.ToString();
+            foreach (var item in orderRecordsList)
+            {
+                bool isDone = false;
+                AppointmentLogs appointmentLogs = new AppointmentLogs();
+                List<int> indexList = item.Id.ToList();
+                msg += " indexList = " + indexList.Count.ToString();
+                foreach (var index in indexList)
+                {
+                    Appointment appointments = new Appointment();
+                    appointments = _db.Appointments.Where(x => x.MyOrder.Id == index && x.ReserveStatus=="已完成").OrderByDescending(x=>x.AppointmentTime).FirstOrDefault();
+                    if (appointments != null)
+                    {
+                        isDone = true;
+                        time = (DateTime)appointments.AppointmentTime;
+                        field = appointments.MyOrder.Field;
+                    }
+                   
+                }
+                if(isDone)
+                {
+                    appointmentLogs.Name = item.UserName;
+                    appointmentLogs.Field = field;
+                    appointmentLogs.AppointmentDate = time.ToString("yyyy/M/d");
+                    appointmentLogs.AppointmentTime = time.ToString("HH:mm");
+                    appointmentLogsList.Add(appointmentLogs);
+                }
+           
+            }
+
+            //判斷有沒有已成立的課程
+            if (!appointmentLogsList.Any())
+            {
+                result.Success = true;
+                result.Message = "尚無成立課程";
+                return Ok(result);
+            }
+            result.Success = true;
+            result.Message = "取得課程列表";
+            result.Data = new { appointmentLogsList };
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得諮商列表紀錄
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/AppointmentsRecordLogs")]
+        [JwtAuthFilter]
+        [HttpPost]
+        public IHttpActionResult GetAppointmentsRecordLogs(AppointmentLogs_UserName view)
+        {
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            int userId = (int)userToken["Id"];
+            Counselor counselor = _db.Counselors.Where(x => x.Id == userId).FirstOrDefault();
+            ApiResponse result = new ApiResponse();
+            List<AppointmentLogs> appointmentLogsList = new List<AppointmentLogs>();
+            List<Appointment> appointmentsList = new List<Appointment>();
+            if (counselor == null) return BadRequest("id不存在");
+            var orderRecordsList = _db.OrderRecords.Where(x => x.CounselorName == counselor.Name && x.UserName == view.Name && x.OrderStatus == "已成立")
+                .Select(x => new { x.UserName, x.CounselorName ,x.Id }).ToList();
+
+            var orderRecordsListCheck = _db.OrderRecords.Where(x => x.UserName == view.Name).FirstOrDefault();
+            if (orderRecordsListCheck == null) return BadRequest("此參數沒有紀錄");
+            var msg = "counselor.Name = " + counselor.Name  + " view.Name = " + view.Name ;
+            DateTime time = DateTime.Now;
+            string field = "";
+            msg += " orderRecordsList = " + orderRecordsList.Count.ToString();
+            
+            foreach (var item in orderRecordsList)
+            {
+                //Appointment appointment = new Appointment();
+                appointmentsList = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已完成").ToList();
+                foreach(var itemA in appointmentsList)
+                {
+                    if (appointmentsList != null)
+                    {
+                        AppointmentLogs appointmentLogs = new AppointmentLogs();
+
+                        msg += " appointment.Id = " + itemA.Id;
+                        msg += " appointment.OrderId = " + itemA.OrderId;
+                        //msg += " appointment.AppointmentTime = " + itemA.AppointmentTime;
+                        appointmentLogs.AppointmentId = itemA.Id;
+                        appointmentLogs.Name = item.UserName;
+                        appointmentLogs.Field = itemA.MyOrder.Field;
+                        appointmentLogs.AppointmentDate = ((DateTime)itemA.AppointmentTime).ToString("yyyy/M/d");
+                        appointmentLogs.AppointmentTime = ((DateTime)itemA.AppointmentTime).ToString("HH:mm");
+                        appointmentLogsList.Add(appointmentLogs);
+                    }
+                }
+
+
+            }
+
+            //判斷有沒有已成立的課程
+            if (!appointmentLogsList.Any())
+            {
+                result.Success = true;
+                result.Message = "尚無任何紀錄 ";
+                return Ok(result);
+            }
+            result.Success = true;
+            result.Message = "取得諮商列表紀錄 ";
+            result.Data = new { appointmentLogsList };
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得諮商列表紀錄
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/AppointmentsRecord")]
+        [JwtAuthFilter]
+        [HttpPost]
+        public IHttpActionResult GetAppointmentsRecord(AppointmentLogs_Id view)
+        {
+            ApiResponse result = new ApiResponse();
+            Appointment appointment = _db.Appointments.Where(x => x.Id == view.AppointmentId).FirstOrDefault();
+            AppointmentLogs_Record record = new AppointmentLogs_Record();
+
+            //判斷有沒有已成立的課程
+            if (appointment == null)
+            {
+                return BadRequest("參數錯誤，無此課程");
+            }
+            record.Name = appointment.MyOrder.UserName;
+            record.Field = appointment.MyOrder.Field;
+            record.AppointmentDate = ((DateTime)appointment.AppointmentTime).ToString("yyyy/M/d");
+            if (appointment.RecordDate != null) record.LastRecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
+            else record.LastRecordDate = DateTime.Now.ToString("yyyy/M/d");
+            record.RecordDate = DateTime.Now.ToString("yyyy/M/d");
+            record.CounsellingRecord = appointment.CounsellingRecord;
+            record.AppointmentId = appointment.Id;
+            result.Success = true;
+            result.Message = "取得諮商列表紀錄 ";
+            result.Data = new { record };
+            return Ok(result);
+        }
+        /// <summary>
+        /// 修改諮商紀錄
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/UpdateAppointmentsRecord")]
+        [JwtAuthFilter]
+        [HttpPut]
+        public IHttpActionResult UpdateAppointmentsRecord(AppointmentLogs_UpdateRecod view)
+        {
+            ApiResponse result = new ApiResponse();
+            Appointment appointment = _db.Appointments.Where(x => x.Id == view.AppointmentId).FirstOrDefault();
+            //判斷有沒有已成立的課程
+            if (appointment == null)
+            {
+                return BadRequest("參數錯誤，無此諮商");
+            }
+            appointment.RecordDate = DateTime.Now;
+            appointment.CounsellingRecord = view.CounsellingRecord;
+            _db.SaveChanges();
+
+            result.Success = true;
+            result.Message = "修改成功";
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 顯示評價
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/GetAppointmentsCommit")]
+        [JwtAuthFilter]
+        [HttpGet]
+        public IHttpActionResult GetAppointmentsCommit(int AppointmentId)
+        {
+            ApiResponse result = new ApiResponse();
+            Appointment appointment = _db.Appointments.Where(x => x.Id == AppointmentId).FirstOrDefault();
+            //判斷有沒有已成立的課程
+            if (appointment == null)
+            {
+                return BadRequest("參數錯誤，無此諮商");
+            }
+            result.Success = true;
+            result.Message = "顯示成功";
+            result.Data = new { Star = appointment.Star, Comment = appointment.Comment };
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 儲存評價
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [Route("api/PostAppointmentsComment")]
+        [JwtAuthFilter]
+        [HttpPost]
+        public IHttpActionResult GetAppointmentsCommit(AppointmentLogs_Comment view)
+        {
+            ApiResponse result = new ApiResponse();
+            Appointment appointment = _db.Appointments.Where(x => x.Id == view.AppointmentId).FirstOrDefault();
+            //判斷有沒有已成立的課程
+            if (appointment == null)
+            {
+                return BadRequest("參數錯誤，無此諮商");
+            }
+            appointment.Star = view.Star;
+            appointment.Comment = view.Comment;
+            _db.SaveChanges();
+            result.Success = true;
+            result.Message = "修改成功";
+            return Ok(result);
+        }
+
     }
 }
