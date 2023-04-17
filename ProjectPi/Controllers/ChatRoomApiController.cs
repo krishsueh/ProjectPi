@@ -11,6 +11,7 @@ using System.Web.Http;
 
 namespace ProjectPi.Controllers
 {
+    [OpenApiTag("ChatRoom", Description = "聊天室")]
     public class ChatRoomApiController : ApiController
     {
         /// <summary>

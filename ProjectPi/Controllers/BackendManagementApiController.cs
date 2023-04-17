@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using NSwag.Annotations;
 using ProjectPi.Models;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Web.Http;
 
 namespace ProjectPi.Controllers
 {
+    [OpenApiTag("BackendManagement", Description = "後台管理")]
     public class BackendManagementApiController : ApiController
     {
         PiDbContext _db = new PiDbContext();
