@@ -429,51 +429,6 @@ namespace ProjectPi.Controllers
                     _db.SaveChanges();
                 }
 
-                //建立預約明細
-                var findOrders = _db.OrderRecords
-                    .Where(c => c.UserName == userName)
-                    .GroupBy(c => c.OrderNum)
-                    .OrderByDescending(c => c.Key)
-                    .ToList()
-                    .FirstOrDefault();
-
-                if (!findOrders.Any())
-                    return BadRequest("查無訂單");
-                else
-                {
-                    Appointment appointment = new Appointment();
-                    foreach (var orderItem in findOrders)
-                    {
-                        switch (orderItem.Quantity)
-                        {
-                            case 1:
-                                appointment.OrderId = orderItem.Id;
-                                appointment.ReserveStatus = "待預約";
-                                _db.Appointments.Add(appointment);
-                                _db.SaveChanges();
-                                break;
-                            case 3:
-                                for (int i = 0; i < 3; i++)
-                                {
-                                    appointment.OrderId = orderItem.Id;
-                                    appointment.ReserveStatus = "待預約";
-                                    _db.Appointments.Add(appointment);
-                                    _db.SaveChanges();
-                                }
-                                break;
-                            case 5:
-                                for (int i = 0; i < 5; i++)
-                                {
-                                    appointment.OrderId = orderItem.Id;
-                                    appointment.ReserveStatus = "待預約";
-                                    _db.Appointments.Add(appointment);
-                                    _db.SaveChanges();
-                                }
-                                break;
-                        }
-                    }
-                }
-
                 //刪除已付款購物車商品
                 _db.Carts.RemoveRange(cartItems);
                 _db.SaveChanges();
