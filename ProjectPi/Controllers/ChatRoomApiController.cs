@@ -1,5 +1,6 @@
 ﻿using NSwag.Annotations;
 using ProjectPi.Models;
+using ProjectPi.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/chatroom/chatlogs")]
+        [JwtAuthFilter]
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult PostChatlogs(ChatRoom ChatRoom)
         {
@@ -70,6 +72,7 @@ namespace ProjectPi.Controllers
         /// <response code="200">取得全部聊天內容</response>
         /// <returns></returns>
         [HttpGet]
+        [JwtAuthFilter]
         [Route("api/chatroom/GetChatlogs")]
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult GetChatlogs(int CounselorId, int UserId, string UserType)
@@ -120,7 +123,7 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
-                result.Data = new { ChatlogList = chatlogList };
+                result.Data = new { Photo = _db.Counselors.Where(x=>x.Id == CounselorId).Select(x=>new { x.Photo}).FirstOrDefault(), ChatlogList = chatlogList };
 
                 return Ok(result);
             }
@@ -139,6 +142,7 @@ namespace ProjectPi.Controllers
         /// <response code="200">取得所有人聊天紀錄</response>
         /// <returns></returns>
         [HttpGet]
+        [JwtAuthFilter]
         [Route("api/chatroom/lastMsgTarget")]
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult LastMsgTarget(int Id, string Type)
@@ -202,6 +206,7 @@ namespace ProjectPi.Controllers
        x.ChatRoom.Type,
        x.ChatRoom.Content,
        x.ChatRoom.InitDate,
+       
        //x.ChatRoom.UserRead,
        //x.ChatRoom.CounselorRead
 
@@ -265,7 +270,8 @@ namespace ProjectPi.Controllers
                         //userChatTarget.UserRead = item.UserRead;
                         //userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTarget.Type = item.Type;
-
+                        userChatTarget.Photo = counselor.Photo;
+                      
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
@@ -309,6 +315,7 @@ namespace ProjectPi.Controllers
         /// <response code="200">註冊成功</response>
         /// <returns></returns>
         [HttpGet]
+        [JwtAuthFilter]
         [Route("api/chatroom/getTatgetCounselor")]
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult GetTatgetCounselor()
