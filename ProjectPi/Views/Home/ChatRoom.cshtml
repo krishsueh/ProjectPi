@@ -159,7 +159,7 @@
                 var myNumberID = tid;
                 var tid = index;
             }
-            // (res.data.Data.ChatlogList[i].Type == 'accept' && myType=='counselor')
+            
             const test = async () => {
                 try {
                     const res = await axios.get('https://localhost:44344/api/chatroom/GetChatlogs?CounselorId=' + tid + '&UserId=' + myNumberID + '&UserType=' + myType);

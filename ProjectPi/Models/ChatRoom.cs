@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 聊天室
+    /// </summary>
     public class ChatRoom
     {
         /// <summary>

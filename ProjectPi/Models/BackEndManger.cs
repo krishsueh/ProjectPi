@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 後端管理Model
+    /// </summary>
     public class BackEndManger
     {
         /// <summary>

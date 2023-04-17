@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 訂單紀錄
+    /// </summary>
     public class OrderRecord
     {
         /// <summary>

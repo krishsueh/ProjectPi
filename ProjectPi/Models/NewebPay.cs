@@ -5,12 +5,30 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 接收藍新回傳result
+    /// </summary>
     public class NewebPayReturn
     {
+        /// <summary>
+        /// 狀態碼
+        /// </summary>
         public string Status { get; set; }
+        /// <summary>
+        /// 藍新商店代號
+        /// </summary>
         public string MerchantID { get; set; }
+        /// <summary>
+        /// 版本
+        /// </summary>
         public string Version { get; set; }
+        /// <summary>
+        /// 商品資訊加密
+        /// </summary>
         public string TradeInfo { get; set; }
+        /// <summary>
+        /// TradeInfo SHA加密
+        /// </summary>
         public string TradeSha { get; set; }
     }
     public class PaymentResult
@@ -19,7 +37,9 @@ namespace ProjectPi.Models
         public string Message { get; set; }
         public Result Result { get; set; }
     }
-
+    /// <summary>
+    /// 參數傳入TradeInfo 加密
+    /// </summary>
     public class Result
     {
         public string MerchantID { get; set; }
