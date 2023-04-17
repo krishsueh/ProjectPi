@@ -519,10 +519,9 @@ namespace ProjectPi.Controllers
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
-            string userName = (string)userToken["Name"];
 
             var findAppointment = _db.Appointments
-                    .Where(x => x.MyOrder.UserName == userName && x.ReserveStatus == status)
+                    .Where(x => x.MyOrder.UserId == userId && x.ReserveStatus == status)
                     .OrderByDescending(x => x.OrderId)
                     .ToList();
 
@@ -705,10 +704,9 @@ namespace ProjectPi.Controllers
         {
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
-            string counselorName = (string)counselorToken["Name"];
 
             var findAppointment = _db.Appointments
-                .Where(x => x.MyOrder.CounselorName == counselorName && x.ReserveStatus == status)
+                .Where(x => x.MyOrder.CounselorId == counselorId && x.ReserveStatus == status)
                 .OrderByDescending(x => x.OrderId)
                 .ToList();
 
