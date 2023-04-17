@@ -6,6 +6,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// View 
+    /// </summary>
     public class AppointmentLogs_UpdateRecod
     {
         [Display(Name = "課程編號")]
