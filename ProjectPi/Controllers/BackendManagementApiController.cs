@@ -161,11 +161,11 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [Route("api/getNewebPayOrder")]
         [HttpGet]
-        public IHttpActionResult GetNewebPayOrder(bool isPay = true)
+        public IHttpActionResult GetNewebPayOrder(bool isPay = true, int PageNumber =1 , int PageSize = 10)
         {
             ApiResponse result = new ApiResponse();
-            var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已付費").Select(x => new { x.CounselorName,x.UserName,x.OrderNum,x.OrderDate,x.Price,x.Field}).ToList();
-            if (isPay == false) orderRecordsList = _db.OrderRecords.Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field }).ToList();
+            var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName,x.UserName,x.OrderNum,x.OrderDate,x.Price,x.Field}).ToList();
+            if (isPay == false) orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus != "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field }).ToList();
             
             if(orderRecordsList == null)
             {
@@ -204,10 +204,8 @@ namespace ProjectPi.Controllers
         public IHttpActionResult GetCounselorList(int PageNumber=1 , int PageSize = 10)
         {
             ApiResponse result = new ApiResponse();
-            PageNumber = 1; // 第1頁
-            PageSize = 10; // 每頁取10條數據
-            var counselorList = _db.Counselors.Skip((PageNumber - 1) * PageSize) // 跳過前面的結果
-                    .Take(PageSize).Select(x=> new { x.Id,x.Name,x.Validation,x.Photo,x.CertNumber,x.InitDate}).ToList();
+         
+            var counselorList = _db.Counselors.OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x=> new { x.Id,x.Name,x.Validation,x.Photo,x.CertNumber,x.InitDate}).ToList();
             if (counselorList == null) return BadRequest("沒有任何資料");
             result.Success = true;
             result.Message = "成功取得訊息";
@@ -224,10 +222,8 @@ namespace ProjectPi.Controllers
         public IHttpActionResult GetUserList(int PageNumber = 1, int PageSize = 10)
         {
             ApiResponse result = new ApiResponse();
-            PageNumber = 1; // 第1頁
-            PageSize = 10; // 每頁取10條數據
-            var userList = _db.Users.Skip((PageNumber - 1) * PageSize) // 跳過前面的結果
-                    .Take(PageSize).Select(x => new { x.Id, x.Name, x.Account,x.Sex, x.InitDate }).ToList();
+         
+            var userList = _db.Users.OrderBy(x => x.Id).Skip((PageNumber-1) * PageSize).Take(PageSize).Select(x => new { x.Id, x.Name, x.Account,x.Sex, x.InitDate }).ToList();
             if (userList == null) return BadRequest("沒有任何資料");
             result.Success = true;
             result.Message = "成功取得訊息";

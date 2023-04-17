@@ -430,7 +430,8 @@ namespace ProjectPi.Controllers
                     order.Item = item.Products.Item;
                     order.Quantity = item.Products.Quantity;
                     order.Price = item.Products.Price;
-                    sBuilder.Append($"{order.Field}{order.Item}    {order.Price}\n");
+                    string sPrice = string.Format("{0:#,0}", order.Price);
+                    sBuilder.Append($"{order.Field}    {order.Item}｜{sPrice}\n");
                     total += order.Price;
                     order.OrderStatus = "未付款";
 
