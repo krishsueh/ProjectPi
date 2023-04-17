@@ -130,21 +130,63 @@ namespace ProjectPi.Models
             /// </summary>
             [Display(Name = "課程方案")]
             public string Item { get; set; }
-
-            /// <summary>
-            /// 方案價格
-            /// </summary>
-            [Display(Name = "方案價格")]
-            public int Price { get; set; }
         }
 
+        /// <summary>
+        /// 刪除購物車
+        /// </summary>
         public class DeleteProduct
         {
             /// <summary>
-            /// 商品編號
+            /// 購物車編號
             /// </summary>
-            [Display(Name = "商品編號")]
-            public int ProductId { get; set; }
+            [Display(Name = "購物車編號")]
+            public int CartId { get; set; }
+        }
+
+        /// <summary>
+        /// 選擇預約時間
+        /// </summary>
+        public class AppointmentTime
+        {
+            /// <summary>
+            /// 預約編號
+            /// </summary>
+            [Display(Name = "預約編號")]
+            public int AppointmentId { get; set; }
+
+            /// <summary>
+            /// 預約時間
+            /// </summary>
+            [Display(Name = "預約時間")]
+            public DateTimeValue DateTimeValue { get; set; }
+        }
+        public class DateTimeValue
+        {
+            /// <summary>
+            /// 年
+            /// </summary>
+            [Display(Name = "年")]
+            public string Year { get; set; }
+
+            /// <summary>
+            /// 月
+            /// </summary>
+            [Display(Name = "月")]
+            public string Month { get; set; }
+
+            /// <summary>
+            /// 日
+            /// </summary>
+            [Display(Name = "日")]
+            public string Day { get; set; }
+
+            /// <summary>
+            /// 時間
+            /// </summary>
+            [Display(Name = "時間")]
+            public string Hour { get; set; }
+
         }
     }
 }
