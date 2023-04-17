@@ -988,7 +988,7 @@ namespace ProjectPi.Controllers
             record.Name = appointment.MyOrder.UserName;
             record.Field = appointment.MyOrder.Field;
             record.AppointmentDate = ((DateTime)appointment.AppointmentTime).ToString("yyyy/M/d");
-            if (appointment.AppointmentTime != null) record.LastRecordDate = ((DateTime)appointment.AppointmentTime).ToString("yyyy/M/d");
+            if (appointment.RecordDate != null) record.LastRecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
             else record.LastRecordDate = DateTime.Now.ToString("yyyy/M/d");
             record.RecordDate = DateTime.Now.ToString("yyyy/M/d");
             record.CounsellingRecord = appointment.CounsellingRecord;
