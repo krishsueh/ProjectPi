@@ -297,9 +297,8 @@ namespace ProjectPi.Controllers
                     string sendTo = view.Account.Trim().ToLower();
                     string subject = "【拍拍】重設密碼連結";
                     string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>請點選下列連結進入重設密碼頁面。<br><br>提醒您，若您未提出重設密碼的需求，請忽略此封信件。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + path + "?guid=" + guid + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>重設密碼</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</ span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
-                    string mailBodyEnd = "<p style='color: #424242; text-align: center;'>-----此為系統發出信件，請勿直接回覆，感謝您的配合。-----</p>";
 
-                    SendGmailMail(sendFrom, sendTo, subject, mailBody + mailBodyEnd, password);
+                    SendGmailMail(sendFrom, sendTo, subject, mailBody, password);
 
                     ApiResponse result = new ApiResponse { };
                     result.Success = true;
