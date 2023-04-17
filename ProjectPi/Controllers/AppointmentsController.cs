@@ -408,8 +408,6 @@ namespace ProjectPi.Controllers
                 OrderRecord order = new OrderRecord();
                 foreach (var item in cartItems)
                 {
-
-
                     switch (userId.ToString().Length)
                     {
                         case 1:
@@ -423,7 +421,9 @@ namespace ProjectPi.Controllers
                             break;
                     }
                     order.OrderDate = DateTime.Now;
+                    order.UserId = userId;
                     order.UserName = userName;
+                    order.CounselorId = item.Products.MyCounselor.Id;
                     order.CounselorName = item.Products.MyCounselor.Name;
 
                     order.Field = item.Products.MyField.Field;
@@ -465,20 +465,21 @@ namespace ProjectPi.Controllers
                 string loginType = "0"; // 0不須登入藍新金流會員
 
                 // 將 model 轉換為List<KeyValuePair<string, string>>
-                List<KeyValuePair<string, string>> tradeData = new List<KeyValuePair<string, string>>() {
-        new KeyValuePair<string, string>("MerchantID", merchantID),
-        new KeyValuePair<string, string>("RespondType", respondType),
-        new KeyValuePair<string, string>("TimeStamp", timeStamp),
-        new KeyValuePair<string, string>("Version", version),
-        new KeyValuePair<string, string>("MerchantOrderNo", merchantOrderNo),
-        new KeyValuePair<string, string>("Amt", amt),
-        new KeyValuePair<string, string>("ItemDesc", itemDesc),
-        new KeyValuePair<string, string>("TradeLimit", tradeLimit),
-        new KeyValuePair<string, string>("NotifyURL", notifyURL),
-        new KeyValuePair<string, string>("ReturnURL", returnURL),
-        new KeyValuePair<string, string>("Email", email),
-        new KeyValuePair<string, string>("LoginType", loginType)
-    };
+                List<KeyValuePair<string, string>> tradeData = new List<KeyValuePair<string, string>>() 
+                {
+                    new KeyValuePair<string, string>("MerchantID", merchantID),
+                    new KeyValuePair<string, string>("RespondType", respondType),
+                    new KeyValuePair<string, string>("TimeStamp", timeStamp),
+                    new KeyValuePair<string, string>("Version", version),
+                    new KeyValuePair<string, string>("MerchantOrderNo", merchantOrderNo),
+                    new KeyValuePair<string, string>("Amt", amt),
+                    new KeyValuePair<string, string>("ItemDesc", itemDesc),
+                    new KeyValuePair<string, string>("TradeLimit", tradeLimit),
+                    new KeyValuePair<string, string>("NotifyURL", notifyURL),
+                    new KeyValuePair<string, string>("ReturnURL", returnURL),
+                    new KeyValuePair<string, string>("Email", email),
+                    new KeyValuePair<string, string>("LoginType", loginType)
+                };
 
                 // 將 List<KeyValuePair<string, string>> 轉換為 key1=Value1&key2=Value2&key3=Value3...
                 var tradeQueryPara = string.Join("&", tradeData.Select(x => $"{x.Key}={x.Value}"));
@@ -502,25 +503,15 @@ namespace ProjectPi.Controllers
                         Version = version
                     }
                 });
-
-
-
-
-
             }
-
-
         }
      
-
-
-
-    /// <summary>
-    /// 取得預約管理明細 (個案)
-    /// </summary>
-    /// <param name="status">預約單狀態</param>
-    /// <param name="page">頁數</param>
-    /// <returns></returns>
+        /// <summary>
+        /// 取得預約管理明細 (個案)
+        /// </summary>
+        /// <param name="status">預約單狀態</param>
+        /// <param name="page">頁數</param>
+        /// <returns></returns>
         [HttpGet]
         [Route("api/apptRecords")]
         [JwtAuthFilter]
@@ -528,10 +519,9 @@ namespace ProjectPi.Controllers
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
-            string userName = (string)userToken["Name"];
 
             var findAppointment = _db.Appointments
-                    .Where(x => x.MyOrder.UserName == userName && x.ReserveStatus == status)
+                    .Where(x => x.MyOrder.UserId == userId && x.ReserveStatus == status)
                     .OrderByDescending(x => x.OrderId)
                     .ToList();
 
@@ -714,10 +704,9 @@ namespace ProjectPi.Controllers
         {
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
-            string counselorName = (string)counselorToken["Name"];
 
             var findAppointment = _db.Appointments
-                .Where(x => x.MyOrder.CounselorName == counselorName && x.ReserveStatus == status)
+                .Where(x => x.MyOrder.CounselorId == counselorId && x.ReserveStatus == status)
                 .OrderByDescending(x => x.OrderId)
                 .ToList();
 
