@@ -35,7 +35,6 @@ namespace ProjectPi.Models
         /// <summary>
         /// 個案編號
         /// </summary>
-        [MaxLength(50)]
         [Display(Name = "個案編號")]
         public int UserId { get; set; }
 
@@ -49,7 +48,6 @@ namespace ProjectPi.Models
         /// <summary>
         /// 諮商師編號
         /// </summary>
-        [MaxLength(50)]
         [Display(Name = "諮商師編號")]
         public int CounselorId { get; set; }
 

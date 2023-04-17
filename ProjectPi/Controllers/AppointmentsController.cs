@@ -506,9 +506,6 @@ namespace ProjectPi.Controllers
             }
         }
      
-
-
-
         /// <summary>
         /// 取得預約管理明細 (個案)
         /// </summary>
