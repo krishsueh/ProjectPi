@@ -9,6 +9,11 @@ using System.Net.Http;
 using System.Text;
 using System.Web;
 using System.Web.Http;
+using RestSharp;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
+
+
 
 namespace ProjectPi.Controllers
 {
@@ -786,6 +791,30 @@ namespace ProjectPi.Controllers
                 return BadRequest("查無此筆預約紀錄");
             else
             {
+                var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var now = DateTime.Now;
+                var apiSecret = "7S2JIaMSBmx32CLpYAVtZ3ThTQ897kplWlIM";
+                byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Issuer = "3eA43EJUTa2PXAXf2TjiBg",
+                    Expires = now.AddSeconds(300),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256),
+                };
+
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                var tokenString = tokenHandler.WriteToken(token);
+                var client = new RestClient("https://api.zoom.us/v2/users/plowrain1328@gmail.com/meetings");
+                var request = new RestRequest(Method.POST);
+                request.RequestFormat = DataFormat.Json;
+                request.AddJsonBody(new { topic = findAppointment.MyOrder.Field , duration = "40", start_time = findAppointment.AppointmentTime, type = 2 });
+                request.AddHeader("authorization", String.Format("Bearer {0}", tokenString));
+                IRestResponse restResponse = client.Execute(request);
+                HttpStatusCode statusCode = restResponse.StatusCode;
+                int numericStatusCode = (int)statusCode;
+                var jObject = JObject.Parse(restResponse.Content);
+                //result.Data = new { Host = (string)jObject["start_url"], Join = (string)jObject["join_url"], Code = Convert.ToString(numericStatusCode) };
+                findAppointment.ZoomLink = (string)jObject["join_url"];
                 findAppointment.ReserveStatus = "已成立";
                 _db.SaveChanges();
             }
