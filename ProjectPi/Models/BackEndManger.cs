@@ -13,7 +13,7 @@ namespace ProjectPi.Models
     public class BackEndManger
     {
         /// <summary>
-        /// 後端管理編號
+        /// 編號
         /// </summary>
         [Key]
         [Display(Name = "編號")]
@@ -21,7 +21,7 @@ namespace ProjectPi.Models
         public int Id { get; set; }
 
         /// <summary>
-        /// 後端管理姓名
+        /// 姓名
         /// </summary>
         [Required]
         [MaxLength(50)]
@@ -45,7 +45,7 @@ namespace ProjectPi.Models
         public DateTime BirthDate { get; set; }
 
         /// <summary>
-        /// 後端管理帳號
+        /// 帳號
         /// </summary>
         [Required]
         [Display(Name = "帳號")]
@@ -56,7 +56,7 @@ namespace ProjectPi.Models
         public string Account { get; set; }
 
         /// <summary>
-        /// 後端管理密碼
+        /// 密碼
         /// </summary>
         [Required]
         [Display(Name = "密碼")]
@@ -72,7 +72,7 @@ namespace ProjectPi.Models
         public int AdminAccess { get; set; }
 
         /// <summary>
-        /// 後端管理Guid
+        /// Guid
         /// </summary>
         [Display(Name = "Guid")]
         public Guid Guid { get; set; }

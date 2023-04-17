@@ -40,8 +40,8 @@ namespace ProjectPi.Models
         public string Content { get; set; }
         public string OutName { get; set; }
         public string Photo { get; set; }
-        //public bool UserRead { get; set; }
-        //public bool CounselorRead { get; set; }
+        public bool UserRead { get; set; }
+        public bool CounselorRead { get; set; }
         public DateTime InitDate { get; set; }
     }
 }

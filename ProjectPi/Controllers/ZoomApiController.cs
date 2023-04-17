@@ -14,8 +14,7 @@ using RestSharp;
 
 namespace ProjectPi.Controllers
 {
-    [OpenApiTag("ZoomApi", Description = "Zoom")]
-
+    [OpenApiTag("Zoom", Description = "Zoom")]
     public class ZoomApiController : ApiController
     {
         /// <summary>

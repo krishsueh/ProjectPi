@@ -44,6 +44,12 @@ namespace ProjectPi.Models
         public DateTime? AppointmentTime { get; set; }
 
         /// <summary>
+        /// Zoom 連結
+        /// </summary>
+        [Display(Name = "Zoom 連結")]
+        public string ZoomLink { get; set; }
+
+        /// <summary>
         /// 個案紀錄
         /// </summary>
         [Display(Name = "個案紀錄")]

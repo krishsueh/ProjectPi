@@ -65,23 +65,11 @@ namespace ProjectPi.Models
         public string LicenseImg { get; set; }
 
         /// <summary>
-        /// 執業證照 Base64
-        /// </summary>
-        [Display(Name = "執業證照Base64")]
-        public string LicenseBase64 { get; set; }
-
-        /// <summary>
         /// 個人照片
         /// </summary>
         [MaxLength(50)]
         [Display(Name = "個人照片")]
         public string Photo { get; set; }
-
-        /// <summary>
-        /// 個人照片 Base64
-        /// </summary>
-        [Display(Name = "個人照片Base64")]
-        public string PhotoBase64 { get; set; }
 
         /// <summary>
         /// 個人賣點
