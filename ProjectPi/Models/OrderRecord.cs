@@ -33,11 +33,25 @@ namespace ProjectPi.Models
         public DateTime OrderDate { get; set; }
 
         /// <summary>
+        /// 個案編號
+        /// </summary>
+        [MaxLength(50)]
+        [Display(Name = "個案編號")]
+        public int UserId { get; set; }
+
+        /// <summary>
         /// 個案姓名
         /// </summary>
         [MaxLength(50)]
         [Display(Name = "個案姓名")]
         public string UserName { get; set; }
+
+        /// <summary>
+        /// 諮商師編號
+        /// </summary>
+        [MaxLength(50)]
+        [Display(Name = "諮商師編號")]
+        public int CounselorId { get; set; }
 
         /// <summary>
         /// 諮商師姓名
