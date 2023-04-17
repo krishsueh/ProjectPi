@@ -11,6 +11,7 @@ using System.Web.Http;
 
 namespace ProjectPi.Controllers
 {
+    [OpenApiTag("ChatRoom", Description = "聊天室")]
     public class ChatRoomApiController : ApiController
     {
         /// <summary>
@@ -36,7 +37,7 @@ namespace ProjectPi.Controllers
                 _chatroom.Content = ChatRoom.Content;
                 _chatroom.Type = ChatRoom.Type;
                 _chatroom.InitDate = DateTime.Now;
-                /*
+                
                 if (_chatroom.Type == "send")
                 {
                     _chatroom.UserRead = true;
@@ -51,7 +52,7 @@ namespace ProjectPi.Controllers
                 {
                     _chatroom.UserRead = false;
                     _chatroom.CounselorRead = false;
-                }*/
+                }
                 result.Success = true;
                 result.Message = "聊天訊息存入成功";
                 _db.ChatRooms.Add(_chatroom);
@@ -68,7 +69,6 @@ namespace ProjectPi.Controllers
         /// <summary>
         /// 取得聊天內容
         /// </summary>
-        /// <param name="view"></param>
         /// <response code="200">取得全部聊天內容</response>
         /// <returns></returns>
         [HttpGet]
@@ -94,7 +94,6 @@ namespace ProjectPi.Controllers
                 return Ok(result);
             }
             //修改已讀
-            /*
             if (UserType.ToLower() == "user")
             {
                 _db.ChatRooms
@@ -110,7 +109,7 @@ namespace ProjectPi.Controllers
                     .ForEach(c => c.CounselorRead = true);
             }
             _db.SaveChanges();
-            */
+
             var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.InitDate });
 
             if (!chatlogList.Any())
@@ -134,11 +133,9 @@ namespace ProjectPi.Controllers
 
         }
 
-
         /// <summary>
         /// 取得聊天對象以及最後一句話
         /// </summary>
-        /// <param name="view"></param>
         /// <response code="200">取得所有人聊天紀錄</response>
         /// <returns></returns>
         [HttpGet]
@@ -156,8 +153,8 @@ namespace ProjectPi.Controllers
                 x.Type,
                 x.Content,
                 x.InitDate,
-                //x.UserRead,
-                //x.CounselorRead
+                x.UserRead,
+                x.CounselorRead
             });
 
             if (!_db.ChatRooms.Where(x => x.CounselorId == Id).Any() && Type.ToLower() == "counselor")
@@ -180,70 +177,69 @@ namespace ProjectPi.Controllers
             if (Type.ToLower() == "user")
             {
                 targetList = _db.ChatRooms
-   .GroupBy(c => c.UserId)
-   .Select(grp => new
-   {
-       UserId = grp.Key,
-       CounselorIds = grp.Select(x => x.CounselorId).Distinct(),
-       MaxDates = grp.GroupBy(x => x.CounselorId).Select(x => new
-       {
-           CounselorId = x.Key,
-           MaxDate = x.Max(y => y.InitDate)
-       })
-   })
-   .SelectMany(x => x.CounselorIds.Select(cid => new
-   {
-       x.UserId,
-       CounselorId = cid,
-       ChatRoom = _db.ChatRooms.FirstOrDefault(c => c.UserId == x.UserId && c.CounselorId == cid && x.MaxDates.FirstOrDefault(md => md.CounselorId == cid).MaxDate == c.InitDate)
-   }))
-   .Where(x => x.UserId == Id)
-   .Select(x => new
-   {
-       x.ChatRoom.Id,
-       x.ChatRoom.CounselorId,
-       x.ChatRoom.UserId,
-       x.ChatRoom.Type,
-       x.ChatRoom.Content,
-       x.ChatRoom.InitDate,
-       
-       //x.ChatRoom.UserRead,
-       //x.ChatRoom.CounselorRead
+                   .GroupBy(c => c.UserId)
+                   .Select(grp => new
+                   {
+                       UserId = grp.Key,
+                       CounselorIds = grp.Select(x => x.CounselorId).Distinct(),
+                       MaxDates = grp.GroupBy(x => x.CounselorId).Select(x => new
+                       {
+                           CounselorId = x.Key,
+                           MaxDate = x.Max(y => y.InitDate)
+                       })
+                   })
+                   .SelectMany(x => x.CounselorIds.Select(cid => new
+                   {
+                       x.UserId,
+                       CounselorId = cid,
+                       ChatRoom = _db.ChatRooms.FirstOrDefault(c => c.UserId == x.UserId && c.CounselorId == cid && x.MaxDates.FirstOrDefault(md => md.CounselorId == cid).MaxDate == c.InitDate)
+                   }))
+                   .Where(x => x.UserId == Id)
+                   .Select(x => new
+                   {
+                       x.ChatRoom.Id,
+                       x.ChatRoom.CounselorId,
+                       x.ChatRoom.UserId,
+                       x.ChatRoom.Type,
+                       x.ChatRoom.Content,
+                       x.ChatRoom.InitDate,
+                       x.ChatRoom.UserRead,
+                       x.ChatRoom.CounselorRead
 
-   }).OrderByDescending(x => x.InitDate);
+                   }).OrderByDescending(x => x.InitDate);
             }
             else if (Type.ToLower() == "counselor")
             {
                 targetList = _db.ChatRooms
-    .GroupBy(c => c.CounselorId)
-    .Select(grp => new
-    {
-        CounselorId = grp.Key,
-        UserIds = grp.Select(x => x.UserId).Distinct(),
-        MaxDates = grp.GroupBy(x => x.UserId).Select(x => new
-        {
-            UserId = x.Key,
-            MaxDate = x.Max(y => y.InitDate)
-        })
-    })
-    .SelectMany(x => x.UserIds.Select(uid => new
-    {
-        x.CounselorId,
-        UserId = uid,
-        ChatRoom = _db.ChatRooms.FirstOrDefault(c => c.UserId == uid && c.CounselorId == x.CounselorId && x.MaxDates.FirstOrDefault(md => md.UserId == uid).MaxDate == c.InitDate)
-    }))
-    .Where(x => x.CounselorId == Id)
-    .Select(x => new
-    {
-        x.ChatRoom.Id,
-        x.ChatRoom.CounselorId,
-        x.ChatRoom.UserId,
-        x.ChatRoom.Type,
-        x.ChatRoom.Content,
-        x.ChatRoom.InitDate,
-        //x.ChatRoom.UserRead,
-        //x.ChatRoom.CounselorRead
-    }).OrderByDescending(x => x.InitDate);
+                    .GroupBy(c => c.CounselorId)
+                    .Select(grp => new
+                    {
+                        CounselorId = grp.Key,
+                        UserIds = grp.Select(x => x.UserId).Distinct(),
+                        MaxDates = grp.GroupBy(x => x.UserId).Select(x => new
+                        {
+                            UserId = x.Key,
+                            MaxDate = x.Max(y => y.InitDate)
+                        })
+                    })
+                    .SelectMany(x => x.UserIds.Select(uid => new
+                    {
+                        x.CounselorId,
+                        UserId = uid,
+                        ChatRoom = _db.ChatRooms.FirstOrDefault(c => c.UserId == uid && c.CounselorId == x.CounselorId && x.MaxDates.FirstOrDefault(md => md.UserId == uid).MaxDate == c.InitDate)
+                    }))
+                    .Where(x => x.CounselorId == Id)
+                    .Select(x => new
+                    {
+                        x.ChatRoom.Id,
+                        x.ChatRoom.CounselorId,
+                        x.ChatRoom.UserId,
+                        x.ChatRoom.Type,
+                        x.ChatRoom.Content,
+                        x.ChatRoom.InitDate,
+                        x.ChatRoom.UserRead,
+                        x.ChatRoom.CounselorRead
+                    }).OrderByDescending(x => x.InitDate);
             }
             else return BadRequest("Type類型輸入錯誤");
 
@@ -267,8 +263,8 @@ namespace ProjectPi.Controllers
                         userChatTarget.UserId = item.UserId;
                         userChatTarget.Content = item.Content;
                         userChatTarget.CounselorId = item.CounselorId;
-                        //userChatTarget.UserRead = item.UserRead;
-                        //userChatTarget.CounselorRead = item.CounselorRead;
+                        userChatTarget.UserRead = item.UserRead;
+                        userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTarget.Type = item.Type;
                         userChatTarget.Photo = counselor.Photo;
                       
@@ -287,8 +283,8 @@ namespace ProjectPi.Controllers
                         userChatTarget.Content = item.Content;
                         userChatTarget.CounselorId = item.CounselorId;
                         userChatTarget.Type = item.Type;
-                        //userChatTarget.UserRead = item.UserRead;
-                        //userChatTarget.CounselorRead = item.CounselorRead;
+                        userChatTarget.UserRead = item.UserRead;
+                        userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
@@ -311,8 +307,6 @@ namespace ProjectPi.Controllers
         /// <summary>
         /// 取得所有諮商師目標
         /// </summary>
-        /// <param name="view"></param>
-        /// <response code="200">註冊成功</response>
         /// <returns></returns>
         [HttpGet]
         [JwtAuthFilter]

@@ -291,7 +291,6 @@
     <Compile Include="Controllers\CounselorsController.cs" />
     <Compile Include="Controllers\CoursesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Controllers\TestController.cs" />
     <Compile Include="Controllers\TimetablesController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="Controllers\ZoomApiController.cs" />
@@ -329,6 +328,10 @@
     <Compile Include="Migrations\202304060246008_updateBase64Counselor.cs" />
     <Compile Include="Migrations\202304060246008_updateBase64Counselor.Designer.cs">
       <DependentUpon>202304060246008_updateBase64Counselor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202304170642425_amendDB.cs" />
+    <Compile Include="Migrations\202304170642425_amendDB.Designer.cs">
+      <DependentUpon>202304170642425_amendDB.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ApiResponse.cs" />
@@ -468,6 +471,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202304060246008_updateBase64Counselor.resx">
       <DependentUpon>202304060246008_updateBase64Counselor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202304170642425_amendDB.resx">
+      <DependentUpon>202304170642425_amendDB.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

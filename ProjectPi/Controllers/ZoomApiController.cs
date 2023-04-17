@@ -8,11 +8,13 @@ using System.Text;
 using System.Web.Http;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
+using NSwag.Annotations;
 using ProjectPi.Models;
 using RestSharp;
 
 namespace ProjectPi.Controllers
 {
+    [OpenApiTag("Zoom", Description = "Zoom")]
     public class ZoomApiController : ApiController
     {
         /// <summary>

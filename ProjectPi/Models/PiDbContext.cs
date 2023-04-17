@@ -32,6 +32,7 @@ namespace ProjectPi.Models
         public virtual DbSet<Timetable> Timetables { get; set; }
 
         public virtual DbSet<ChatRoom> ChatRooms { get; set; }
+        public virtual DbSet<BackEndManger> BackEndMangers { get; set; }
 
     }
 

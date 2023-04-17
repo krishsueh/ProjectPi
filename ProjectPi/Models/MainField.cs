@@ -25,6 +25,12 @@ namespace ProjectPi.Models
         public string Field { get; set; }
 
         /// <summary>
+        /// 圖片
+        /// </summary>
+        [Display(Name = "圖片")]
+        public string FieldImg { get; set; }
+
+        /// <summary>
         /// 建立時間
         /// </summary>
         [Display(Name = "建立時間")]
