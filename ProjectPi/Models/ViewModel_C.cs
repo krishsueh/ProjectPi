@@ -305,5 +305,16 @@ namespace ProjectPi.Models
             public int AppointmentId { get; set; }
         }
 
+        /// <summary>
+        /// 修改諮商師開通狀態
+        /// </summary>
+        public class C_Validation
+        {
+            [Display(Name="諮商師ID")]
+            public int CounselorId { get; set; }
+            [Display(Name = "狀態")]
+            public bool Validation { get; set; }
+        }
+
     }
 }

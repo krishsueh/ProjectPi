@@ -106,5 +106,134 @@ namespace ProjectPi.Controllers
             */
             return response;
         }
+
+        /// <summary>
+        /// 得到諮商師證書申請列表
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/CounselorLicense")]
+        [HttpGet]
+        public IHttpActionResult GetCounselorLicense()
+        {
+            ApiResponse result = new ApiResponse();
+            var LicenseList = _db.Counselors.Where(x => x.LicenseImg != null && x.Validation == false)
+                .Select(x => new { x.Id,x.Name,x.LicenseImg,x.CertNumber}).ToList();
+            result.Success = true;
+            result.Message = "取得成功";
+            if(!LicenseList.Any())
+            {
+                result.Message = "沒有諮商師申請";
+                return Ok(result);
+            }
+            result.Data = new { LicenseList };
+            return Ok(result);
+        }
+        /// <summary>
+        /// 修改諮商師開通狀態
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/udateValidation")]
+        [HttpPut]
+        public IHttpActionResult UdateValidation(ViewModel_C.C_Validation view)
+        {
+            ApiResponse result = new ApiResponse();
+            Counselor counselor = _db.Counselors.Where(x => x.Id == view.CounselorId).FirstOrDefault();
+            if (counselor == null) return BadRequest("沒有此諮商師");
+            counselor.Validation = view.Validation;
+            if (counselor.Validation == false)
+            {
+                counselor.LicenseImg = "null";
+                result.Success = true;
+                result.Message = "審核不通過";
+            }
+            else
+            {
+                result.Success = true;
+                result.Message = "審核通過";
+            }
+            _db.SaveChanges();
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得金流
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/getNewebPayOrder")]
+        [HttpGet]
+        public IHttpActionResult GetNewebPayOrder(bool isPay = true)
+        {
+            ApiResponse result = new ApiResponse();
+            var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已付費").Select(x => new { x.CounselorName,x.UserName,x.OrderNum,x.OrderDate,x.Price,x.Field}).ToList();
+            if (isPay == false) orderRecordsList = _db.OrderRecords.Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field }).ToList();
+            
+            if(orderRecordsList == null)
+            {
+                return BadRequest("沒有任何金流資料");
+            }
+            
+            result.Success = true;
+            result.Message = "取得成功";
+            result.Data = new { orderRecordsList };
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得治療紀錄
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/getAppTList")]
+        [HttpGet]
+        public IHttpActionResult GetAppTList()
+        {
+            ApiResponse result = new ApiResponse();
+            var appointmentsList = _db.Appointments.Select(x => new { x.Id , x.MyOrder.Field ,x.MyOrder.CounselorName,x.MyOrder.UserName , x.ReserveStatus ,Time = x.AppointmentTime!=null?x.AppointmentTime:null}).ToList();
+            if (appointmentsList == null) return BadRequest("沒有任何資料");
+            result.Success = true;
+            result.Message = "成功取得訊息";
+            result.Data = new { appointmentsList };
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得諮商師列表
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/getCounselorList")]
+        [HttpGet]
+        public IHttpActionResult GetCounselorList(int PageNumber=1 , int PageSize = 10)
+        {
+            ApiResponse result = new ApiResponse();
+            PageNumber = 1; // 第1頁
+            PageSize = 10; // 每頁取10條數據
+            var counselorList = _db.Counselors.Skip((PageNumber - 1) * PageSize) // 跳過前面的結果
+                    .Take(PageSize).Select(x=> new { x.Id,x.Name,x.Validation,x.Photo,x.CertNumber,x.InitDate}).ToList();
+            if (counselorList == null) return BadRequest("沒有任何資料");
+            result.Success = true;
+            result.Message = "成功取得訊息";
+            result.Data = new { counselorList };
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 取得個案列表
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/getUserList")]
+        [HttpGet]
+        public IHttpActionResult GetUserList(int PageNumber = 1, int PageSize = 10)
+        {
+            ApiResponse result = new ApiResponse();
+            PageNumber = 1; // 第1頁
+            PageSize = 10; // 每頁取10條數據
+            var userList = _db.Users.Skip((PageNumber - 1) * PageSize) // 跳過前面的結果
+                    .Take(PageSize).Select(x => new { x.Id, x.Name, x.Account,x.Sex, x.InitDate }).ToList();
+            if (userList == null) return BadRequest("沒有任何資料");
+            result.Success = true;
+            result.Message = "成功取得訊息";
+            result.Data = new { userList };
+            return Ok(result);
+        }
+
     }
 }
