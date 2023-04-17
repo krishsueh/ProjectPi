@@ -556,6 +556,95 @@ namespace ProjectPi.Controllers
                 return BadRequest("執照上傳失敗或未上傳");
             }
         }
+
+        /// <summary>
+        /// 儲存諮商師執照
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/getZoomUrl")]
+        [JwtAuthFilter]
+        [HttpGet]
+        public async Task<IHttpActionResult> GetZoomUrl()
+        {
+            PiDbContext _db = new PiDbContext();
+            ApiResponse result = new ApiResponse();
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            string userAccount = userToken["Account"].ToString();
+            Counselor counselor = _db.Counselors.Where(x=>x.Account == userAccount).FirstOrDefault();
+            User user = _db.Users.Where(x => x.Account == userAccount).FirstOrDefault();
+            List<Appointment> appointmentsList = new List<Appointment>();
+            if (counselor != null)
+            {
+                List<OrderRecord> orderRecordsList = _db.OrderRecords.Where(x => x.CounselorId == counselor.Id && x.OrderStatus == "已成立").ToList();
+                if (orderRecordsList != null)
+                {
+                    foreach (var item in orderRecordsList)
+                    {
+                        Appointment appointment = new Appointment();
+                        appointment = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已成立").FirstOrDefault();
+                        if (appointment != null) appointmentsList.Add(appointment);
+                        //var url = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus== "已成立").OrderBy(x=>x.AppointmentTime).Select(x=>new { x.ZoomLink , x.AppointmentTime}).FirstOrDefault();
+                    }
+                    var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
+                    if (ApptList.AppointmentTime != null && (DateTime.Now - (DateTime)ApptList.AppointmentTime).TotalMinutes < 10)
+                    {
+                        result.Success = true;
+                        result.Message = "時間快到囉~";
+                        result.Data = new { ApptList };
+                        return Ok(result);
+                    }
+                    else
+                    {
+                        result.Success = true;
+                        result.Message = "沒有連結";
+                        return Ok(result);
+                    }
+                }
+                else
+                {
+                    result.Success = true;
+                    result.Message = "沒有連結";
+                    return Ok(result);
+                }
+            }
+            else if (user != null)
+            {
+                List<OrderRecord> orderRecordsList = _db.OrderRecords.Where(x => x.UserId == user.Id && x.OrderStatus == "已成立").ToList();
+                if (orderRecordsList != null)
+                {
+                    foreach (var item in orderRecordsList)
+                    {
+                        Appointment appointment = new Appointment();
+                        appointment = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已成立").FirstOrDefault();
+                        if (appointment != null) appointmentsList.Add(appointment);
+                        //var url = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus== "已成立").OrderBy(x=>x.AppointmentTime).Select(x=>new { x.ZoomLink , x.AppointmentTime}).FirstOrDefault();
+                    }
+                    var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
+                    if (ApptList.AppointmentTime != null && (DateTime.Now - (DateTime)ApptList.AppointmentTime).TotalMinutes < 10)
+                    {
+                        result.Success = true;
+                        result.Message = "時間快到囉~";
+                        result.Data = new { ApptList };
+                        return Ok(result);
+                    }
+                    else
+                    {
+                        result.Success = true;
+                        result.Message = "沒有連結";
+                        return Ok(result);
+                    }
+                }
+                else
+                {
+                    result.Success = true;
+                    result.Message = "沒有連結";
+                    return Ok(result);
+                }
+            }
+            else return BadRequest("Token錯誤");
+            
+        }
+
     }
 }
 
