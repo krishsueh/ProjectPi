@@ -3,6 +3,7 @@ using ProjectPi.Models;
 using ProjectPi.Security;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -164,6 +165,178 @@ namespace ProjectPi.Controllers
             return findTime;
         }
 
+        /// <summary>
+        /// 諮商師頁面的預約時段
+        /// </summary>
+        /// <param name="id">諮商師ID</param>
+        /// /// <param name="page">頁碼</param>
+        /// <returns></returns>
+        [Route("api/timetableBrowser")]
+        [HttpGet]
+        public IHttpActionResult GetTimetableBrowser(int id, int page)
+        {
+            var findTimes = _db.Timetables
+                .Where(x => x.CounselorId == id)
+                .GroupBy(x => x.Date)
+                .ToList();
+
+            var dateList = findTimes
+                .Select(x => new
+                {
+                    Year = x.Key.ToShortDateString().Split('/')[0],
+                    Month = x.Key.ToShortDateString().Split('/')[1],
+                    Date = x.Key.ToShortDateString().Split('/')[2],
+                    WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(x.Key.DayOfWeek)[2],
+                    Hours = x.Select(y => new
+                    {
+                        Time = y.Time,
+                        Availability = y.Availability,
+                    }).ToList()
+                })
+                .ToList();
+
+            int year, month, day;
+            // 諮商師可約的第一天
+            year = int.Parse(dateList.FirstOrDefault().Year);
+            month = int.Parse(dateList.FirstOrDefault().Month);
+            day = int.Parse(dateList.FirstOrDefault().Date);
+            DateTime firstDayOfAvailable = new DateTime(year, month, day);
+
+            // 諮商師可約的最後一天
+            year = int.Parse(dateList.LastOrDefault().Year);
+            month = int.Parse(dateList.LastOrDefault().Month);
+            day = int.Parse(dateList.LastOrDefault().Date);
+            DateTime lastDayOfAvailable = new DateTime(year, month, day);
+
+            // 日曆顯示的第一天
+            DateTime today = DateTime.Today;
+
+            // 計算當天與可約第一天之間的 interval
+            int interval = Math.Abs((firstDayOfAvailable - today).Days);
+
+            // 頭部資料處理
+            var newDateList = new List<object>();
+            if ((firstDayOfAvailable - today).Days >=0)
+            {
+                // 產出開頭需補足資料
+                var frontFalseDates = new List<object>();
+                for (int i = 0; i < interval; i++)
+                {
+                    var falseDates = new
+                    {
+                        Year = today.AddDays(i).ToShortDateString().Split('/')[0],
+                        Month = today.AddDays(i).ToShortDateString().Split('/')[1],
+                        Date = today.AddDays(i).ToShortDateString().Split('/')[2],
+                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2]
+                    };
+
+                    frontFalseDates.Add(falseDates);
+                }
+
+                // 將 falseDates 塞入資料頭部
+                newDateList = frontFalseDates.Take(interval).Concat(dateList).ToList();
+            }
+            else
+            {
+                // 移除開頭以過期的資料
+                // newDateList 型態為 List<object>。dateList 型態為 List<`a>，故加上 .Cast<object>() 轉型為 List<object>
+                newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).Cast<object>().ToList();
+            }
+
+            // 尾部資料處理：
+            var allDateList = new List<object>();
+            if (newDateList.Count() % 7 == 0)
+            {
+                // newDataList 總天數若能被 7 整除，則尾部不需補資料
+                allDateList = newDateList;
+            }
+            else
+            {
+                // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
+                
+                // 須補足的天數
+                int days = 7 - (newDateList.Count() % 7);
+
+                // 產出結尾需補足資料
+                var endFalseDates = new List<object>();
+                for (int i = 0; i < days; i++)
+                {
+                    var falseDates = new
+                    {
+                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
+                        Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
+                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
+                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
+                        Hours = FalseDate()
+                    };
+
+                    endFalseDates.Add(falseDates);
+                }
+
+                // 再將 falseDates 塞入資料尾部
+                allDateList = newDateList.Concat(endFalseDates.Take(days)).ToList();
+            }
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "成功取得預約時段";
+            result.Data = Pagination(page, allDateList);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 分頁功能
+        /// </summary>
+        /// <param name="page">前端傳入的分頁數</param>
+        /// <param name="allDateList">可預約時段加入無用日期後的資料</param>
+        /// <returns></returns>
+        public static object Pagination(int page, List<object> allDateList)
+        {
+            int pageSize = 7;
+            int pageNum = allDateList.Count() / pageSize;
+
+            var pagination = allDateList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new { PageNum = pageNum, Pagination = pagination };
+        }
+
+        /// <summary>
+        /// 取得無效日期的全天時段
+        /// </summary>
+        /// <returns></returns>
+        public static object FalseDate()
+        {
+            var Hours = new[]
+            {
+                new { Time = "00:00", Available = false },
+                new { Time = "01:00", Available = false },
+                new { Time = "02:00", Available = false },
+                new { Time = "03:00", Available = false },
+                new { Time = "04:00", Available = false },
+                new { Time = "05:00", Available = false },
+                new { Time = "06:00", Available = false },
+                new { Time = "07:00", Available = false },
+                new { Time = "08:00", Available = false },
+                new { Time = "09:00", Available = false },
+                new { Time = "10:00", Available = false },
+                new { Time = "11:00", Available = false },
+                new { Time = "12:00", Available = false },
+                new { Time = "13:00", Available = false },
+                new { Time = "14:00", Available = false },
+                new { Time = "15:00", Available = false },
+                new { Time = "16:00", Available = false },
+                new { Time = "17:00", Available = false },
+                new { Time = "18:00", Available = false },
+                new { Time = "19:00", Available = false },
+                new { Time = "20:00", Available = false },
+                new { Time = "21:00", Available = false },
+                new { Time = "22:00", Available = false },
+                new { Time = "23:00", Available = false }
+            };
+            return Hours;
+        }
     }
 
 }
