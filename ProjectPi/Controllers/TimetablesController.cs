@@ -165,18 +165,6 @@ namespace ProjectPi.Controllers
             return findTime;
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
         /// <summary>
         /// 諮商師頁面的預約時段
         /// </summary>
@@ -199,63 +187,78 @@ namespace ProjectPi.Controllers
                     Month = x.Key.ToShortDateString().Split('/')[1],
                     Date = x.Key.ToShortDateString().Split('/')[2],
                     WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(x.Key.DayOfWeek)[2],
-                    //Hours = x.Select(y => new {
-                    //    Time = y.Time,
-                    //    Availability = y.Availability,
-                    //}).ToList()
+                    Hours = x.Select(y => new
+                    {
+                        Time = y.Time,
+                        Availability = y.Availability,
+                    }).ToList()
                 })
                 .ToList();
 
             int year, month, day;
-            //諮商師可以的第一天
+            // 諮商師可約的第一天
             year = int.Parse(dateList.FirstOrDefault().Year);
             month = int.Parse(dateList.FirstOrDefault().Month);
             day = int.Parse(dateList.FirstOrDefault().Date);
             DateTime firstDayOfAvailable = new DateTime(year, month, day);
 
-            //諮商師可以的最後一天
+            // 諮商師可約的最後一天
             year = int.Parse(dateList.LastOrDefault().Year);
             month = int.Parse(dateList.LastOrDefault().Month);
             day = int.Parse(dateList.LastOrDefault().Date);
             DateTime lastDayOfAvailable = new DateTime(year, month, day);
 
-            //日曆顯示的第一天
-            DateTime today = DateTime.Now;
+            // 日曆顯示的第一天
+            DateTime today = DateTime.Today;
 
-            //計算需要補足的天數
-            TimeSpan timeSpan = firstDayOfAvailable - today;
-            int interval = (int)Math.Ceiling(timeSpan.TotalDays);
-            interval = Math.Abs(interval);
+            // 計算當天與可約第一天之間的 interval
+            int interval = Math.Abs((firstDayOfAvailable - today).Days);
 
-            //產出開頭需補足資料
-            var frontFalseDates = new List<object>();
-            for (int i = 0; i < interval; i++)
+            // 頭部資料處理
+            var newDateList = new List<object>();
+            if ((firstDayOfAvailable - today).Days >=0)
             {
-                var falseDates = new
+                // 產出開頭需補足資料
+                var frontFalseDates = new List<object>();
+                for (int i = 0; i < interval; i++)
                 {
-                    Year = today.AddDays(i).ToShortDateString().Split('/')[0],
-                    Month = today.AddDays(i).ToShortDateString().Split('/')[1],
-                    Date = today.AddDays(i).ToShortDateString().Split('/')[2],
-                    WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2]
-                };
+                    var falseDates = new
+                    {
+                        Year = today.AddDays(i).ToShortDateString().Split('/')[0],
+                        Month = today.AddDays(i).ToShortDateString().Split('/')[1],
+                        Date = today.AddDays(i).ToShortDateString().Split('/')[2],
+                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2]
+                    };
 
-                frontFalseDates.Add(falseDates);
+                    frontFalseDates.Add(falseDates);
+                }
+
+                // 將 falseDates 塞入資料頭部
+                newDateList = frontFalseDates.Take(interval).Concat(dateList).ToList();
             }
-
-            //將 falseDates 塞入資料裡
-            var newDateList = frontFalseDates.Take(interval).Concat(dateList).ToArray();
-
-            //判斷 newDataList 總天數是否能被 7 整除
-            //如果不行，則需要在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天 
-            if (newDateList.Count() % 7 == 0)
-                return Ok(newDateList);
             else
             {
-                //須補足的天數
+                // 移除開頭以過期的資料
+                // newDateList 型態為 List<object>。dateList 型態為 List<`a>，故加上 .Cast<object>() 轉型為 List<object>
+                newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).Cast<object>().ToList();
+            }
+
+            // 尾部資料處理：
+            var allDateList = new List<object>();
+            if (newDateList.Count() % 7 == 0)
+            {
+                // newDataList 總天數若能被 7 整除，則尾部不需補資料
+                allDateList = newDateList;
+            }
+            else
+            {
+                // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
+                
+                // 須補足的天數
                 int days = 7 - (newDateList.Count() % 7);
 
+                // 產出結尾需補足資料
                 var endFalseDates = new List<object>();
-                //產出結尾需補足資料
                 for (int i = 0; i < days; i++)
                 {
                     var falseDates = new
@@ -264,116 +267,29 @@ namespace ProjectPi.Controllers
                         Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
                         Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
                         WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
-                        //Hours = FalseDate()
+                        Hours = FalseDate()
                     };
 
                     endFalseDates.Add(falseDates);
                 }
 
-                //再將 falseDates 塞入資料裡
-                var allDateList = newDateList.Concat(endFalseDates.Take(days)).ToArray();
-
-                ApiResponse result = new ApiResponse { };
-                result.Success = true;
-                result.Message = "成功取得預約時段";
-                result.Data = Pagination(page, allDateList);
-                return Ok(result);
+                // 再將 falseDates 塞入資料尾部
+                allDateList = newDateList.Concat(endFalseDates.Take(days)).ToList();
             }
-
-
-
-
-
-
-
-
-            ///////////////////////////////////////////////////////////////////////// Firstdate < Today
-
-            //var findTimes = _db.Timetables
-            // .Where(x => x.CounselorId == id)
-            // .GroupBy(x => x.Date)
-            // .ToList();
-
-            //var dateList = findTimes
-            //    .Select(x => new
-            //    {
-            //        Year = x.Key.ToShortDateString().Split('/')[0],
-            //        Month = x.Key.ToShortDateString().Split('/')[1],
-            //        Date = x.Key.ToShortDateString().Split('/')[2],
-            //        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(x.Key.DayOfWeek)[2],
-            //        //Hours = x.Select(y => new {
-            //        //    Time = y.Time,
-            //        //    Availability = y.Availability,
-            //        //}).ToList()
-            //    })
-            //    .ToList();
-
-            //int year, month, day;
-            ////諮商師可以的第一天
-            //year = int.Parse(dateList.FirstOrDefault().Year);
-            //month = int.Parse(dateList.FirstOrDefault().Month);
-            //day = int.Parse(dateList.FirstOrDefault().Date);
-            //DateTime firstDayOfAvailable = new DateTime(year, month, day);
-
-            ////諮商師可以的最後一天
-            //year = int.Parse(dateList.LastOrDefault().Year);
-            //month = int.Parse(dateList.LastOrDefault().Month);
-            //day = int.Parse(dateList.LastOrDefault().Date);
-            //DateTime lastDayOfAvailable = new DateTime(year, month, day);
-
-            ////日曆顯示的第一天
-            //DateTime today = DateTime.Now;
-
-            ////計算需從資料裡扣除的天數
-            //TimeSpan timeSpan = firstDayOfAvailable - today;
-            //int interval = (int)Math.Ceiling(timeSpan.TotalDays);
-            //interval = Math.Abs(interval);
-
-            //var newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).ToList();
-
-            ////判斷 newDataList 總天數是否能被 7 整除
-            ////如果不行，則需要在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天 
-            //if (newDateList.Count() % 7 == 0)
-            //    return Ok(newDateList);
-            //else
-            //{
-            //    //須補足的天數
-            //    int days = 7 - (newDateList.Count() % 7);
-
-            //    var endFalseDates = new List<object>();
-            //    //產出結尾需補足資料
-            //    for (int i = 0; i < days; i++)
-            //    {
-            //        var falseDates = new
-            //        {
-            //            Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
-            //            Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
-            //            Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
-            //            WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
-            //            //Hours = FalseDate()
-            //        };
-
-            //        endFalseDates.Add(falseDates);
-            //    }
-
-            //    //再將 falseDates 塞入資料裡
-            //    var allDateList = newDateList.Concat(endFalseDates.Take(days)).ToArray();
-
-            //    ApiResponse result = new ApiResponse { };
-            //    result.Success = true;
-            //    result.Message = "成功取得預約時段";
-            //    result.Data = Pagination(page, allDateList);
-            //    return Ok(result);
-            //}
+            ApiResponse result = new ApiResponse { };
+            result.Success = true;
+            result.Message = "成功取得預約時段";
+            result.Data = Pagination(page, allDateList);
+            return Ok(result);
         }
 
         /// <summary>
         /// 分頁功能
         /// </summary>
         /// <param name="page">前端傳入的分頁數</param>
-        /// <param name="allDataList">可預約時段加入無用日期後的資料</param>
+        /// <param name="allDateList">可預約時段加入無用日期後的資料</param>
         /// <returns></returns>
-        public static object Pagination(int page, object[] allDateList)
+        public static object Pagination(int page, List<object> allDateList)
         {
             int pageSize = 7;
             int pageNum = allDateList.Count() / pageSize;
