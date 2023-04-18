@@ -471,7 +471,7 @@ namespace ProjectPi.Controllers
                 string loginType = "0"; // 0不須登入藍新金流會員
 
                 // 將 model 轉換為List<KeyValuePair<string, string>>
-                List<KeyValuePair<string, string>> tradeData = new List<KeyValuePair<string, string>>() 
+                List<KeyValuePair<string, string>> tradeData = new List<KeyValuePair<string, string>>()
                 {
                     new KeyValuePair<string, string>("MerchantID", merchantID),
                     new KeyValuePair<string, string>("RespondType", respondType),
@@ -511,7 +511,7 @@ namespace ProjectPi.Controllers
                 });
             }
         }
-     
+
         /// <summary>
         /// 取得預約管理明細 (個案)
         /// </summary>
@@ -620,7 +620,7 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 選取預約時段
+        /// 選取/修改預約時段
         /// </summary>
         /// <returns></returns>
         [HttpPost]
@@ -630,21 +630,40 @@ namespace ProjectPi.Controllers
         {
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int userId = (int)userToken["Id"];
-            string userName = (string)userToken["Name"];
 
             var findAppointment = _db.Appointments
-                .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
+                .Where(x => x.MyOrder.UserId == userId && x.Id == view.AppointmentId)
                 .FirstOrDefault();
 
             if (findAppointment == null)
                 return BadRequest("查無此筆預約紀錄");
             else
             {
+                // 前端傳入用戶選擇的預約時間
                 int year = int.Parse(view.DateTimeValue.Year);
                 int month = int.Parse(view.DateTimeValue.Month);
                 int day = int.Parse(view.DateTimeValue.Day);
                 int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
                 DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
+
+                // 判斷是新增預約時間，還是修改預約時間
+                if (findAppointment.AppointmentTime == null)
+                {
+                    // 新增，去諮商師 Timetable 尋找該時段，並將開放時段關閉
+                    var counselorTimetable = _db.Timetables.Where(x => x.Id == view.DateTimeId).FirstOrDefault();
+                    counselorTimetable.Availability = false;
+                    _db.SaveChanges();
+                }
+                else
+                {
+                    // 修改，去諮商師 Timetable 尋找該時段，並將舊時段開啟，新時段關閉
+                    //var oldTime = _db.Timetables.Where(x => x.Id == findAppointment.DateTimeId).FirstOrDefault();
+                    //oldTime.Availability = true;
+
+                    var newTime = _db.Timetables.Where(x => x.Id == view.DateTimeId).FirstOrDefault();
+                    newTime.Availability = false;
+                    _db.SaveChanges();
+                }
 
                 findAppointment.AppointmentTime = dateTimeValue;
                 findAppointment.ReserveStatus = "待回覆";
@@ -653,49 +672,52 @@ namespace ProjectPi.Controllers
 
             ApiResponse result = new ApiResponse { };
             result.Success = true;
-            result.Message = "預約完成，請待諮商師接收預約";
+            if (findAppointment.AppointmentTime != null)  //修改預約時段
+                result.Message = "成功修改預約時間，請待諮商師接收預約";
+            else //新增預約時段
+                result.Message = "預約完成，請待諮商師接收預約";
             result.Data = null;
             return Ok(result);
         }
 
-        /// <summary>
-        /// 修改預約時段
-        /// </summary>
-        /// <returns></returns>
-        [HttpPut]
-        [Route("api/apptTime")]
-        [JwtAuthFilter]
-        public IHttpActionResult PutApptTime(ViewModel_U.AppointmentTime view)
-        {
-            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
-            int userId = (int)userToken["Id"];
-            string userName = (string)userToken["Name"];
+        ///// <summary>
+        ///// 修改預約時段
+        ///// </summary>
+        ///// <returns></returns>
+        //[HttpPut]
+        //[Route("api/apptTime")]
+        //[JwtAuthFilter]
+        //public IHttpActionResult PutApptTime(ViewModel_U.AppointmentTime view)
+        //{
+        //    var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+        //    int userId = (int)userToken["Id"];
+        //    string userName = (string)userToken["Name"];
 
-            var findAppointment = _db.Appointments
-                .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
-                .FirstOrDefault();
+        //    var findAppointment = _db.Appointments
+        //        .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
+        //        .FirstOrDefault();
 
-            if (findAppointment == null)
-                return BadRequest("查無此筆預約紀錄");
-            else
-            {
-                int year = int.Parse(view.DateTimeValue.Year);
-                int month = int.Parse(view.DateTimeValue.Month);
-                int day = int.Parse(view.DateTimeValue.Day);
-                int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
-                DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
+        //    if (findAppointment == null)
+        //        return BadRequest("查無此筆預約紀錄");
+        //    else
+        //    {
+        //        int year = int.Parse(view.DateTimeValue.Year);
+        //        int month = int.Parse(view.DateTimeValue.Month);
+        //        int day = int.Parse(view.DateTimeValue.Day);
+        //        int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
+        //        DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
 
-                findAppointment.AppointmentTime = dateTimeValue;
-                findAppointment.ReserveStatus = "待回覆";
-                _db.SaveChanges();
-            }
+        //        findAppointment.AppointmentTime = dateTimeValue;
+        //        findAppointment.ReserveStatus = "待回覆";
+        //        _db.SaveChanges();
+        //    }
 
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功修改預約時段";
-            result.Data = null;
-            return Ok(result);
-        }
+        //    ApiResponse result = new ApiResponse { };
+        //    result.Success = true;
+        //    result.Message = "成功修改預約時段";
+        //    result.Data = null;
+        //    return Ok(result);
+        //}
 
         /// <summary>
         /// 取得預約管理明細 (諮商師)
@@ -931,9 +953,9 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse();
             List<AppointmentLogs> appointmentLogsList = new List<AppointmentLogs>();
             List<Appointment> appointmentsList = new List<Appointment>();
-            var orderRecordsList = _db.OrderRecords.Where(x => x.CounselorName == counselor.Name && x.OrderStatus=="已成立").GroupBy(x=>x.UserName).Select(o=> new { UserName=o.Key , Field=o.Select(g=>g.Field), Id =o.Select(g=>g.Id)}).ToList();
+            var orderRecordsList = _db.OrderRecords.Where(x => x.CounselorName == counselor.Name && x.OrderStatus == "已成立").GroupBy(x => x.UserName).Select(o => new { UserName = o.Key, Field = o.Select(g => g.Field), Id = o.Select(g => g.Id) }).ToList();
             var msg = "";
-            DateTime time= DateTime.Now;
+            DateTime time = DateTime.Now;
             string field = "";
             msg = " orderRecordsList = " + orderRecordsList.Count.ToString();
             foreach (var item in orderRecordsList)
@@ -945,16 +967,16 @@ namespace ProjectPi.Controllers
                 foreach (var index in indexList)
                 {
                     Appointment appointments = new Appointment();
-                    appointments = _db.Appointments.Where(x => x.MyOrder.Id == index && x.ReserveStatus=="已完成").OrderByDescending(x=>x.AppointmentTime).FirstOrDefault();
+                    appointments = _db.Appointments.Where(x => x.MyOrder.Id == index && x.ReserveStatus == "已完成").OrderByDescending(x => x.AppointmentTime).FirstOrDefault();
                     if (appointments != null)
                     {
                         isDone = true;
                         time = (DateTime)appointments.AppointmentTime;
                         field = appointments.MyOrder.Field;
                     }
-                   
+
                 }
-                if(isDone)
+                if (isDone)
                 {
                     appointmentLogs.Name = item.UserName;
                     appointmentLogs.Field = field;
@@ -962,7 +984,7 @@ namespace ProjectPi.Controllers
                     appointmentLogs.AppointmentTime = time.ToString("HH:mm");
                     appointmentLogsList.Add(appointmentLogs);
                 }
-           
+
             }
 
             //判斷有沒有已成立的課程
@@ -996,20 +1018,20 @@ namespace ProjectPi.Controllers
             List<Appointment> appointmentsList = new List<Appointment>();
             if (counselor == null) return BadRequest("id不存在");
             var orderRecordsList = _db.OrderRecords.Where(x => x.CounselorName == counselor.Name && x.UserName == view.Name && x.OrderStatus == "已成立")
-                .Select(x => new { x.UserName, x.CounselorName ,x.Id }).ToList();
+                .Select(x => new { x.UserName, x.CounselorName, x.Id }).ToList();
 
             var orderRecordsListCheck = _db.OrderRecords.Where(x => x.UserName == view.Name).FirstOrDefault();
             if (orderRecordsListCheck == null) return BadRequest("此參數沒有紀錄");
-            var msg = "counselor.Name = " + counselor.Name  + " view.Name = " + view.Name ;
+            var msg = "counselor.Name = " + counselor.Name + " view.Name = " + view.Name;
             DateTime time = DateTime.Now;
             string field = "";
             msg += " orderRecordsList = " + orderRecordsList.Count.ToString();
-            
+
             foreach (var item in orderRecordsList)
             {
                 //Appointment appointment = new Appointment();
                 appointmentsList = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已完成").ToList();
-                foreach(var itemA in appointmentsList)
+                foreach (var itemA in appointmentsList)
                 {
                     if (appointmentsList != null)
                     {
