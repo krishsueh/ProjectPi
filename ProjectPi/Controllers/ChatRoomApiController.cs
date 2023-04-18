@@ -123,7 +123,7 @@ namespace ProjectPi.Controllers
             try
             {
                 string photo = _db.Counselors.Where(x => x.Id == CounselorId).Select(x => new { x.Photo }).FirstOrDefault().Photo;
-                if (string.IsNullOrEmpty(photo)) photo = "UserPhoto.png";
+                if (string.IsNullOrEmpty(photo)) photo = "user_profile.svg";
                 
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
@@ -272,7 +272,7 @@ namespace ProjectPi.Controllers
                         userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTarget.Type = item.Type;
                         userChatTarget.Photo = counselor.Photo;
-                        if (userChatTarget.Photo == null) userChatTarget.Photo = "UserPhoto.png";
+                        if (userChatTarget.Photo == null) userChatTarget.Photo = "user_profile.svg";
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
