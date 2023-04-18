@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -32,11 +31,8 @@ namespace ProjectPi.Controllers
         {
 
             ApiResponse result = new ApiResponse();
-
-
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var now = DateTime.Now;
-
             var apiSecret = "7S2JIaMSBmx32CLpYAVtZ3ThTQ897kplWlIM";
             byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
             var tokenDescriptor = new SecurityTokenDescriptor
