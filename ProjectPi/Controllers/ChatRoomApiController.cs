@@ -314,12 +314,12 @@ namespace ProjectPi.Controllers
         //[JwtAuthFilter]
         [Route("api/chatroom/getTatgetCounselor")]
         [SwaggerResponse(typeof(ApiResponse))]
-        public IHttpActionResult GetTatgetCounselor()
+        public async Task<IHttpActionResult> GetTatgetCounselor()
         {
             ApiResponse result = new ApiResponse();
           
 
-            var counselorList = _db.Counselors.Select(x => new { x.Id, x.Name });
+            var counselorList = await Task.Run(() => _db.Counselors.Select(x => new { x.Id, x.Name }));
             result.Success = true;
             result.Message = "取得諮商師目標";
             result.Data = new { counselorList };
