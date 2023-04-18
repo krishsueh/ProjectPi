@@ -191,7 +191,7 @@ namespace ProjectPi.Controllers
                     WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(x.Key.DayOfWeek)[2],
                     Hours = x.Select(y => new
                     {
-                        TimeId = y.Id,
+                        AppointmentTimeId = y.Id,
                         Time = y.Time,
                         Availability = y.Availability,
                     }).ToList()

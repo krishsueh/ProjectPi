@@ -646,78 +646,41 @@ namespace ProjectPi.Controllers
                 int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
                 DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
 
-                // 判斷是新增預約時間，還是修改預約時間
-                if (findAppointment.AppointmentTime == null)
+                if (findAppointment.AppointmentTimeId == 0) //新增
                 {
-                    // 新增，去諮商師 Timetable 尋找該時段，並將開放時段關閉
-                    var counselorTimetable = _db.Timetables.Where(x => x.Id == view.DateTimeId).FirstOrDefault();
-                    counselorTimetable.Availability = false;
-                    _db.SaveChanges();
-                }
-                else
-                {
-                    // 修改，去諮商師 Timetable 尋找該時段，並將舊時段開啟，新時段關閉
-                    //var oldTime = _db.Timetables.Where(x => x.Id == findAppointment.DateTimeId).FirstOrDefault();
-                    //oldTime.Availability = true;
+                    var selectTime = _db.Timetables.Where(x => x.Id == view.AppointmentTimeId).FirstOrDefault();
 
-                    var newTime = _db.Timetables.Where(x => x.Id == view.DateTimeId).FirstOrDefault();
+                    selectTime.Availability = false;
+                    findAppointment.AppointmentTimeId = view.AppointmentTimeId;
+                    findAppointment.AppointmentTime = dateTimeValue;
+                    findAppointment.ReserveStatus = "待回覆";
+                    _db.SaveChanges();
+
+                    ApiResponse result = new ApiResponse { };
+                    result.Success = true;
+                    result.Message = "預約完成，請待諮商師接收預約";
+                    result.Data = null;
+                    return Ok(result);
+                }
+                else // 更改時間，將舊時段開啟，新時段關閉
+                {
+                    var oldTime = _db.Timetables.Where(x => x.Id == findAppointment.AppointmentTimeId).FirstOrDefault();
+                    var newTime = _db.Timetables.Where(x => x.Id == view.AppointmentTimeId).FirstOrDefault();
+                    
+                    oldTime.Availability = true;
                     newTime.Availability = false;
+                    findAppointment.AppointmentTimeId = view.AppointmentTimeId;
+                    findAppointment.AppointmentTime = dateTimeValue;
                     _db.SaveChanges();
+
+                    ApiResponse result = new ApiResponse { };
+                    result.Success = true;
+                    result.Message = "成功修改預約時間，請待諮商師接收預約";
+                    result.Data = null;
+                    return Ok(result);
                 }
-
-                findAppointment.AppointmentTime = dateTimeValue;
-                findAppointment.ReserveStatus = "待回覆";
-                _db.SaveChanges();
             }
-
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            if (findAppointment.AppointmentTime != null)  //修改預約時段
-                result.Message = "成功修改預約時間，請待諮商師接收預約";
-            else //新增預約時段
-                result.Message = "預約完成，請待諮商師接收預約";
-            result.Data = null;
-            return Ok(result);
         }
-
-        ///// <summary>
-        ///// 修改預約時段
-        ///// </summary>
-        ///// <returns></returns>
-        //[HttpPut]
-        //[Route("api/apptTime")]
-        //[JwtAuthFilter]
-        //public IHttpActionResult PutApptTime(ViewModel_U.AppointmentTime view)
-        //{
-        //    var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
-        //    int userId = (int)userToken["Id"];
-        //    string userName = (string)userToken["Name"];
-
-        //    var findAppointment = _db.Appointments
-        //        .Where(x => x.MyOrder.UserName == userName && x.Id == view.AppointmentId)
-        //        .FirstOrDefault();
-
-        //    if (findAppointment == null)
-        //        return BadRequest("查無此筆預約紀錄");
-        //    else
-        //    {
-        //        int year = int.Parse(view.DateTimeValue.Year);
-        //        int month = int.Parse(view.DateTimeValue.Month);
-        //        int day = int.Parse(view.DateTimeValue.Day);
-        //        int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
-        //        DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
-
-        //        findAppointment.AppointmentTime = dateTimeValue;
-        //        findAppointment.ReserveStatus = "待回覆";
-        //        _db.SaveChanges();
-        //    }
-
-        //    ApiResponse result = new ApiResponse { };
-        //    result.Success = true;
-        //    result.Message = "成功修改預約時段";
-        //    result.Data = null;
-        //    return Ok(result);
-        //}
 
         /// <summary>
         /// 取得預約管理明細 (諮商師)

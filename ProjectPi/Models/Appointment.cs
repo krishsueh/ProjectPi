@@ -33,6 +33,12 @@ namespace ProjectPi.Models
         public string ReserveStatus { get; set; }
 
         /// <summary>
+        /// 預約時間編號
+        /// </summary>
+        [Display(Name = "預約時間編號")]
+        public int AppointmentTimeId { get; set; }
+
+        /// <summary>
         /// 預約時間
         /// </summary>
         [Display(Name = "預約時間")]

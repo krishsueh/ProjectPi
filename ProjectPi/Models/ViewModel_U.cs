@@ -159,7 +159,7 @@ namespace ProjectPi.Models
             /// 預約時間編號
             /// </summary>
             [Display(Name = "預約時間編號")]
-            public int DateTimeId { get; set; }
+            public int AppointmentTimeId { get; set; }
 
             /// <summary>
             /// 預約時間
