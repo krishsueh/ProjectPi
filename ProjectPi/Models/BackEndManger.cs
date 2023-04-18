@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 後端管理Model
+    /// </summary>
     public class BackEndManger
     {
         /// <summary>
@@ -26,7 +29,7 @@ namespace ProjectPi.Models
         public string Name { get; set; }
 
         /// <summary>
-        /// 性別
+        /// 後端管理性別
         /// </summary>
         [Required]
         [MaxLength(50)]
@@ -34,7 +37,7 @@ namespace ProjectPi.Models
         public string Sex { get; set; }
 
         /// <summary>
-        /// 生日
+        /// 後端管理生日
         /// </summary>
         [Display(Name = "生日")]
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:d}")]
@@ -62,7 +65,7 @@ namespace ProjectPi.Models
         public string Password { get; set; }
 
         /// <summary>
-        /// 權限
+        /// 後端管理權限
         /// </summary>
         [Required]
         [Display(Name = "權限")]

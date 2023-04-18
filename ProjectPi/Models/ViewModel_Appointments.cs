@@ -16,6 +16,9 @@ namespace ProjectPi.Models
         [Display(Name = "紀錄內容")]
         public string CounsellingRecord { get; set; }
     }
+    /// <summary>
+    /// 取得諮商課程內容
+    /// </summary>
     public class AppointmentLogs_Record
     {
         [Display(Name = "個案姓名")]
@@ -45,6 +48,9 @@ namespace ProjectPi.Models
         [Display(Name = "個案姓名")]
         public string Name { get; set; }
     }
+    /// <summary>
+    /// 個案評價諮商課程
+    /// </summary>
     public class AppointmentLogs_Comment
     {
         [Display(Name = "課程編號")]
@@ -54,6 +60,9 @@ namespace ProjectPi.Models
         [Display(Name = "個案評分")]
         public int Star { get; set; }
     }
+    /// <summary>
+    /// 諮商時間課程內容
+    /// </summary>
     public class AppointmentLogs
     {
         [Display(Name = "個案姓名")]

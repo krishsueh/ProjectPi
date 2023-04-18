@@ -5,15 +5,21 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 聊天室連線的成員註冊
+    /// </summary>
     public class UserInfo
     {
         public int Id { get; set; }
+        /// <summary>
+        /// SiganlR會給每個人獨立的ConnectionId
+        /// </summary>
         public string ConnectionID { get; set; }
         public string UserName { get; set; }
         
         public string UserType { get; set; }
 
-        //构造函数
+        //建構值
         public UserInfo(string cid, string unm, string UserType)
         {
             this.ConnectionID = cid;
@@ -21,7 +27,9 @@ namespace ProjectPi.Models
             this.UserType = UserType;
         }
     }
-
+    /// <summary>
+    /// 回傳給前端聊天室訊息
+    /// </summary>
     public class UserChatTarget
     {
 

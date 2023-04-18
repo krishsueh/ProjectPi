@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 諮商師
+    /// </summary>
     public class Counselor
     {
         /// <summary>
