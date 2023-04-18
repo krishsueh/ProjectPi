@@ -586,11 +586,16 @@ namespace ProjectPi.Controllers
                     }
                     var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
                     var spanTime = (DateTime)ApptList.AppointmentTime - DateTime.Now;
+                    result.Success = true;
+                    result.Message = "時間快到囉~";
+                    result.Data = new { orderRecordsList };
+                    return Ok(result);
+
                     if (ApptList.AppointmentTime != null && ((spanTime.TotalMinutes < 60) || spanTime.TotalMinutes>-20) )
                     {//預約四點 -現在三點>60  預約4點 現在4點20分
                         result.Success = true;
                         result.Message = "時間快到囉~";
-                        result.Data = new { ApptList , appointmentsList };
+                        result.Data = new { TotalMinutes= spanTime, ApptList, appointmentsList };
                         return Ok(result);
                     }
                     else
