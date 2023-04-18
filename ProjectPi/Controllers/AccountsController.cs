@@ -558,7 +558,7 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 儲存諮商師執照
+        /// 得到ZoomUrl
         /// </summary>
         /// <returns></returns>
         [Route("api/getZoomUrl")]

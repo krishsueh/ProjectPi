@@ -815,6 +815,7 @@ namespace ProjectPi.Controllers
                 var jObject = JObject.Parse(restResponse.Content);
                 //result.Data = new { Host = (string)jObject["start_url"], Join = (string)jObject["join_url"], Code = Convert.ToString(numericStatusCode) };
                 findAppointment.ZoomLink = (string)jObject["join_url"];
+                
                 findAppointment.ReserveStatus = "已成立";
                 _db.SaveChanges();
             }
