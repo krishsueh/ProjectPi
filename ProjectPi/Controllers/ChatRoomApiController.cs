@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace ProjectPi.Controllers
@@ -14,6 +15,7 @@ namespace ProjectPi.Controllers
     [OpenApiTag("ChatRoom", Description = "聊天室")]
     public class ChatRoomApiController : ApiController
     {
+        PiDbContext _db = new PiDbContext();
         /// <summary>
         /// 儲存聊天內容
         /// </summary>
@@ -22,11 +24,11 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/chatroom/chatlogs")]
-        [JwtAuthFilter]
+        //[JwtAuthFilter]
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult PostChatlogs(ChatRoom ChatRoom)
         {
-            PiDbContext _db = new PiDbContext();
+        
             ApiResponse result = new ApiResponse();
 
             ChatRoom _chatroom = new ChatRoom();
@@ -72,12 +74,12 @@ namespace ProjectPi.Controllers
         /// <response code="200">取得全部聊天內容</response>
         /// <returns></returns>
         [HttpGet]
-        [JwtAuthFilter]
+        //[JwtAuthFilter]
         [Route("api/chatroom/GetChatlogs")]
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult GetChatlogs(int CounselorId, int UserId, string UserType)
         {
-            PiDbContext _db = new PiDbContext();
+            
             ApiResponse result = new ApiResponse();
 
             if (!_db.ChatRooms.Where(x => x.CounselorId == CounselorId).Any())
@@ -139,12 +141,12 @@ namespace ProjectPi.Controllers
         /// <response code="200">取得所有人聊天紀錄</response>
         /// <returns></returns>
         [HttpGet]
-        [JwtAuthFilter]
+        //[JwtAuthFilter]
         [Route("api/chatroom/lastMsgTarget")]
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult LastMsgTarget(int Id, string Type)
         {
-            PiDbContext _db = new PiDbContext();
+           
             ApiResponse result = new ApiResponse();
             var targetList = _db.ChatRooms.Select(x => new {
                 x.Id,
@@ -309,18 +311,47 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [JwtAuthFilter]
+        //[JwtAuthFilter]
         [Route("api/chatroom/getTatgetCounselor")]
         [SwaggerResponse(typeof(ApiResponse))]
-        public IHttpActionResult GetTatgetCounselor()
+        public async Task<IHttpActionResult> GetTatgetCounselor()
         {
             ApiResponse result = new ApiResponse();
-            PiDbContext _db = new PiDbContext();
+          
 
-            var counselorList = _db.Counselors.Select(x => new { x.Id, x.Name });
+            var counselorList = await Task.Run(() => _db.Counselors.Select(x => new { x.Id, x.Name }));
             result.Success = true;
             result.Message = "取得諮商師目標";
             result.Data = new { counselorList };
+            return Ok(result);
+        }
+
+
+        /// <summary>
+        /// 已讀雙方的所有訊息
+        /// </summary>
+        /// <param name="UserId"></param>
+        /// <param name="CounselorId"></param>
+        /// <returns></returns>
+        [HttpPost]
+        //[JwtAuthFilter]
+        [Route("api/chatroom/PostReadChatRoom")]
+        [SwaggerResponse(typeof(ApiResponse))]
+        public async Task<IHttpActionResult> PostReadChatRoom(int UserId , int CounselorId)
+        {
+            ApiResponse result = new ApiResponse();
+            if(_db.ChatRooms.Where(c => c.UserId == UserId && c.CounselorId == CounselorId).Any())
+            {
+               
+                return BadRequest("沒有聊天紀錄");
+            }
+            _db.ChatRooms
+                    .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                    .ToList()
+                    .ForEach(c => { c.UserRead = true; c.CounselorRead = true; });
+            await _db.SaveChangesAsync();
+            result.Success = true;
+            result.Message = "已讀對方訊息";
             return Ok(result);
         }
         //**
