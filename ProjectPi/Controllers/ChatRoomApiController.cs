@@ -26,7 +26,7 @@ namespace ProjectPi.Controllers
         [Route("api/chatroom/chatlogs")]
         //[JwtAuthFilter]
         [SwaggerResponse(typeof(ApiResponse))]
-        public IHttpActionResult PostChatlogs(ChatRoom ChatRoom)
+        public IHttpActionResult PostChatlogs(ViewModel.PostChatRoomLog view)
         {
         
             ApiResponse result = new ApiResponse();
@@ -34,10 +34,10 @@ namespace ProjectPi.Controllers
             ChatRoom _chatroom = new ChatRoom();
             try
             {
-                _chatroom.CounselorId = ChatRoom.CounselorId;
-                _chatroom.UserId = ChatRoom.UserId;
-                _chatroom.Content = ChatRoom.Content;
-                _chatroom.Type = ChatRoom.Type;
+                _chatroom.CounselorId = view.CounselorId;
+                _chatroom.UserId = view.UserId;
+                _chatroom.Content = view.Content;
+                _chatroom.Type = view.Type;
                 _chatroom.InitDate = DateTime.Now;
                 
                 if (_chatroom.Type == "send")
@@ -112,7 +112,7 @@ namespace ProjectPi.Controllers
             }
             _db.SaveChanges();
 
-            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.InitDate });
+            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type,x.UserRead,x.CounselorRead, x.InitDate });
 
             if (!chatlogList.Any())
             {
