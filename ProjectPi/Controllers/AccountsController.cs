@@ -585,11 +585,12 @@ namespace ProjectPi.Controllers
                         //var url = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus== "已成立").OrderBy(x=>x.AppointmentTime).Select(x=>new { x.ZoomLink , x.AppointmentTime}).FirstOrDefault();
                     }
                     var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
-                    if (ApptList.AppointmentTime != null && (DateTime.Now - (DateTime)ApptList.AppointmentTime).TotalMinutes < 10)
-                    {
+                    var spanTime = (DateTime)ApptList.AppointmentTime - DateTime.Now;
+                    if (ApptList.AppointmentTime != null && ((spanTime.TotalMinutes < 60) || spanTime.TotalMinutes>-20) )
+                    {//預約四點 -現在三點>60  預約4點 現在4點20分
                         result.Success = true;
                         result.Message = "時間快到囉~";
-                        result.Data = new { ApptList };
+                        result.Data = new { ApptList , appointmentsList };
                         return Ok(result);
                     }
                     else
