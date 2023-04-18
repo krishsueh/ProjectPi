@@ -577,20 +577,34 @@ namespace ProjectPi.Controllers
                 List<OrderRecord> orderRecordsList = _db.OrderRecords.Where(x => x.CounselorId == counselor.Id && x.OrderStatus == "已成立").ToList();
                 if (orderRecordsList != null)
                 {
-                    foreach (var item in orderRecordsList)
+                    try
                     {
-                        Appointment appointment = new Appointment();
-                        appointment = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已成立").FirstOrDefault();
-                        if (appointment != null) appointmentsList.Add(appointment);
-                        //var url = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus== "已成立").OrderBy(x=>x.AppointmentTime).Select(x=>new { x.ZoomLink , x.AppointmentTime}).FirstOrDefault();
-                    }
-                    var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
-                    var spanTime = (DateTime)ApptList.AppointmentTime - DateTime.Now;
-                    result.Success = true;
-                    result.Message = "時間快到囉~";
-                    result.Data = new { orderRecordsList };
-                    return Ok(result);
+                        foreach (var item in orderRecordsList)
+                        {
+                            Appointment appointment = new Appointment();
+                            appointment = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已成立").FirstOrDefault();
+                            if (appointment != null)
+                            {
+                                // Remove the circular reference to MyOrder in Appointment object
+                                appointment.MyOrder = null;
+                                appointmentsList.Add(appointment);
+                            }
+                            //var url = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus== "已成立").OrderBy(x=>x.AppointmentTime).Select(x=>new { x.ZoomLink , x.AppointmentTime}).FirstOrDefault();
+                        }
+                        var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
+                        var spanTime = (DateTime)ApptList.AppointmentTime - DateTime.Now;
+                        //var appointmentt = _db.Appointments.Where(x => x.OrderId == orderRecordsList.FirstOrDefault().Id && x.ReserveStatus == "已成立").FirstOrDefault();
 
+                        result.Success = true;
+                        result.Message = "時間快到囉~";
+                        result.Data = new { appointmentsList };
+                        return Ok(result);
+                    }
+                    catch(Exception ex)
+                    {
+                        return BadRequest("error: "+ex);
+                    }
+                    /*
                     if (ApptList.AppointmentTime != null && ((spanTime.TotalMinutes < 60) || spanTime.TotalMinutes>-20) )
                     {//預約四點 -現在三點>60  預約4點 現在4點20分
                         result.Success = true;
@@ -603,7 +617,8 @@ namespace ProjectPi.Controllers
                         result.Success = true;
                         result.Message = "沒有連結";
                         return Ok(result);
-                    }
+                    }*/
+                    return Ok();
                 }
                 else
                 {
