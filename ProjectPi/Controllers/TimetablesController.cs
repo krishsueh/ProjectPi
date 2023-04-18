@@ -272,7 +272,6 @@ namespace ProjectPi.Controllers
 
                     endFalseDates.Add(falseDates);
                 }
-
                 // 再將 falseDates 塞入資料尾部
                 allDateList = newDateList.Concat(endFalseDates.Take(days)).ToList();
             }

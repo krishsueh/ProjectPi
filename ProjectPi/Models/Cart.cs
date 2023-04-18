@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 購物車
+    /// </summary>
     public class Cart
     {
         /// <summary>

@@ -14,7 +14,7 @@ namespace ProjectPi.SignalRHub
     {
         private static List<UserInfo> USERLIST = new List<UserInfo>();
         PiDbContext _db = new PiDbContext();
-        //连接
+        //連接
         public override Task OnConnected()
         {
 
@@ -28,7 +28,7 @@ namespace ProjectPi.SignalRHub
             return base.OnConnected();
         }
 
-        //断开
+        //斷開
         public override Task OnDisconnected(bool stopCalled)
         {
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
@@ -43,18 +43,18 @@ namespace ProjectPi.SignalRHub
 
 
         /// <summary>
-        /// 广播登陆用户列表到全体连接客户端
+        /// 廣播登陸用戶列表到全體連接客戶端
         /// </summary>
         [HubMethodName("showAllUser")]
         public void ShowAllUser()
         {
             string userJson = Newtonsoft.Json.JsonConvert.SerializeObject(USERLIST);
             Clients.All.broadcastUserList(userJson);
-            //前端js定义 function broadcastUserList(userList)
+            //前端js定義 function broadcastUserList(userList)
         }
 
         /// <summary>
-        /// 登陆时设置名字
+        /// 登陸時設置名字
         /// </summary>
         /// <param name="inputName"></param>
         [HubMethodName("setUserName")]
@@ -65,7 +65,7 @@ namespace ProjectPi.SignalRHub
             {
                 currentUser.UserName = inputName;
             }
-            //广播给全体客户端
+            //廣播給全部客戶端
             //this.ShowAllUser();
         }
 
@@ -123,13 +123,13 @@ namespace ProjectPi.SignalRHub
                 Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id,message, myType);
                 Clients.Client(outsideUser.ConnectionID).showLastMsg();
                 Clients.Client(outsideUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString());
-                //对方  和  我方 的界面都要显示语录
+                //雙方的界面都要渲染，透過伺服器呼叫雙方的JS的Method重新渲染畫面
             }
             /*
              離線訊息不用渲染OR 提示
             else
             {
-                Clients.Client(myUser.ConnectionID).showMessage(outsideUser.UserName + outsideUser.ConnectionID, "离线");
+                Clients.Client(myUser.ConnectionID).showMessage(outsideUser.UserName + outsideUser.ConnectionID, "離線");
             }
             */
         }
