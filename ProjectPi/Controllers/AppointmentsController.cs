@@ -654,46 +654,22 @@ namespace ProjectPi.Controllers
                 return BadRequest("查無此筆預約紀錄");
             else
             {
-                // 前端傳入用戶選擇的預約時間
                 int year = int.Parse(view.DateTimeValue.Year);
                 int month = int.Parse(view.DateTimeValue.Month);
                 int day = int.Parse(view.DateTimeValue.Day);
                 int hour = int.Parse(view.DateTimeValue.Hour.Split(':')[0]);
                 DateTime dateTimeValue = new DateTime(year, month, day, hour, 00, 0);
 
-                if (findAppointment.AppointmentTimeId == 0) //新增
-                {
-                    var selectTime = _db.Timetables.Where(x => x.Id == view.AppointmentTimeId).FirstOrDefault();
+                findAppointment.AppointmentTimeId = view.AppointmentTimeId;
+                findAppointment.AppointmentTime = dateTimeValue;
+                findAppointment.ReserveStatus = "待回覆";
+                _db.SaveChanges();
 
-                    selectTime.Availability = false;
-                    findAppointment.AppointmentTimeId = view.AppointmentTimeId;
-                    findAppointment.AppointmentTime = dateTimeValue;
-                    findAppointment.ReserveStatus = "待回覆";
-                    _db.SaveChanges();
-
-                    ApiResponse result = new ApiResponse { };
-                    result.Success = true;
-                    result.Message = "預約完成，請待諮商師接收預約";
-                    result.Data = null;
-                    return Ok(result);
-                }
-                else // 更改時間，將舊時段開啟，新時段關閉
-                {
-                    var oldTime = _db.Timetables.Where(x => x.Id == findAppointment.AppointmentTimeId).FirstOrDefault();
-                    var newTime = _db.Timetables.Where(x => x.Id == view.AppointmentTimeId).FirstOrDefault();
-                    
-                    oldTime.Availability = true;
-                    newTime.Availability = false;
-                    findAppointment.AppointmentTimeId = view.AppointmentTimeId;
-                    findAppointment.AppointmentTime = dateTimeValue;
-                    _db.SaveChanges();
-
-                    ApiResponse result = new ApiResponse { };
-                    result.Success = true;
-                    result.Message = "成功修改預約時間，請待諮商師接收預約";
-                    result.Data = null;
-                    return Ok(result);
-                }
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "預約完成，請待諮商師接收預約";
+                result.Data = null;
+                return Ok(result);
             }
         }
 
@@ -822,7 +798,10 @@ namespace ProjectPi.Controllers
                 var jObject = JObject.Parse(restResponse.Content);
                 //result.Data = new { Host = (string)jObject["start_url"], Join = (string)jObject["join_url"], Code = Convert.ToString(numericStatusCode) };
                 findAppointment.ZoomLink = (string)jObject["join_url"];
-                
+
+
+                var selectedTime = _db.Timetables.Where(x => x.Id == findAppointment.AppointmentTimeId).FirstOrDefault();
+                selectedTime.Availability = false;
                 findAppointment.ReserveStatus = "已成立";
                 _db.SaveChanges();
             }
