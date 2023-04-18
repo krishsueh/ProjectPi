@@ -532,7 +532,16 @@ namespace ProjectPi.Controllers
                     .ToList();
 
             if (!findAppointment.Any())
-                return BadRequest("尚無訂單紀錄");
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "尚無紀錄",
+                    Data = new
+                    {
+                        TotalPageNum = 0,
+                        List = new object[0]
+                    }
+                });
             else
             {
                 ApiResponse result = new ApiResponse { };
@@ -702,7 +711,15 @@ namespace ProjectPi.Controllers
                 .ToList();
 
             if (!findAppointment.Any())
-                return BadRequest("尚無訂單紀錄");
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "尚無紀錄",
+                    Data = new {
+                        TotalPageNum = 0,
+                        List = new object[0]
+                    }
+                });
             else
             {
                 if (status != "待回覆" && status == "已成立" && status == "已取消")
