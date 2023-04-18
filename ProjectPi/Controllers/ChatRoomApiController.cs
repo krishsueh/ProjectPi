@@ -122,9 +122,12 @@ namespace ProjectPi.Controllers
             }
             try
             {
+                string photo = _db.Counselors.Where(x => x.Id == CounselorId).Select(x => new { x.Photo }).FirstOrDefault().Photo;
+                if (string.IsNullOrEmpty(photo)) photo = "UserPhoto.png";
+                
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
-                result.Data = new { Photo = _db.Counselors.Where(x=>x.Id == CounselorId).Select(x=>new { x.Photo}).FirstOrDefault(), ChatlogList = chatlogList };
+                result.Data = new { Photo = photo , ChatlogList = chatlogList };
 
                 return Ok(result);
             }
@@ -269,7 +272,7 @@ namespace ProjectPi.Controllers
                         userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTarget.Type = item.Type;
                         userChatTarget.Photo = counselor.Photo;
-                      
+                        if (userChatTarget.Photo == null) userChatTarget.Photo = "UserPhoto.png";
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
