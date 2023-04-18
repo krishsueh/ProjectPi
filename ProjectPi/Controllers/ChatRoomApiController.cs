@@ -326,6 +326,13 @@ namespace ProjectPi.Controllers
             return Ok(result);
         }
 
+
+        /// <summary>
+        /// 已讀雙方的所有訊息
+        /// </summary>
+        /// <param name="UserId"></param>
+        /// <param name="CounselorId"></param>
+        /// <returns></returns>
         [HttpPost]
         //[JwtAuthFilter]
         [Route("api/chatroom/PostReadChatRoom")]
