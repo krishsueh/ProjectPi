@@ -123,8 +123,8 @@ namespace ProjectPi.Controllers
             try
             {
                 string photo = _db.Counselors.Where(x => x.Id == CounselorId).Select(x => new { x.Photo }).FirstOrDefault().Photo;
-                if (string.IsNullOrEmpty(photo)) photo = "user_profile.svg";
-                
+                if (string.IsNullOrEmpty(photo)) photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
+                else photo = "https://pi.rocket-coding.com/upload/headshot/"+photo;
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
                 result.Data = new { Photo = photo , ChatlogList = chatlogList };
@@ -272,7 +272,9 @@ namespace ProjectPi.Controllers
                         userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTarget.Type = item.Type;
                         userChatTarget.Photo = counselor.Photo;
-                        if (userChatTarget.Photo == null) userChatTarget.Photo = "user_profile.svg";
+                        if (userChatTarget.Photo == null) userChatTarget.Photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
+                        else userChatTarget.Photo = "https://pi.rocket-coding.com/upload/headshot/" + userChatTarget.Photo;
+
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
