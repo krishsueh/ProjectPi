@@ -160,7 +160,17 @@ namespace ProjectPi.Controllers
             //因為即使查詢沒有回傳任何資料，hasProduct 仍然是一個空的 List 物件，而不是 null
             if (!hasProduct.Any())
             {
-                return BadRequest("尚未新增課程資訊");
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "尚未新增課程",
+                    Data = new
+                    {
+                        FieldIds = new int[0],
+                        Courses = new object[0],
+                        Feature = new string[0]
+                    }
+                });
             }
             else
             {
