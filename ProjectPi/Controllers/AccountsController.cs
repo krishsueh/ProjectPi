@@ -572,7 +572,7 @@ namespace ProjectPi.Controllers
             Counselor counselor = _db.Counselors.Where(x => x.Account == userAccount).FirstOrDefault();
             User user = _db.Users.Where(x => x.Account == userAccount).FirstOrDefault();
             string url = "";
-            List<Appointment> appointmentsList = new List<Appointment>();
+
             if (counselor != null)
             {
                 var appointmentsWithOrder = _db.Appointments
@@ -582,7 +582,7 @@ namespace ProjectPi.Controllers
                     order => order.Id,
                     (appointment, order) => new { Appointment = appointment, Order = order }
                 )
-                .Where(joined =>  joined.Order.CounselorId == counselor.Id)
+                .Where(joined =>  joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null)
                 .Select(joined => new
                 {
                     AppointmentId = joined.Appointment.Id,
@@ -602,7 +602,7 @@ namespace ProjectPi.Controllers
                 .ToList();
 
                 
-                if (appointmentsWithOrder != null)
+                if (appointmentsWithOrder.Count != 0)
                 {
                     string msg = "";
                     TimeSpan spanTime = TimeSpan.FromMinutes(0);
@@ -618,10 +618,16 @@ namespace ProjectPi.Controllers
                                 break;
                             }
                         }
-                      
+                        if(string.IsNullOrEmpty(url))
+                        {
+                            result.Success = true;
+                            result.Message = "課程時間還沒到";
+                            result.Data = new {};
+                            return Ok(result);
+                        }
                         result.Success = true;
-                        result.Message = "時間快到囉~ ";
-                        result.Data = new { url };
+                        result.Message = "時間快到囉~ " ;
+                        result.Data = new { url  };
                         return Ok(result);
                     }
                     catch (Exception ex)
@@ -647,7 +653,7 @@ namespace ProjectPi.Controllers
                     order => order.Id,
                     (appointment, order) => new { Appointment = appointment, Order = order }
                 )
-                .Where(joined => joined.Order.UserId == user.Id)
+                .Where(joined => joined.Order.UserId == user.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null)
                 .Select(joined => new
                 {
                     AppointmentId = joined.Appointment.Id,
@@ -667,7 +673,7 @@ namespace ProjectPi.Controllers
                 .ToList();
 
 
-                if (appointmentsWithOrder != null)
+                if (appointmentsWithOrder.Count != 0)
                 {
                     string msg = "";
                     TimeSpan spanTime = TimeSpan.FromMinutes(0);
@@ -683,10 +689,16 @@ namespace ProjectPi.Controllers
                                 break;
                             }
                         }
-
+                        if (string.IsNullOrEmpty(url))
+                        {
+                            result.Success = true;
+                            result.Message = "課程時間還沒到";
+                            result.Data = new { };
+                            return Ok(result);
+                        }
                         result.Success = true;
                         result.Message = "時間快到囉~ ";
-                        result.Data = new { url };
+                        result.Data = new { url};
                         return Ok(result);
                     }
                     catch (Exception ex)
@@ -702,6 +714,7 @@ namespace ProjectPi.Controllers
                     result.Message = "沒有成立的訂單";
                     return Ok(result);
                 }
+
             }
             else return BadRequest("Token錯誤");
 
