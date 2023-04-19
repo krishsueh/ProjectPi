@@ -342,18 +342,37 @@ namespace ProjectPi.Controllers
         //[JwtAuthFilter]
         [Route("api/chatroom/PostReadChatRoom")]
         [SwaggerResponse(typeof(ApiResponse))]
-        public async Task<IHttpActionResult> PostReadChatRoom(int UserId , int CounselorId)
+        public async Task<IHttpActionResult> PostReadChatRoom(int UserId , int CounselorId , string MyType)
         {
             ApiResponse result = new ApiResponse();
-            if(_db.ChatRooms.Where(c => c.UserId == UserId && c.CounselorId == CounselorId).Any())
+            if(!_db.ChatRooms.Where(c => c.UserId == UserId && c.CounselorId == CounselorId).Any())
             {
-               
                 return BadRequest("沒有聊天紀錄");
             }
-            _db.ChatRooms
+
+            if (MyType == "user")
+            {
+                _db.ChatRooms
                     .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
                     .ToList()
-                    .ForEach(c => { c.UserRead = true; c.CounselorRead = true; });
+                    .ForEach(c => { c.UserRead = true;  });
+            }
+            else if (MyType == "counselor")
+            {
+                _db.ChatRooms
+                   .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                   .ToList()
+                   .ForEach(c => {  c.CounselorRead = true; });
+            }
+            else if (MyType == "all")
+            {
+                _db.ChatRooms
+                   .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                   .ToList()
+                   .ForEach(c => { c.UserRead = true; c.CounselorRead = true; });
+            }
+            else return BadRequest("MyType輸入錯誤");
+            
             await _db.SaveChangesAsync();
             result.Success = true;
             result.Message = "已讀對方訊息";
