@@ -175,6 +175,8 @@ namespace ProjectPi.Controllers
         [HttpGet]
         public IHttpActionResult GetTimetableBrowser(int id, int page)
         {
+            CultureInfo taiwanCulture = new CultureInfo("zh-TW");
+
             var findTimes = _db.Timetables
                 .Where(x => x.CounselorId == id)
                 .GroupBy(x => x.Date)
@@ -183,30 +185,24 @@ namespace ProjectPi.Controllers
             var dateList = findTimes
                 .Select(x => new
                 {
-                    Year = x.Key.ToShortDateString().Split('/')[0],
-                    Month = x.Key.ToShortDateString().Split('/')[1],
-                    Date = x.Key.ToShortDateString().Split('/')[2],
-                    WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(x.Key.DayOfWeek)[2],
+                    Year = x.Key.ToShortDateString().Split('/')[2],
+                    Month = x.Key.ToShortDateString().Split('/')[0],
+                    Date = x.Key.ToShortDateString().Split('/')[1],
+                    WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(x.Key.DayOfWeek)[2],
                     Hours = x.Select(y => new
                     {
+                        AppointmentTimeId = y.Id,
                         Time = y.Time,
                         Availability = y.Availability,
                     }).ToList()
                 })
                 .ToList();
 
-            int year, month, day;
             // 諮商師可約的第一天
-            year = int.Parse(dateList.FirstOrDefault().Year);
-            month = int.Parse(dateList.FirstOrDefault().Month);
-            day = int.Parse(dateList.FirstOrDefault().Date);
-            DateTime firstDayOfAvailable = new DateTime(year, month, day);
+            DateTime firstDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Min(x => x.Date);
 
             // 諮商師可約的最後一天
-            year = int.Parse(dateList.LastOrDefault().Year);
-            month = int.Parse(dateList.LastOrDefault().Month);
-            day = int.Parse(dateList.LastOrDefault().Date);
-            DateTime lastDayOfAvailable = new DateTime(year, month, day);
+            DateTime lastDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Max(x => x.Date);
 
             // 日曆顯示的第一天
             DateTime today = DateTime.Today;
@@ -216,7 +212,7 @@ namespace ProjectPi.Controllers
 
             // 頭部資料處理
             var newDateList = new List<object>();
-            if ((firstDayOfAvailable - today).Days >=0)
+            if ((firstDayOfAvailable - today).Days >= 0)
             {
                 // 產出開頭需補足資料
                 var frontFalseDates = new List<object>();
@@ -224,10 +220,11 @@ namespace ProjectPi.Controllers
                 {
                     var falseDates = new
                     {
-                        Year = today.AddDays(i).ToShortDateString().Split('/')[0],
-                        Month = today.AddDays(i).ToShortDateString().Split('/')[1],
-                        Date = today.AddDays(i).ToShortDateString().Split('/')[2],
-                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(today.AddDays(i).DayOfWeek)[2]
+                        Year = today.AddDays(i).ToShortDateString().Split('/')[2],
+                        Month = today.AddDays(i).ToShortDateString().Split('/')[0],
+                        Date = today.AddDays(i).ToShortDateString().Split('/')[1],
+                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i).DayOfWeek)[2],
+                        Hours = FalseDate()
                     };
 
                     frontFalseDates.Add(falseDates);
@@ -253,7 +250,7 @@ namespace ProjectPi.Controllers
             else
             {
                 // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
-                
+
                 // 須補足的天數
                 int days = 7 - (newDateList.Count() % 7);
 
@@ -263,10 +260,10 @@ namespace ProjectPi.Controllers
                 {
                     var falseDates = new
                     {
-                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
-                        Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
-                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
-                        WeekDay = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(lastDayOfAvailable.AddDays(i + 1).DayOfWeek)[2],
+                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
+                        Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
+                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
+                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i + 1).DayOfWeek)[2],
                         Hours = FalseDate()
                     };
 
@@ -309,30 +306,30 @@ namespace ProjectPi.Controllers
         {
             var Hours = new[]
             {
-                new { Time = "00:00", Available = false },
-                new { Time = "01:00", Available = false },
-                new { Time = "02:00", Available = false },
-                new { Time = "03:00", Available = false },
-                new { Time = "04:00", Available = false },
-                new { Time = "05:00", Available = false },
-                new { Time = "06:00", Available = false },
-                new { Time = "07:00", Available = false },
-                new { Time = "08:00", Available = false },
-                new { Time = "09:00", Available = false },
-                new { Time = "10:00", Available = false },
-                new { Time = "11:00", Available = false },
-                new { Time = "12:00", Available = false },
-                new { Time = "13:00", Available = false },
-                new { Time = "14:00", Available = false },
-                new { Time = "15:00", Available = false },
-                new { Time = "16:00", Available = false },
-                new { Time = "17:00", Available = false },
-                new { Time = "18:00", Available = false },
-                new { Time = "19:00", Available = false },
-                new { Time = "20:00", Available = false },
-                new { Time = "21:00", Available = false },
-                new { Time = "22:00", Available = false },
-                new { Time = "23:00", Available = false }
+                new { AppointmentTimeId = 0, Time = "00:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "01:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "02:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "03:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "04:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "05:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "06:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "07:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "08:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "09:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "10:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "11:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "12:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "13:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "14:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "15:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "16:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "17:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "18:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "19:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "20:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "21:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "22:00", Available = false },
+                new { AppointmentTimeId = 0, Time = "23:00", Available = false }
             };
             return Hours;
         }
