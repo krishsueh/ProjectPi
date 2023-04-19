@@ -432,7 +432,7 @@ namespace ProjectPi.Controllers
             PiDbContext _db = new PiDbContext();
             ApiResponse result = new ApiResponse();
             //判斷用哪一種方式重設密碼guid / token
-            if(_Password.Password.Length<8)
+            if (_Password.Password.Length < 8)
             {
                 return BadRequest("密碼不能少於8位數");
             }
@@ -448,7 +448,7 @@ namespace ProjectPi.Controllers
                 var newPassword = BitConverter
                            .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                            .Replace("-", null);
-                if(user.Password == newPassword)
+                if (user.Password == newPassword)
                 {
                     return BadRequest("不能與舊密碼相同");
                 }
@@ -569,79 +569,155 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse();
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             string userAccount = userToken["Account"].ToString();
-            Counselor counselor = _db.Counselors.Where(x=>x.Account == userAccount).FirstOrDefault();
+            Counselor counselor = _db.Counselors.Where(x => x.Account == userAccount).FirstOrDefault();
             User user = _db.Users.Where(x => x.Account == userAccount).FirstOrDefault();
-            List<Appointment> appointmentsList = new List<Appointment>();
+            string url = "";
+
             if (counselor != null)
             {
-                List<OrderRecord> orderRecordsList = _db.OrderRecords.Where(x => x.CounselorId == counselor.Id && x.OrderStatus == "已成立").ToList();
-                if (orderRecordsList != null)
+                var appointmentsWithOrder = _db.Appointments
+                .Join(
+                    _db.OrderRecords,
+                    appointment => appointment.OrderId,
+                    order => order.Id,
+                    (appointment, order) => new { Appointment = appointment, Order = order }
+                )
+                .Where(joined =>  joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null)
+                .Select(joined => new
                 {
-                    foreach (var item in orderRecordsList)
+                    AppointmentId = joined.Appointment.Id,
+                    OrderNum = joined.Order.OrderNum,
+                    UserName = joined.Order.UserName,
+                    CounselorName = joined.Order.CounselorName,
+                    AppointmentTime = joined.Appointment.AppointmentTime,
+                    ReserveStatus = joined.Appointment.ReserveStatus,
+                    ZoomLink = joined.Appointment.ZoomLink,
+                    CounsellingRecord = joined.Appointment.CounsellingRecord,
+                    RecordDate = joined.Appointment.RecordDate,
+                    Star = joined.Appointment.Star,
+                    Comment = joined.Appointment.Comment,
+                    InitDate = joined.Appointment.InitDate
+                })
+                .OrderBy(joined => joined.AppointmentTime)
+                .ToList();
+
+                
+                if (appointmentsWithOrder.Count != 0)
+                {
+                    string msg = "";
+                    TimeSpan spanTime = TimeSpan.FromMinutes(0);
+                    try
                     {
-                        Appointment appointment = new Appointment();
-                        appointment = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已成立").FirstOrDefault();
-                        if (appointment != null) appointmentsList.Add(appointment);
-                        //var url = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus== "已成立").OrderBy(x=>x.AppointmentTime).Select(x=>new { x.ZoomLink , x.AppointmentTime}).FirstOrDefault();
-                    }
-                    var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
-                    if (ApptList.AppointmentTime != null && (DateTime.Now - (DateTime)ApptList.AppointmentTime).TotalMinutes < 10)
-                    {
+                        foreach(var item in appointmentsWithOrder)
+                        {
+                            spanTime = (TimeSpan)(item.AppointmentTime - DateTime.Now);
+                            msg += " spanTime = " + spanTime.ToString();
+                            if(spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 60)
+                            {
+                                url = item.ZoomLink;
+                                break;
+                            }
+                        }
+                        if(string.IsNullOrEmpty(url))
+                        {
+                            result.Success = true;
+                            result.Message = "課程時間還沒到";
+                            result.Data = new {};
+                            return Ok(result);
+                        }
                         result.Success = true;
-                        result.Message = "時間快到囉~";
-                        result.Data = new { ApptList };
+                        result.Message = "時間快到囉~ " ;
+                        result.Data = new { url  };
                         return Ok(result);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        result.Success = true;
-                        result.Message = "沒有連結";
-                        return Ok(result);
+                        return BadRequest("error: " + ex);
                     }
+            
+              
                 }
                 else
                 {
                     result.Success = true;
-                    result.Message = "沒有連結";
+                    result.Message = "沒有成立的訂單";
                     return Ok(result);
                 }
             }
             else if (user != null)
             {
-                List<OrderRecord> orderRecordsList = _db.OrderRecords.Where(x => x.UserId == user.Id && x.OrderStatus == "已成立").ToList();
-                if (orderRecordsList != null)
+                var appointmentsWithOrder = _db.Appointments
+                .Join(
+                    _db.OrderRecords,
+                    appointment => appointment.OrderId,
+                    order => order.Id,
+                    (appointment, order) => new { Appointment = appointment, Order = order }
+                )
+                .Where(joined => joined.Order.UserId == user.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null)
+                .Select(joined => new
                 {
-                    foreach (var item in orderRecordsList)
+                    AppointmentId = joined.Appointment.Id,
+                    OrderNum = joined.Order.OrderNum,
+                    UserName = joined.Order.UserName,
+                    CounselorName = joined.Order.CounselorName,
+                    AppointmentTime = joined.Appointment.AppointmentTime,
+                    ReserveStatus = joined.Appointment.ReserveStatus,
+                    ZoomLink = joined.Appointment.ZoomLink,
+                    CounsellingRecord = joined.Appointment.CounsellingRecord,
+                    RecordDate = joined.Appointment.RecordDate,
+                    Star = joined.Appointment.Star,
+                    Comment = joined.Appointment.Comment,
+                    InitDate = joined.Appointment.InitDate
+                })
+                .OrderBy(joined => joined.AppointmentTime)
+                .ToList();
+
+
+                if (appointmentsWithOrder.Count != 0)
+                {
+                    string msg = "";
+                    TimeSpan spanTime = TimeSpan.FromMinutes(0);
+                    try
                     {
-                        Appointment appointment = new Appointment();
-                        appointment = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已成立").FirstOrDefault();
-                        if (appointment != null) appointmentsList.Add(appointment);
-                        //var url = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus== "已成立").OrderBy(x=>x.AppointmentTime).Select(x=>new { x.ZoomLink , x.AppointmentTime}).FirstOrDefault();
-                    }
-                    var ApptList = appointmentsList.OrderBy(x => x.AppointmentTime).Select(x => new { x.AppointmentTime, x.ZoomLink }).FirstOrDefault();
-                    if (ApptList.AppointmentTime != null && (DateTime.Now - (DateTime)ApptList.AppointmentTime).TotalMinutes < 60)
-                    {
+                        foreach (var item in appointmentsWithOrder)
+                        {
+                            spanTime = (TimeSpan)(item.AppointmentTime - DateTime.Now);
+                            msg += " spanTime = " + spanTime.ToString();
+                            if (spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 60)
+                            {
+                                url = item.ZoomLink;
+                                break;
+                            }
+                        }
+                        if (string.IsNullOrEmpty(url))
+                        {
+                            result.Success = true;
+                            result.Message = "課程時間還沒到";
+                            result.Data = new { };
+                            return Ok(result);
+                        }
                         result.Success = true;
-                        result.Message = "時間快到囉~";
-                        result.Data = new { ApptList };
+                        result.Message = "時間快到囉~ ";
+                        result.Data = new { url};
                         return Ok(result);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        result.Success = true;
-                        result.Message = "沒有連結";
-                        return Ok(result);
+                        return BadRequest("error: " + ex);
                     }
+
+
                 }
                 else
                 {
                     result.Success = true;
-                    result.Message = "沒有連結";
+                    result.Message = "沒有成立的訂單";
                     return Ok(result);
                 }
+
             }
             else return BadRequest("Token錯誤");
-            
+
         }
 
     }
