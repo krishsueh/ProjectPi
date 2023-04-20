@@ -26,7 +26,7 @@ namespace ProjectPi.Controllers
         [Route("api/chatroom/chatlogs")]
         //[JwtAuthFilter]
         [SwaggerResponse(typeof(ApiResponse))]
-        public IHttpActionResult PostChatlogs(ChatRoom ChatRoom)
+        public IHttpActionResult PostChatlogs(ViewModel.PostChatRoomLog view)
         {
         
             ApiResponse result = new ApiResponse();
@@ -34,10 +34,10 @@ namespace ProjectPi.Controllers
             ChatRoom _chatroom = new ChatRoom();
             try
             {
-                _chatroom.CounselorId = ChatRoom.CounselorId;
-                _chatroom.UserId = ChatRoom.UserId;
-                _chatroom.Content = ChatRoom.Content;
-                _chatroom.Type = ChatRoom.Type;
+                _chatroom.CounselorId = view.CounselorId;
+                _chatroom.UserId = view.UserId;
+                _chatroom.Content = view.Content;
+                _chatroom.Type = view.Type;
                 _chatroom.InitDate = DateTime.Now;
                 
                 if (_chatroom.Type == "send")
@@ -112,7 +112,7 @@ namespace ProjectPi.Controllers
             }
             _db.SaveChanges();
 
-            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.InitDate });
+            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type,x.UserRead,x.CounselorRead, x.InitDate });
 
             if (!chatlogList.Any())
             {
@@ -122,9 +122,12 @@ namespace ProjectPi.Controllers
             }
             try
             {
+                string photo = _db.Counselors.Where(x => x.Id == CounselorId).Select(x => new { x.Photo }).FirstOrDefault().Photo;
+                if (string.IsNullOrEmpty(photo)) photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
+                else photo = "https://pi.rocket-coding.com/upload/headshot/"+photo;
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
-                result.Data = new { Photo = _db.Counselors.Where(x=>x.Id == CounselorId).Select(x=>new { x.Photo}).FirstOrDefault(), ChatlogList = chatlogList };
+                result.Data = new { Photo = photo , ChatlogList = chatlogList };
 
                 return Ok(result);
             }
@@ -269,7 +272,9 @@ namespace ProjectPi.Controllers
                         userChatTarget.CounselorRead = item.CounselorRead;
                         userChatTarget.Type = item.Type;
                         userChatTarget.Photo = counselor.Photo;
-                      
+                        if (userChatTarget.Photo == null) userChatTarget.Photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
+                        else userChatTarget.Photo = "https://pi.rocket-coding.com/upload/headshot/" + userChatTarget.Photo;
+
                         userChatTargetList.Add(userChatTarget);
                     }
                 }
@@ -337,18 +342,37 @@ namespace ProjectPi.Controllers
         //[JwtAuthFilter]
         [Route("api/chatroom/PostReadChatRoom")]
         [SwaggerResponse(typeof(ApiResponse))]
-        public async Task<IHttpActionResult> PostReadChatRoom(int UserId , int CounselorId)
+        public async Task<IHttpActionResult> PostReadChatRoom(int UserId , int CounselorId , string MyType)
         {
             ApiResponse result = new ApiResponse();
-            if(_db.ChatRooms.Where(c => c.UserId == UserId && c.CounselorId == CounselorId).Any())
+            if(!_db.ChatRooms.Where(c => c.UserId == UserId && c.CounselorId == CounselorId).Any())
             {
-               
                 return BadRequest("沒有聊天紀錄");
             }
-            _db.ChatRooms
+
+            if (MyType == "user")
+            {
+                _db.ChatRooms
                     .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
                     .ToList()
-                    .ForEach(c => { c.UserRead = true; c.CounselorRead = true; });
+                    .ForEach(c => { c.UserRead = true;  });
+            }
+            else if (MyType == "counselor")
+            {
+                _db.ChatRooms
+                   .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                   .ToList()
+                   .ForEach(c => {  c.CounselorRead = true; });
+            }
+            else if (MyType == "all")
+            {
+                _db.ChatRooms
+                   .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                   .ToList()
+                   .ForEach(c => { c.UserRead = true; c.CounselorRead = true; });
+            }
+            else return BadRequest("MyType輸入錯誤");
+            
             await _db.SaveChangesAsync();
             result.Success = true;
             result.Message = "已讀對方訊息";

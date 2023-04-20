@@ -83,5 +83,45 @@ namespace ProjectPi.Models
        
 
         }
+
+        /// <summary>
+        /// 聊天室存訊息VIEW
+        /// </summary>
+        public class PostChatRoomLog
+        {
+
+            /// <summary>
+            /// 諮商師編號
+            /// </summary>
+            [Display(Name = "諮商師編號")]
+            public int CounselorId { get; set; }
+
+            /// <summary>
+            /// 個案編號
+            /// </summary>
+            [Display(Name = "個案編號")]
+            public int UserId { get; set; }
+
+            /// <summary>
+            /// 傳輸類型
+            /// </summary>
+            [MaxLength(10)]
+            [Display(Name = "傳輸類型")]
+            public string Type { get; set; }
+
+            /// <summary>
+            /// 訊息內容
+            /// </summary>
+            [Display(Name = "訊息內容")]
+            public string Content { get; set; }
+
+
+
+
+
+
+        }
+
+
     }
 }
