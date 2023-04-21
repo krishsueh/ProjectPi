@@ -67,9 +67,9 @@ namespace ProjectPi.Controllers
         [HttpPut]
         public IHttpActionResult PutCounselors(ViewModel_C.Profile view)
         {
-            if (view.Name == null)
+            if (String.IsNullOrEmpty(view.Name))
                 return BadRequest("姓名欄必填");
-            else if (view.LicenseImg == null)
+            else if (String.IsNullOrEmpty(view.LicenseImg))
                 return BadRequest("請上傳執照");
             else
             {

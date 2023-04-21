@@ -697,7 +697,8 @@ namespace ProjectPi.Controllers
                 {
                     Success = true,
                     Message = "尚無紀錄",
-                    Data = new {
+                    Data = new
+                    {
                         TotalPageNum = 0,
                         List = new object[0]
                     }
@@ -790,7 +791,7 @@ namespace ProjectPi.Controllers
                 var client = new RestClient("https://api.zoom.us/v2/users/plowrain1328@gmail.com/meetings");
                 var request = new RestRequest(Method.POST);
                 request.RequestFormat = DataFormat.Json;
-                request.AddJsonBody(new { topic = findAppointment.MyOrder.Field , duration = "40", start_time = findAppointment.AppointmentTime, type = 2 });
+                request.AddJsonBody(new { topic = findAppointment.MyOrder.Field, duration = "40", start_time = findAppointment.AppointmentTime, type = 2 });
                 request.AddHeader("authorization", String.Format("Bearer {0}", tokenString));
                 IRestResponse restResponse = client.Execute(request);
                 HttpStatusCode statusCode = restResponse.StatusCode;
@@ -820,7 +821,7 @@ namespace ProjectPi.Controllers
         [HttpPost]
         [Route("api/reAppt")]
         [JwtAuthFilter]
-        public IHttpActionResult PostReAppt(ViewModel_C.Appt view)
+        public IHttpActionResult PostReAppt(ViewModel_C.ReAppt view)
         {
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
@@ -855,7 +856,7 @@ namespace ProjectPi.Controllers
                 string password = ConfigurationManager.AppSettings["GmailPassword"];
                 string sendTo = userEmail;
                 string subject = "【拍拍】預約時段變更請求";
-                string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>您有一則預約時間的變更請求，請立即連繫您的諮商師，重新洽談諮商時間。<br><br>登入平台後，可點擊聊天室尋找您的諮商師。若您未曾與該諮商師建立過聊天視窗，請至該諮商師頁面的【我有問題】創建一個聊天視窗，謝謝您的配合。<br><br><br>諮商師姓名：" + counselorName + "<br><br>課程方案：" + course + "<br><br>預約時間：" + apptDateTime + "</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + loginPath + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>登入</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</ span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
+                string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>您有一則預約時間的變更請求，請立即連繫您的諮商師，重新洽談諮商時間。<br><br>登入平台後，可點擊聊天室尋找您的諮商師。若您未曾與該諮商師建立過聊天視窗，請至該諮商師頁面的【我有問題】創建一個聊天視窗，謝謝您的配合。<br><br><br>諮商師姓名：" + counselorName + "<br><br>課程方案：" + course + "<br><br>預約時間：" + apptDateTime + "<br><br>原因：" + view.Reason + "</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + loginPath + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>登入</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</ span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
 
                 SendGmailMail(sendFrom, sendTo, subject, mailBody, password);
 
