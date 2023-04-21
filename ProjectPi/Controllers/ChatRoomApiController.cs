@@ -30,7 +30,6 @@ namespace ProjectPi.Controllers
         {
         
             ApiResponse result = new ApiResponse();
-
             ChatRoom _chatroom = new ChatRoom();
             try
             {
