@@ -112,17 +112,29 @@ namespace ProjectPi.SignalRHub
         {
             var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
             var outsideUser = USERLIST.FirstOrDefault(x => x.UserType != myType && x.Id == outsideID);
+            var chatMsg = new { CounselorId = outsideID, UserId = myUser.Id, Content = message, Type = "send" , InitDate = DateTime.Now };
+           
+            if (myType == "user")
+            {
+                 chatMsg = new { CounselorId = outsideID , UserId = myUser.Id , Content = message , Type = "send", InitDate = DateTime.Now };
+            }
+            else
+            {
+                 chatMsg = new { CounselorId = myUser.Id, UserId = outsideID, Content = message, Type = "accept", InitDate = DateTime.Now };
+            }
             //var outsideUser = USERLIST.Where(x => x.ConnectionID != Context.ConnectionId).Where(x => x.Id == outsideID).FirstOrDefault();
-            Clients.Client(myUser.ConnectionID).showMessage(myUser.Id,message , myType);
+            Clients.Client(myUser.ConnectionID).showMessage(myUser.Id,message , myType , chatMsg);
             Clients.Client(myUser.ConnectionID).showLastMsg();
-            Clients.Client(myUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString());
+            var UserList = new { Myid = myUser.Id, MyType = myUser.UserType };
+            Clients.Client(myUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString() , UserList );
 
             //前端js定义function showMessage(speakerName , message)
             if (outsideUser != null)
             {
-                Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id,message, myType);
+                var ConList = new { Outid = outsideUser.Id, OutType = outsideUser.UserType };
+                Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id,message, myType , chatMsg);
                 Clients.Client(outsideUser.ConnectionID).showLastMsg();
-                Clients.Client(outsideUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString());
+                Clients.Client(outsideUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString(), UserList, ConList);
                 //雙方的界面都要渲染，透過伺服器呼叫雙方的JS的Method重新渲染畫面
             }
             /*
