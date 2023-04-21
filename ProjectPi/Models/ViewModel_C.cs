@@ -306,6 +306,18 @@ namespace ProjectPi.Models
         }
 
         /// <summary>
+        /// 請求時段變更
+        /// </summary>
+        public class ReAppt:Appt
+        {
+            /// <summary>
+            /// 請求變更時段原因
+            /// </summary>
+            [Display(Name = "原因")]
+            public string Reason { get; set; }
+        }
+
+        /// <summary>
         /// 修改諮商師開通狀態
         /// </summary>
         public class C_Validation
