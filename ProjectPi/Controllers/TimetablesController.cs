@@ -182,7 +182,20 @@ namespace ProjectPi.Controllers
                 .GroupBy(x => x.Date)
                 .ToList();
 
-            var dateList = findTimes
+            if (!findTimes.Any())
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "尚未新增預約時段",
+                    Data = new
+                    {
+                        TotalPageNum = 0,
+                        Pagination = new object[0]
+                    }
+                });
+            else
+            {
+                var dateList = findTimes
                 .Select(x => new
                 {
                     Year = x.Key.ToShortDateString().Split('/')[2],
@@ -198,85 +211,86 @@ namespace ProjectPi.Controllers
                 })
                 .ToList();
 
-            // 諮商師可約的第一天
-            DateTime firstDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Min(x => x.Date);
+                // 諮商師可約的第一天
+                DateTime firstDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Min(x => x.Date);
 
-            // 諮商師可約的最後一天
-            DateTime lastDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Max(x => x.Date);
+                // 諮商師可約的最後一天
+                DateTime lastDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Max(x => x.Date);
 
-            // 日曆顯示的第一天
-            DateTime today = DateTime.Today;
+                // 日曆顯示的第一天
+                DateTime today = DateTime.Today;
 
-            // 計算當天與可約第一天之間的 interval
-            int interval = Math.Abs((firstDayOfAvailable - today).Days);
+                // 計算當天與可約第一天之間的 interval
+                int interval = Math.Abs((firstDayOfAvailable - today).Days);
 
-            // 頭部資料處理
-            var newDateList = new List<object>();
-            if ((firstDayOfAvailable - today).Days >= 0)
-            {
-                // 產出開頭需補足資料
-                var frontFalseDates = new List<object>();
-                for (int i = 0; i < interval; i++)
+                // 頭部資料處理
+                var newDateList = new List<object>();
+                if ((firstDayOfAvailable - today).Days >= 0)
                 {
-                    var falseDates = new
+                    // 產出開頭需補足資料
+                    var frontFalseDates = new List<object>();
+                    for (int i = 0; i < interval; i++)
                     {
-                        Year = today.AddDays(i).ToShortDateString().Split('/')[2],
-                        Month = today.AddDays(i).ToShortDateString().Split('/')[0],
-                        Date = today.AddDays(i).ToShortDateString().Split('/')[1],
-                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i).DayOfWeek)[2],
-                        Hours = FalseDate()
-                    };
+                        var falseDates = new
+                        {
+                            Year = today.AddDays(i).ToShortDateString().Split('/')[2],
+                            Month = today.AddDays(i).ToShortDateString().Split('/')[0],
+                            Date = today.AddDays(i).ToShortDateString().Split('/')[1],
+                            WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i).DayOfWeek)[2],
+                            Hours = FalseDate()
+                        };
 
-                    frontFalseDates.Add(falseDates);
+                        frontFalseDates.Add(falseDates);
+                    }
+
+                    // 將 falseDates 塞入資料頭部
+                    newDateList = frontFalseDates.Take(interval).Concat(dateList).ToList();
+                }
+                else
+                {
+                    // 移除開頭以過期的資料
+                    // newDateList 型態為 List<object>。dateList 型態為 List<`a>，故加上 .Cast<object>() 轉型為 List<object>
+                    newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).Cast<object>().ToList();
                 }
 
-                // 將 falseDates 塞入資料頭部
-                newDateList = frontFalseDates.Take(interval).Concat(dateList).ToList();
-            }
-            else
-            {
-                // 移除開頭以過期的資料
-                // newDateList 型態為 List<object>。dateList 型態為 List<`a>，故加上 .Cast<object>() 轉型為 List<object>
-                newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).Cast<object>().ToList();
-            }
-
-            // 尾部資料處理：
-            var allDateList = new List<object>();
-            if (newDateList.Count() % 7 == 0)
-            {
-                // newDataList 總天數若能被 7 整除，則尾部不需補資料
-                allDateList = newDateList;
-            }
-            else
-            {
-                // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
-
-                // 須補足的天數
-                int days = 7 - (newDateList.Count() % 7);
-
-                // 產出結尾需補足資料
-                var endFalseDates = new List<object>();
-                for (int i = 0; i < days; i++)
+                // 尾部資料處理：
+                var allDateList = new List<object>();
+                if (newDateList.Count() % 7 == 0)
                 {
-                    var falseDates = new
-                    {
-                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
-                        Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
-                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
-                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i + 1).DayOfWeek)[2],
-                        Hours = FalseDate()
-                    };
-
-                    endFalseDates.Add(falseDates);
+                    // newDataList 總天數若能被 7 整除，則尾部不需補資料
+                    allDateList = newDateList;
                 }
-                // 再將 falseDates 塞入資料尾部
-                allDateList = newDateList.Concat(endFalseDates.Take(days)).ToList();
+                else
+                {
+                    // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
+
+                    // 須補足的天數
+                    int days = 7 - (newDateList.Count() % 7);
+
+                    // 產出結尾需補足資料
+                    var endFalseDates = new List<object>();
+                    for (int i = 0; i < days; i++)
+                    {
+                        var falseDates = new
+                        {
+                            Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
+                            Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
+                            Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
+                            WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i + 1).DayOfWeek)[2],
+                            Hours = FalseDate()
+                        };
+
+                        endFalseDates.Add(falseDates);
+                    }
+                    // 再將 falseDates 塞入資料尾部
+                    allDateList = newDateList.Concat(endFalseDates.Take(days)).ToList();
+                }
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得預約時段";
+                result.Data = Pagination(page, allDateList);
+                return Ok(result);
             }
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功取得預約時段";
-            result.Data = Pagination(page, allDateList);
-            return Ok(result);
         }
 
         /// <summary>

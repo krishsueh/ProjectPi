@@ -254,7 +254,7 @@ namespace ProjectPi.Controllers
                     Photo = path + counselorData.Photo,
                     Name = counselorData.Name,
                     FieldTags = _db.Features
-                        .Where(x => x.CounselorId == id).Select(x => x.MyField.Field).ToArray(),
+                        .Where(x => x.CounselorId == id).OrderBy(x => x.FieldId).Select(x => x.MyField.Field).ToArray(),
                     SelfIntroduction = counselorData.SelfIntroduction,
                     CertNumber = counselorData.CertNumber,
                     VideoLink = counselorData.VideoLink,
@@ -558,6 +558,7 @@ namespace ProjectPi.Controllers
                     {
                         OrderId = x.OrderId,
                         AppointmentId = x.Id,
+                        CounselorId = x.MyOrder.CounselorId,
                         Counselor = x.MyOrder.CounselorName,
                         Field = x.MyOrder.Field,
                     }).ToList();
@@ -589,6 +590,7 @@ namespace ProjectPi.Controllers
                     {
                         OrderId = x.OrderId,
                         AppointmentId = x.Id,
+                        CounselorId = x.MyOrder.CounselorId,
                         Counselor = x.MyOrder.CounselorName,
                         Field = x.MyOrder.Field,
                         Time = x.AppointmentTime
