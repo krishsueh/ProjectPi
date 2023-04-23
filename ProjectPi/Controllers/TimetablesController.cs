@@ -29,85 +29,106 @@ namespace ProjectPi.Controllers
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
 
-            //有新增過預約時段 -> 先刪掉舊資料
-            var timetableExist = _db.Timetables
-                .Where(c => c.CounselorId == counselorId).ToList();
-            if (timetableExist != null)
-            {
-                _db.Timetables.RemoveRange(timetableExist);
-                _db.SaveChanges();
-            }
+            //若該諮商師有任一筆待回覆預約，必須先完成回覆才能更改時段，否則舊時段資料會被刪除
+            var findAppointment = _db.Appointments
+                .Where(x => x.MyOrder.CounselorId == counselorId && x.ReserveStatus == "待回覆")
+                .ToList();
 
-            //新增預約時段
-            DateTime startDate = view.StartDate;
-            DateTime endDate = view.EndDate;
-            TimeSpan interval = endDate - startDate;
-            int timeSpan = interval.Days + 1;
-
-            Timetable timetable = new Timetable();
-            for (int i = 0; i < timeSpan; i++)
-            {
-                for (int j = 0; j < 24; j++)
+            if (findAppointment.Any())
+                return Ok(new
                 {
-                    timetable.CounselorId = counselorId;
-                    DateTime nextDate = startDate.AddDays(i);
-                    DayOfWeek dayOfWeek = nextDate.DayOfWeek;
-
-                    switch (dayOfWeek)
-                    {
-                        case DayOfWeek.Sunday:
-                            timetable.WeekDay = "日";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[0].Hours[j].Time;
-                            timetable.Availability = view.WeekData[0].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Monday:
-                            timetable.WeekDay = "一";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[1].Hours[j].Time;
-                            timetable.Availability = view.WeekData[1].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Tuesday:
-                            timetable.WeekDay = "二";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[2].Hours[j].Time;
-                            timetable.Availability = view.WeekData[2].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Wednesday:
-                            timetable.WeekDay = "三";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[3].Hours[j].Time;
-                            timetable.Availability = view.WeekData[3].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Thursday:
-                            timetable.WeekDay = "四";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[4].Hours[j].Time;
-                            timetable.Availability = view.WeekData[4].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Friday:
-                            timetable.WeekDay = "五";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[5].Hours[j].Time;
-                            timetable.Availability = view.WeekData[5].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Saturday:
-                            timetable.WeekDay = "六";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[6].Hours[j].Time;
-                            timetable.Availability = view.WeekData[6].Hours[j].Available;
-                            break;
-                    }
-
-                    _db.Timetables.Add(timetable);
+                    Success = true,
+                    Message = "您仍有待回覆預約，完成所有回覆後，方可變更預約時段。",
+                });
+            else
+            {
+                //有新增過預約時段 -> 先刪掉舊資料
+                var timetableExist = _db.Timetables
+                    .Where(c => c.CounselorId == counselorId).ToList();
+                if (timetableExist != null)
+                {
+                    _db.Timetables.RemoveRange(timetableExist);
                     _db.SaveChanges();
                 }
+
+                //新增預約時段
+                DateTime startDate = view.StartDate;
+                DateTime endDate = view.EndDate;
+                TimeSpan interval = endDate - startDate;
+                int timeSpan = interval.Days + 1;
+
+                Timetable timetable = new Timetable();
+                for (int i = 0; i < timeSpan; i++)
+                {
+                    for (int j = 0; j < 24; j++)
+                    {
+                        timetable.CounselorId = counselorId;
+                        DateTime nextDate = startDate.AddDays(i);
+                        DayOfWeek dayOfWeek = nextDate.DayOfWeek;
+
+                        switch (dayOfWeek)
+                        {
+                            case DayOfWeek.Sunday:
+                                timetable.WeekDay = "日";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[0].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[0].Hours[j].Available;
+                                timetable.Availability = view.WeekData[0].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Monday:
+                                timetable.WeekDay = "一";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[1].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[1].Hours[j].Available;
+                                timetable.Availability = view.WeekData[1].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Tuesday:
+                                timetable.WeekDay = "二";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[2].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[2].Hours[j].Available;
+                                timetable.Availability = view.WeekData[2].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Wednesday:
+                                timetable.WeekDay = "三";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[3].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[3].Hours[j].Available;
+                                timetable.Availability = view.WeekData[3].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Thursday:
+                                timetable.WeekDay = "四";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[4].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[4].Hours[j].Available;
+                                timetable.Availability = view.WeekData[4].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Friday:
+                                timetable.WeekDay = "五";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[5].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[5].Hours[j].Available;
+                                timetable.Availability = view.WeekData[5].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Saturday:
+                                timetable.WeekDay = "六";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[6].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[6].Hours[j].Available;
+                                timetable.Availability = view.WeekData[6].Hours[j].Available;
+                                break;
+                        }
+
+                        _db.Timetables.Add(timetable);
+                        _db.SaveChanges();
+                    }
+                }
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功編輯預約時段";
+                result.Data = null;
+                return Ok(result);
             }
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功編輯預約時段";
-            result.Data = null;
-            return Ok(result);
         }
 
         /// <summary>
@@ -148,7 +169,7 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 根據星期找到對應的可預約時段
+        /// 根據星期找到對應 預設 的開放時段
         /// </summary>
         /// <param name="weekDay">星期</param>
         /// /// <param name="counselorIdInToken">token中諮商師的Id</param>
@@ -159,7 +180,7 @@ namespace ProjectPi.Controllers
 
             var findTime = _db.Timetables
               .Where(x => x.CounselorId == counselorIdInToken && x.WeekDay == weekDay)
-              .Select(t => new { Time = t.Time, t.Availability })
+              .Select(t => new { Time = t.Time, t.DefaultAvail })
               .Distinct();
 
             return findTime;
