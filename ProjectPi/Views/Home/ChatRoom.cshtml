@@ -67,8 +67,9 @@
             }
 
             //顯示訊息的地方 Method
-            chat.client.showMessage = function (id, message , userType) {
+            chat.client.showMessage = function (id, message , userType,data) {
                 var msg = '';
+                console.info("72", data);
                 var myNumberID = document.getElementById("myNumber").value;
                 var myType = document.getElementById("myType").value;
                 var outId = $('#sid').text();
