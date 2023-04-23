@@ -341,6 +341,10 @@
     <Compile Include="Migrations\202304180627124_addAppointmentTimeId.Designer.cs">
       <DependentUpon>202304180627124_addAppointmentTimeId.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202304231410354_addDefaultAvail.cs" />
+    <Compile Include="Migrations\202304231410354_addDefaultAvail.Designer.cs">
+      <DependentUpon>202304231410354_addDefaultAvail.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\BackEndManger.cs" />
@@ -491,6 +495,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202304180627124_addAppointmentTimeId.resx">
       <DependentUpon>202304180627124_addAppointmentTimeId.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202304231410354_addDefaultAvail.resx">
+      <DependentUpon>202304231410354_addDefaultAvail.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
