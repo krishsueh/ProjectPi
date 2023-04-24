@@ -143,29 +143,42 @@ namespace ProjectPi.Controllers
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
 
-            var earliestDate = _db.Timetables
-                .Where(x => x.CounselorId == counselorId).Min(x => x.Date).ToShortDateString();
-            var latestDate = _db.Timetables
-                .Where(x => x.CounselorId == counselorId).Max(x => x.Date).ToShortDateString();
-            object[] weekData = new object[7];
-            weekData[0] = new { WeekDay = "日", Hours = HoursData(counselorId, "日") };
-            weekData[1] = new { WeekDay = "一", Hours = HoursData(counselorId, "一") };
-            weekData[2] = new { WeekDay = "二", Hours = HoursData(counselorId, "二") };
-            weekData[3] = new { WeekDay = "三", Hours = HoursData(counselorId, "三") };
-            weekData[4] = new { WeekDay = "四", Hours = HoursData(counselorId, "四") };
-            weekData[5] = new { WeekDay = "五", Hours = HoursData(counselorId, "五") };
-            weekData[6] = new { WeekDay = "六", Hours = HoursData(counselorId, "六") };
+            var findTimetable = _db.Timetables.Where(x => x.CounselorId == counselorId).ToList();
 
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功取得預約時段";
-            result.Data = new
+            if (!findTimetable.Any())
             {
-                StartDate = earliestDate,
-                EndDate = latestDate,
-                WeekData = weekData
-            };
-            return Ok(result);
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "諮商師尚未設定預約時段"
+                });
+            }
+            else
+            {
+                var earliestDate = _db.Timetables
+                    .Where(x => x.CounselorId == counselorId).Min(x => x.Date).ToShortDateString();
+                var latestDate = _db.Timetables
+                    .Where(x => x.CounselorId == counselorId).Max(x => x.Date).ToShortDateString();
+                object[] weekData = new object[7];
+                weekData[0] = new { WeekDay = "日", Hours = HoursData(counselorId, "日") };
+                weekData[1] = new { WeekDay = "一", Hours = HoursData(counselorId, "一") };
+                weekData[2] = new { WeekDay = "二", Hours = HoursData(counselorId, "二") };
+                weekData[3] = new { WeekDay = "三", Hours = HoursData(counselorId, "三") };
+                weekData[4] = new { WeekDay = "四", Hours = HoursData(counselorId, "四") };
+                weekData[5] = new { WeekDay = "五", Hours = HoursData(counselorId, "五") };
+                weekData[6] = new { WeekDay = "六", Hours = HoursData(counselorId, "六") };
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得預約時段";
+                result.Data = new
+                {
+                    StartDate = earliestDate,
+                    EndDate = latestDate,
+                    WeekData = weekData
+                };
+                return Ok(result);
+            }
         }
 
         /// <summary>
