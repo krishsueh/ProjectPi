@@ -131,8 +131,7 @@ namespace ProjectPi.SignalRHub
             var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
             if(isCheckList != null)
                 Clients.Client(isCheckList.ConnectionID).IsLogin(true);
-            else
-                Clients.Client(isCheckList.ConnectionID).IsLogin(false);
+            
 
         }
         /// <summary>
