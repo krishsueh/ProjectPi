@@ -46,9 +46,15 @@ namespace ProjectPi.Models
         public string Time { get; set; }
 
         /// <summary>
-        /// 是否為開放時段
+        /// 諮商師預設的開放狀態
         /// </summary>
-        [Display(Name = "是否開放")]
+        [Display(Name = "預設開放狀態")]
+        public bool DefaultAvail { get; set; }
+
+        /// <summary>
+        /// 可否選取狀態
+        /// </summary>
+        [Display(Name = "可否選取狀態")]
         public bool Availability { get; set; }
 
         /// <summary>

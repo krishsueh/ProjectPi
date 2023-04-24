@@ -29,85 +29,106 @@ namespace ProjectPi.Controllers
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
 
-            //有新增過預約時段 -> 先刪掉舊資料
-            var timetableExist = _db.Timetables
-                .Where(c => c.CounselorId == counselorId).ToList();
-            if (timetableExist != null)
-            {
-                _db.Timetables.RemoveRange(timetableExist);
-                _db.SaveChanges();
-            }
+            //若該諮商師有任一筆待回覆預約，必須先完成回覆才能更改時段，否則舊時段資料會被刪除
+            var findAppointment = _db.Appointments
+                .Where(x => x.MyOrder.CounselorId == counselorId && x.ReserveStatus == "待回覆")
+                .ToList();
 
-            //新增預約時段
-            DateTime startDate = view.StartDate;
-            DateTime endDate = view.EndDate;
-            TimeSpan interval = endDate - startDate;
-            int timeSpan = interval.Days + 1;
-
-            Timetable timetable = new Timetable();
-            for (int i = 0; i < timeSpan; i++)
-            {
-                for (int j = 0; j < 24; j++)
+            if (findAppointment.Any())
+                return Ok(new
                 {
-                    timetable.CounselorId = counselorId;
-                    DateTime nextDate = startDate.AddDays(i);
-                    DayOfWeek dayOfWeek = nextDate.DayOfWeek;
-
-                    switch (dayOfWeek)
-                    {
-                        case DayOfWeek.Sunday:
-                            timetable.WeekDay = "日";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[0].Hours[j].Time;
-                            timetable.Availability = view.WeekData[0].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Monday:
-                            timetable.WeekDay = "一";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[1].Hours[j].Time;
-                            timetable.Availability = view.WeekData[1].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Tuesday:
-                            timetable.WeekDay = "二";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[2].Hours[j].Time;
-                            timetable.Availability = view.WeekData[2].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Wednesday:
-                            timetable.WeekDay = "三";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[3].Hours[j].Time;
-                            timetable.Availability = view.WeekData[3].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Thursday:
-                            timetable.WeekDay = "四";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[4].Hours[j].Time;
-                            timetable.Availability = view.WeekData[4].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Friday:
-                            timetable.WeekDay = "五";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[5].Hours[j].Time;
-                            timetable.Availability = view.WeekData[5].Hours[j].Available;
-                            break;
-                        case DayOfWeek.Saturday:
-                            timetable.WeekDay = "六";
-                            timetable.Date = nextDate;
-                            timetable.Time = view.WeekData[6].Hours[j].Time;
-                            timetable.Availability = view.WeekData[6].Hours[j].Available;
-                            break;
-                    }
-
-                    _db.Timetables.Add(timetable);
+                    Success = true,
+                    Message = "您仍有待回覆預約，完成所有回覆後，方可變更預約時段。",
+                });
+            else
+            {
+                //有新增過預約時段 -> 先刪掉舊資料
+                var timetableExist = _db.Timetables
+                    .Where(c => c.CounselorId == counselorId).ToList();
+                if (timetableExist != null)
+                {
+                    _db.Timetables.RemoveRange(timetableExist);
                     _db.SaveChanges();
                 }
+
+                //新增預約時段
+                DateTime startDate = view.StartDate;
+                DateTime endDate = view.EndDate;
+                TimeSpan interval = endDate - startDate;
+                int timeSpan = interval.Days + 1;
+
+                Timetable timetable = new Timetable();
+                for (int i = 0; i < timeSpan; i++)
+                {
+                    for (int j = 0; j < 24; j++)
+                    {
+                        timetable.CounselorId = counselorId;
+                        DateTime nextDate = startDate.AddDays(i);
+                        DayOfWeek dayOfWeek = nextDate.DayOfWeek;
+
+                        switch (dayOfWeek)
+                        {
+                            case DayOfWeek.Sunday:
+                                timetable.WeekDay = "日";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[0].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[0].Hours[j].Available;
+                                timetable.Availability = view.WeekData[0].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Monday:
+                                timetable.WeekDay = "一";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[1].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[1].Hours[j].Available;
+                                timetable.Availability = view.WeekData[1].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Tuesday:
+                                timetable.WeekDay = "二";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[2].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[2].Hours[j].Available;
+                                timetable.Availability = view.WeekData[2].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Wednesday:
+                                timetable.WeekDay = "三";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[3].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[3].Hours[j].Available;
+                                timetable.Availability = view.WeekData[3].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Thursday:
+                                timetable.WeekDay = "四";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[4].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[4].Hours[j].Available;
+                                timetable.Availability = view.WeekData[4].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Friday:
+                                timetable.WeekDay = "五";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[5].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[5].Hours[j].Available;
+                                timetable.Availability = view.WeekData[5].Hours[j].Available;
+                                break;
+                            case DayOfWeek.Saturday:
+                                timetable.WeekDay = "六";
+                                timetable.Date = nextDate;
+                                timetable.Time = view.WeekData[6].Hours[j].Time;
+                                timetable.DefaultAvail = view.WeekData[6].Hours[j].Available;
+                                timetable.Availability = view.WeekData[6].Hours[j].Available;
+                                break;
+                        }
+
+                        _db.Timetables.Add(timetable);
+                        _db.SaveChanges();
+                    }
+                }
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功編輯預約時段";
+                result.Data = null;
+                return Ok(result);
             }
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功編輯預約時段";
-            result.Data = null;
-            return Ok(result);
         }
 
         /// <summary>
@@ -148,7 +169,7 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 根據星期找到對應的可預約時段
+        /// 根據星期找到對應 預設 的開放時段
         /// </summary>
         /// <param name="weekDay">星期</param>
         /// /// <param name="counselorIdInToken">token中諮商師的Id</param>
@@ -159,7 +180,7 @@ namespace ProjectPi.Controllers
 
             var findTime = _db.Timetables
               .Where(x => x.CounselorId == counselorIdInToken && x.WeekDay == weekDay)
-              .Select(t => new { Time = t.Time, t.Availability })
+              .Select(t => new { Time = t.Time, t.DefaultAvail })
               .Distinct();
 
             return findTime;
@@ -182,7 +203,20 @@ namespace ProjectPi.Controllers
                 .GroupBy(x => x.Date)
                 .ToList();
 
-            var dateList = findTimes
+            if (!findTimes.Any())
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "尚未新增預約時段",
+                    Data = new
+                    {
+                        TotalPageNum = 0,
+                        Pagination = new object[0]
+                    }
+                });
+            else
+            {
+                var dateList = findTimes
                 .Select(x => new
                 {
                     Year = x.Key.ToShortDateString().Split('/')[2],
@@ -198,85 +232,86 @@ namespace ProjectPi.Controllers
                 })
                 .ToList();
 
-            // 諮商師可約的第一天
-            DateTime firstDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Min(x => x.Date);
+                // 諮商師可約的第一天
+                DateTime firstDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Min(x => x.Date);
 
-            // 諮商師可約的最後一天
-            DateTime lastDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Max(x => x.Date);
+                // 諮商師可約的最後一天
+                DateTime lastDayOfAvailable = _db.Timetables.Where(x => x.CounselorId == id).Max(x => x.Date);
 
-            // 日曆顯示的第一天
-            DateTime today = DateTime.Today;
+                // 日曆顯示的第一天
+                DateTime today = DateTime.Today;
 
-            // 計算當天與可約第一天之間的 interval
-            int interval = Math.Abs((firstDayOfAvailable - today).Days);
+                // 計算當天與可約第一天之間的 interval
+                int interval = Math.Abs((firstDayOfAvailable - today).Days);
 
-            // 頭部資料處理
-            var newDateList = new List<object>();
-            if ((firstDayOfAvailable - today).Days >= 0)
-            {
-                // 產出開頭需補足資料
-                var frontFalseDates = new List<object>();
-                for (int i = 0; i < interval; i++)
+                // 頭部資料處理
+                var newDateList = new List<object>();
+                if ((firstDayOfAvailable - today).Days >= 0)
                 {
-                    var falseDates = new
+                    // 產出開頭需補足資料
+                    var frontFalseDates = new List<object>();
+                    for (int i = 0; i < interval; i++)
                     {
-                        Year = today.AddDays(i).ToShortDateString().Split('/')[2],
-                        Month = today.AddDays(i).ToShortDateString().Split('/')[0],
-                        Date = today.AddDays(i).ToShortDateString().Split('/')[1],
-                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i).DayOfWeek)[2],
-                        Hours = FalseDate()
-                    };
+                        var falseDates = new
+                        {
+                            Year = today.AddDays(i).ToShortDateString().Split('/')[2],
+                            Month = today.AddDays(i).ToShortDateString().Split('/')[0],
+                            Date = today.AddDays(i).ToShortDateString().Split('/')[1],
+                            WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i).DayOfWeek)[2],
+                            Hours = FalseDate()
+                        };
 
-                    frontFalseDates.Add(falseDates);
+                        frontFalseDates.Add(falseDates);
+                    }
+
+                    // 將 falseDates 塞入資料頭部
+                    newDateList = frontFalseDates.Take(interval).Concat(dateList).ToList();
+                }
+                else
+                {
+                    // 移除開頭以過期的資料
+                    // newDateList 型態為 List<object>。dateList 型態為 List<`a>，故加上 .Cast<object>() 轉型為 List<object>
+                    newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).Cast<object>().ToList();
                 }
 
-                // 將 falseDates 塞入資料頭部
-                newDateList = frontFalseDates.Take(interval).Concat(dateList).ToList();
-            }
-            else
-            {
-                // 移除開頭以過期的資料
-                // newDateList 型態為 List<object>。dateList 型態為 List<`a>，故加上 .Cast<object>() 轉型為 List<object>
-                newDateList = dateList.Skip(interval).Take(dateList.Count() - interval).Cast<object>().ToList();
-            }
-
-            // 尾部資料處理：
-            var allDateList = new List<object>();
-            if (newDateList.Count() % 7 == 0)
-            {
-                // newDataList 總天數若能被 7 整除，則尾部不需補資料
-                allDateList = newDateList;
-            }
-            else
-            {
-                // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
-
-                // 須補足的天數
-                int days = 7 - (newDateList.Count() % 7);
-
-                // 產出結尾需補足資料
-                var endFalseDates = new List<object>();
-                for (int i = 0; i < days; i++)
+                // 尾部資料處理：
+                var allDateList = new List<object>();
+                if (newDateList.Count() % 7 == 0)
                 {
-                    var falseDates = new
-                    {
-                        Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
-                        Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
-                        Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
-                        WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i + 1).DayOfWeek)[2],
-                        Hours = FalseDate()
-                    };
-
-                    endFalseDates.Add(falseDates);
+                    // newDataList 總天數若能被 7 整除，則尾部不需補資料
+                    allDateList = newDateList;
                 }
-                // 再將 falseDates 塞入資料尾部
-                allDateList = newDateList.Concat(endFalseDates.Take(days)).ToList();
+                else
+                {
+                    // 若不能被 7 整除，需另外在 dateList 後面再補上剩餘的 falseDates 湊足一周 7 天
+
+                    // 須補足的天數
+                    int days = 7 - (newDateList.Count() % 7);
+
+                    // 產出結尾需補足資料
+                    var endFalseDates = new List<object>();
+                    for (int i = 0; i < days; i++)
+                    {
+                        var falseDates = new
+                        {
+                            Year = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[2],
+                            Month = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[0],
+                            Date = lastDayOfAvailable.AddDays(i + 1).ToShortDateString().Split('/')[1],
+                            WeekDay = DateTimeFormatInfo.GetInstance(taiwanCulture).GetDayName(today.AddDays(i + 1).DayOfWeek)[2],
+                            Hours = FalseDate()
+                        };
+
+                        endFalseDates.Add(falseDates);
+                    }
+                    // 再將 falseDates 塞入資料尾部
+                    allDateList = newDateList.Concat(endFalseDates.Take(days)).ToList();
+                }
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功取得預約時段";
+                result.Data = Pagination(page, allDateList);
+                return Ok(result);
             }
-            ApiResponse result = new ApiResponse { };
-            result.Success = true;
-            result.Message = "成功取得預約時段";
-            result.Data = Pagination(page, allDateList);
-            return Ok(result);
         }
 
         /// <summary>
