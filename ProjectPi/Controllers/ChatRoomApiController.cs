@@ -277,6 +277,10 @@ namespace ProjectPi.Controllers
                         if (userChatTarget.UserRead == false) isRead = false;
                         userChatTargetList.Add(userChatTarget);
                     }
+                    else
+                    {
+                        return BadRequest("沒有此counselor");
+                    }
                 }
                 else if (Type.ToLower() == "counselor")
                 {
@@ -295,6 +299,10 @@ namespace ProjectPi.Controllers
                         if (userChatTarget.CounselorRead == false) isRead = false;
                         userChatTargetList.Add(userChatTarget);
                     }
+                    else
+                    {
+                        return BadRequest("沒有此user");
+                    }
                 }
             }
 
@@ -302,7 +310,7 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "得到所有人最後一則訊息";
-                result.Data = new { isRead, userChatTargetList };
+                result.Data = new { isRead, userChatTargetList , targetList };
                 return Ok(result);
             }
             catch (Exception ex)

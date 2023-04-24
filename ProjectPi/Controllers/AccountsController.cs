@@ -573,6 +573,7 @@ namespace ProjectPi.Controllers
             User user = _db.Users.Where(x => x.Account == userAccount).FirstOrDefault();
             string url = "";
             bool isHaveUrl = false;
+            DateTime dtCheck = DateTime.Now.AddMinutes(-60);
             if (counselor != null)
             {
                 var appointmentsWithOrder = _db.Appointments
@@ -582,7 +583,7 @@ namespace ProjectPi.Controllers
                     order => order.Id,
                     (appointment, order) => new { Appointment = appointment, Order = order }
                 )
-                .Where(joined =>  joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null)
+                .Where(joined =>  joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null && joined.Appointment.AppointmentTime >= dtCheck)
                 .Select(joined => new
                 {
                     AppointmentId = joined.Appointment.Id,
@@ -656,7 +657,7 @@ namespace ProjectPi.Controllers
                     order => order.Id,
                     (appointment, order) => new { Appointment = appointment, Order = order }
                 )
-                .Where(joined => joined.Order.UserId == user.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null)
+                .Where(joined => joined.Order.UserId == user.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null && joined.Appointment.AppointmentTime >= dtCheck )
                 .Select(joined => new
                 {
                     AppointmentId = joined.Appointment.Id,

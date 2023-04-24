@@ -109,7 +109,9 @@ namespace ProjectPi.SignalRHub
             var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
             if (isCheckList != null)
             {
-                Clients.Client(isCheckList.ConnectionID).closeConnection();
+                var connectionId = currentUser.ConnectionID;
+                USERLIST.Remove(currentUser);
+                Clients.Client(connectionId).forceDisconnect();
             }
             if (currentUser != null)
             {
@@ -129,9 +131,17 @@ namespace ProjectPi.SignalRHub
         public void CheckUserId(int id, string userType)
         {
             var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
-            if(isCheckList != null)
+            if (isCheckList != null)
+            {
+                // 通知現有連線被斷開
                 Clients.Client(isCheckList.ConnectionID).IsLogin(true);
-            
+                // 斷開現有連線
+            }
+            else
+            {
+                Clients.Client(Context.ConnectionId).IsLogin(false);
+            }
+
 
         }
         /// <summary>

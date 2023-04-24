@@ -167,8 +167,8 @@ namespace ProjectPi.Controllers
         public IHttpActionResult GetNewebPayOrder(bool isPay = true, int PageNumber =1 , int PageSize = 10)
         {
             ApiResponse result = new ApiResponse();
-            var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName,x.UserName,x.OrderNum,x.OrderDate,x.Price,x.Field}).ToList();
-            if (isPay == false) orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus != "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field }).ToList();
+            var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName,x.UserName,x.OrderNum,x.OrderDate,x.Price,x.Field, x.OrderStatus }).ToList();
+            if (isPay == false) orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus != "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field,x.OrderStatus }).ToList();
             
             if(orderRecordsList == null)
             {
@@ -190,7 +190,7 @@ namespace ProjectPi.Controllers
         public IHttpActionResult GetAppTList()
         {
             ApiResponse result = new ApiResponse();
-            var appointmentsList = _db.Appointments.Select(x => new { x.Id , x.MyOrder.Field ,x.MyOrder.CounselorName,x.MyOrder.UserName , x.ReserveStatus ,Time = x.AppointmentTime!=null?x.AppointmentTime:null}).ToList();
+            var appointmentsList = _db.Appointments.Select(x => new { x.Id , x.MyOrder.Field ,x.MyOrder.CounselorName,x.MyOrder.UserName , x.ReserveStatus ,Time = x.AppointmentTime!=null?x.AppointmentTime:null , x.Star}).ToList();
             if (appointmentsList == null) return BadRequest("沒有任何資料");
             result.Success = true;
             result.Message = "成功取得訊息";
