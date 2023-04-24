@@ -356,7 +356,10 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse();
             if(!_db.ChatRooms.Where(c => c.UserId == view.UserId && c.CounselorId == view.CounselorId).Any())
             {
-                return BadRequest("沒有聊天紀錄");
+                result.Success = true;
+                result.Message = "沒有聊天紀錄";
+                result.Data = new { };
+                return Ok(result);
             }
 
             if (view.MyType == "user")
