@@ -1,11 +1,14 @@
 ﻿using Newtonsoft.Json;
 using NSwag.Annotations;
 using ProjectPi.Models;
+using ProjectPi.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web.Http;
 
 namespace ProjectPi.Controllers
@@ -230,6 +233,161 @@ namespace ProjectPi.Controllers
             result.Data = new { userList };
             return Ok(result);
         }
+
+        /// <summary>
+        /// 顯示管理員名單
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/backend/getBackender")]
+        [HttpGet]
+        public IHttpActionResult GetBackender(int PageNumber = 1, int PageSize = 10)
+        {
+            ApiResponse result = new ApiResponse();
+            if (PageNumber <= 0 || PageSize <= 0) return BadRequest("分頁參數錯誤");
+            var backEndMangersList = _db.BackEndMangers.OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize)
+                .Select(x => new {
+                x.Id,
+                x.Name,
+                x.Sex,
+                x.Guid,
+                x.InitDate,
+                x.AdminAccess,
+                }).ToList();
+            
+            result.Success = true;
+            result.Message = "管理員取得成功";
+            result.Data = new { backEndMangersList };
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 編輯管理員
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/backend/updateBackender")]
+        [HttpPut]
+        public IHttpActionResult PutBackender(ViewModel.backenderUpdate view)
+        {
+            ApiResponse result = new ApiResponse();
+            BackEndManger backEndManger = _db.BackEndMangers.Where(x => x.Guid == view.Guid).FirstOrDefault();
+            if (backEndManger == null) return BadRequest("Guid錯誤");
+            backEndManger.Name = view.Name;
+            backEndManger.AdminAccess = view.AdminAccess;
+            _db.SaveChanges();
+            result.Success = true;
+            result.Message = "管理員修改成功";
+            
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 管理員註冊
+        /// </summary>
+        /// <param name="view"></param>
+        /// <response code="200">註冊成功</response>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/backend/register")]
+        [SwaggerResponse(typeof(ApiResponse))]
+        public IHttpActionResult Register_BackEnd(ViewModel_U.Register view)
+        {
+            PiDbContext _db = new PiDbContext();
+
+            var hasEmail1 = _db.BackEndMangers
+                .Where(c => c.Account == view.Account
+                .ToLower()).FirstOrDefault();
+
+
+            if (hasEmail1 != null)
+                return BadRequest("此帳號已註冊過");
+            else
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest("資料格式有誤");
+                }
+                else
+                {
+                    if (view.Password != view.ConfirmPassword)
+                        return BadRequest("密碼不一致");
+                    else
+                    {
+                        BackEndManger backEndManger = new BackEndManger();
+                        backEndManger.Account = view.Account;
+                        backEndManger.Password = BitConverter
+                            .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(view.Password))).Replace("-", null);
+                        backEndManger.Name = view.Name;
+                        backEndManger.Sex = view.Sex;
+                        backEndManger.BirthDate = view.BirthDate;
+                        backEndManger.AdminAccess = 0;
+
+                        _db.BackEndMangers.Add(backEndManger);
+                        _db.SaveChanges();
+
+                        ApiResponse result = new ApiResponse { };
+                        result.Success = true;
+                        result.Message = "管理員註冊成功";
+                        result.Data = null;
+
+                        return Ok(result);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 管理員登入
+        /// </summary>
+        /// <param name="view"></param>
+        /// <response code="200">登入驗證成功</response>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/backend/login")]
+        [SwaggerResponse(typeof(ApiResponse))]
+        public IHttpActionResult Login_BackEnd(ViewModel_U.Login view)
+        {
+            PiDbContext _db = new PiDbContext();
+
+            BackEndManger hasAccount = _db.BackEndMangers
+                .Where(c => c.Account == view.Account.ToLower())
+                .FirstOrDefault();
+
+            if (hasAccount == null)
+                return BadRequest("無此帳號");
+            else
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest("Email格式不符");
+                else
+                {
+                    view.Password = BitConverter
+                        .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(view.Password)))
+                        .Replace("-", null);
+
+                    if (hasAccount.Password != view.Password)
+                        return BadRequest("密碼有誤");
+                    else
+                    {
+                        JwtAuthUtil jwtAuthUtil = new JwtAuthUtil();
+                        string token = jwtAuthUtil.GenerateToken(hasAccount.Id, hasAccount.Account, hasAccount.Name, hasAccount.Guid);
+
+                        ApiResponse result = new ApiResponse { };
+                        result.Success = true;
+                        result.Message = "登入成功";
+                        result.Data = new
+                        {
+                            Username = hasAccount.Name,
+                            Identity = "backend",
+                            BackendID = hasAccount.Id,
+                            Authorization = token
+                        };
+                        return Ok(result);
+                    }
+                }
+            }
+        }
+
 
     }
 }

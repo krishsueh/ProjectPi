@@ -122,6 +122,32 @@ namespace ProjectPi.Models
 
         }
 
+        /// <summary>
+        /// 編輯管理員
+        /// </summary>
+        public class backenderUpdate
+        {
+            /// <summary>
+            /// Guid
+            /// </summary>
+            [Display(Name = "Guid")]
+            public Guid Guid { get; set; }
+
+            /// <summary>
+            /// 姓名
+            /// </summary>
+            [Display(Name = "姓名")]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// 後端管理權限
+            /// </summary>
+            [Display(Name = "權限")]
+            public int AdminAccess { get; set; }
+        }
+
 
     }
+
+
 }

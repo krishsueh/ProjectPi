@@ -24,6 +24,16 @@ namespace ProjectPi.SignalRHub
                 UserInfo newUser = new UserInfo(Context.ConnectionId, "", "user");
                 USERLIST.Add(newUser);
             }
+            else
+            {
+                // 如果使用者已經存在，則關閉現有的連接
+                Clients.Client(currentUser.ConnectionID).closeConnection();
+                USERLIST.Remove(currentUser);
+                // 新增新的連接
+                UserInfo newUser = new UserInfo(Context.ConnectionId, "", "user");
+                USERLIST.Add(newUser);
+            }
+
 
             return base.OnConnected();
         }
@@ -66,7 +76,7 @@ namespace ProjectPi.SignalRHub
                 currentUser.UserName = inputName;
             }
             //廣播給全部客戶端
-            //this.ShowAllUser();
+            this.ShowAllUser();
         }
 
         /// <summary>
@@ -96,11 +106,34 @@ namespace ProjectPi.SignalRHub
         public void SetUserId(int id , string userType)
         {
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
+            var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
+            if (isCheckList != null)
+            {
+                Clients.Client(isCheckList.ConnectionID).closeConnection();
+            }
             if (currentUser != null)
             {
                 currentUser.Id = id;
                 currentUser.UserType = userType;
             }
+           
+            this.ShowAllUser();
+            this.CheckUserId(id, userType);
+        }
+
+        /// <summary>
+        /// 確認是否重複連線
+        /// </summary>
+
+        [HubMethodName("checkUserId")]
+        public void CheckUserId(int id, string userType)
+        {
+            var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
+            if(isCheckList != null)
+                Clients.Client(isCheckList.ConnectionID).IsLogin(true);
+            else
+                Clients.Client(isCheckList.ConnectionID).IsLogin(false);
+
         }
         /// <summary>
         /// 指定人發送信息

@@ -572,7 +572,7 @@ namespace ProjectPi.Controllers
             Counselor counselor = _db.Counselors.Where(x => x.Account == userAccount).FirstOrDefault();
             User user = _db.Users.Where(x => x.Account == userAccount).FirstOrDefault();
             string url = "";
-
+            bool isHaveUrl = false;
             if (counselor != null)
             {
                 var appointmentsWithOrder = _db.Appointments
@@ -620,14 +620,16 @@ namespace ProjectPi.Controllers
                         }
                         if(string.IsNullOrEmpty(url))
                         {
+                           
                             result.Success = true;
                             result.Message = "課程時間還沒到";
-                            result.Data = new {};
+                            result.Data = new {isHaveUrl , appointmentsWithOrder };
                             return Ok(result);
                         }
+                        isHaveUrl = true;
                         result.Success = true;
                         result.Message = "時間快到囉~ " ;
-                        result.Data = new { url  };
+                        result.Data = new { isHaveUrl,url };
                         return Ok(result);
                     }
                     catch (Exception ex)
@@ -641,6 +643,7 @@ namespace ProjectPi.Controllers
                 {
                     result.Success = true;
                     result.Message = "沒有成立的訂單";
+                  
                     return Ok(result);
                 }
             }
@@ -691,14 +694,16 @@ namespace ProjectPi.Controllers
                         }
                         if (string.IsNullOrEmpty(url))
                         {
+                            isHaveUrl = false;
                             result.Success = true;
                             result.Message = "課程時間還沒到";
-                            result.Data = new { };
+                            result.Data = new { isHaveUrl , appointmentsWithOrder };
                             return Ok(result);
                         }
+                        isHaveUrl = true;
                         result.Success = true;
                         result.Message = "時間快到囉~ ";
-                        result.Data = new { url};
+                        result.Data = new { isHaveUrl, url };
                         return Ok(result);
                     }
                     catch (Exception ex)
@@ -710,8 +715,10 @@ namespace ProjectPi.Controllers
                 }
                 else
                 {
+                    isHaveUrl = false;
                     result.Success = true;
                     result.Message = "沒有成立的訂單";
+                    result.Data = new { isHaveUrl};
                     return Ok(result);
                 }
 
@@ -719,6 +726,8 @@ namespace ProjectPi.Controllers
             else return BadRequest("Token錯誤");
 
         }
+
+       
 
     }
 }

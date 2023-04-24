@@ -158,8 +158,19 @@
                 //$('#curUserName').text($('#userName').val());
                 var myNumber = document.getElementById("myNumber").value;
                 var myType = document.getElementById("myType").value;
-                chat.server.setUserId(myNumber, myType);
-
+                chat.server.checkUserId(myNumber, myType).done(function (isLogin) {
+                    console.info("162", isLogin);
+                    if (isLogin) {
+                        // 已註冊，斷線重新註冊
+                        $.connection.hub.stop();
+                        $.connection.hub.start().done(function () {
+                            chat.server.setUserId(myNumber, myType);
+                        }); 
+                    } else {
+                        // 未註冊，進行註冊
+                        chat.server.setUserId(myNumber, myType);
+                    }
+                });
             });
         
         };   //end page ready
