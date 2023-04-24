@@ -123,6 +123,28 @@ namespace ProjectPi.Models
         }
 
         /// <summary>
+        /// 已讀對方訊息的VIEW
+        /// </summary>
+        public class PostReadChatRooms
+        {
+            /// <summary>
+            /// 個案編號
+            /// </summary>
+            [Display(Name = "個案編號")]
+            public int UserId { get; set; }
+            /// <summary>
+            /// 諮商師編號
+            /// </summary>
+            [Display(Name = "諮商師編號")]
+            public int CounselorId { get; set; }
+            /// <summary>
+            /// 用戶類別
+            /// </summary>
+            [Display(Name = "用戶類別")]
+            public string MyType { get; set; }
+        }
+
+        /// <summary>
         /// 編輯管理員
         /// </summary>
         public class backenderUpdate
