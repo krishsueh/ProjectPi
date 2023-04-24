@@ -21,7 +21,7 @@ namespace ProjectPi.SignalRHub
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
             if (currentUser == null)
             {
-                UserInfo newUser = new UserInfo(Context.ConnectionId, "", "user");
+                UserInfo newUser = new UserInfo(Context.ConnectionId, "" , "nohaveType");
                 USERLIST.Add(newUser);
             }
             else
@@ -120,7 +120,20 @@ namespace ProjectPi.SignalRHub
             }
            
             this.ShowAllUser();
-            this.CheckUserId(id, userType);
+            //this.CheckUserId(id, userType);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [HubMethodName("loginOut")]
+        public void LoginOut()
+        {
+            var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
+            Clients.All.broadcastUserList("有人想要登出");
+            Clients.All.broadcastUserList(Context.ConnectionId);
+
+            Clients.Client(myUser.ConnectionID).stopConnect();
         }
 
         /// <summary>
@@ -155,7 +168,7 @@ namespace ProjectPi.SignalRHub
             var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
             var outsideUser = USERLIST.FirstOrDefault(x => x.UserType != myType && x.Id == outsideID);
             var chatMsg = new { CounselorId = outsideID, UserId = myUser.Id, Content = message, Type = "send" , InitDate = DateTime.Now };
-           
+            Clients.All.broadcastUserList("有人傳送訊息哦");
             if (myType == "user")
             {
                  chatMsg = new { CounselorId = outsideID , UserId = myUser.Id , Content = message , Type = "send", InitDate = DateTime.Now };

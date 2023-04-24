@@ -97,6 +97,9 @@
                 $('#message').val('');
                 $('#message').val('').focus();
             }   //end showMessage   //end showMessage
+            chat.client.ForceDisconnect = function () {
+                $.connection.hub.stop();
+            };
 
             //確認聊天室成員 Method
             chat.client.broadcastUserList = function (data) {
