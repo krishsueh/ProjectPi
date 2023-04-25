@@ -938,14 +938,16 @@ namespace ProjectPi.Controllers
         [Route("api/AppointmentsLogs")]
         [JwtAuthFilter]
         [HttpGet]
-        public IHttpActionResult GetAppointmentsLogs(int Page = 1)
+        public IHttpActionResult GetAppointmentsLogs(int Page = 1 , string Name="")
         {
             int pageSize = 15;
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int myId = (int)userToken["Id"];
+         
             Counselor counselor = _db.Counselors.Where(x => x.Id == myId).FirstOrDefault();
             ApiResponse result = new ApiResponse();
             if (counselor == null) return BadRequest("此諮商師不存在");
+
             var appointmentsWithOrder = _db.Appointments
                 .Join(
                     _db.OrderRecords,
@@ -959,21 +961,36 @@ namespace ProjectPi.Controllers
                 {
                     UserId = group.Key,
                     AppointmentCount = group.Count(),
-                    Appointments = group.Select(joined => new {
+                    Appointments = group.Select(joined => new
+                    {
                         //AppointmentId = joined.Appointment.Id,
                         UserName = joined.Order.UserName,
-                        UserId = joined.Order.UserId,
+
 
                     }).FirstOrDefault()
                 })
-                .OrderBy(x => x.Appointments.UserId)
-                  .Skip((Page - 1) * pageSize)
-                  .Take(pageSize)
-                  .ToList();
-
+                .OrderBy(x => x.UserId)
+                .ToList();
+            if (string.IsNullOrEmpty(Name))
+            {
+                appointmentsWithOrder = appointmentsWithOrder.Skip((Page - 1) * pageSize)
+              .Take(pageSize)
+              .ToList();
+            }
+            else
+            {
+                appointmentsWithOrder = appointmentsWithOrder.Where(x=>x.Appointments.UserName == Name).Skip((Page - 1) * pageSize)
+              .Take(pageSize)
+              .ToList();
+            }
+            /*
+              .Skip((Page - 1) * pageSize)
+              .Take(pageSize)
+              .ToList();*/
+            string photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
             result.Success = true;
             result.Message = "取得個案紀錄";
-            result.Data = new { appointmentsWithOrder };
+            result.Data = new { Photo=photo, appointmentsWithOrder };
             if(appointmentsWithOrder == null)
             {
                 result.Message = "無個案紀錄";
