@@ -92,6 +92,7 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
+                result.Data = new { };
                 return Ok(result);
             }
             //修改已讀
@@ -118,6 +119,7 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
+                result.Data = new { };
                 return Ok(result);
             }
             try
