@@ -92,6 +92,7 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
+                result.Data = new { };
                 return Ok(result);
             }
             //修改已讀
@@ -112,11 +113,13 @@ namespace ProjectPi.Controllers
             _db.SaveChanges();
 
             var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type,x.UserRead,x.CounselorRead, x.InitDate });
-
+            Counselor counselor = _db.Counselors.Where(x => x.Id == chatlogList.FirstOrDefault().CounselorId).FirstOrDefault();
+            if (counselor == null) return BadRequest("沒有此諮商師存在");
             if (!chatlogList.Any())
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
+                result.Data = new { };
                 return Ok(result);
             }
             try
@@ -126,7 +129,7 @@ namespace ProjectPi.Controllers
                 else photo = "https://pi.rocket-coding.com/upload/headshot/"+photo;
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
-                result.Data = new { Photo = photo , ChatlogList = chatlogList };
+                result.Data = new { Photo = photo ,Name = counselor.Name, ChatlogList = chatlogList };
 
                 return Ok(result);
             }
@@ -250,6 +253,7 @@ namespace ProjectPi.Controllers
 
             var lista = targetList.ToList();
             string msgg = "";
+            bool isRead = true;
             List<UserChatTarget> userChatTargetList = new List<UserChatTarget>();
             List<string> targetName = new List<string>();
             foreach (var item in lista)
@@ -273,8 +277,12 @@ namespace ProjectPi.Controllers
                         userChatTarget.Photo = counselor.Photo;
                         if (userChatTarget.Photo == null) userChatTarget.Photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
                         else userChatTarget.Photo = "https://pi.rocket-coding.com/upload/headshot/" + userChatTarget.Photo;
-
+                        if (userChatTarget.UserRead == false) isRead = false;
                         userChatTargetList.Add(userChatTarget);
+                    }
+                    else
+                    {
+                        return BadRequest("沒有此counselor");
                     }
                 }
                 else if (Type.ToLower() == "counselor")
@@ -291,7 +299,12 @@ namespace ProjectPi.Controllers
                         userChatTarget.Type = item.Type;
                         userChatTarget.UserRead = item.UserRead;
                         userChatTarget.CounselorRead = item.CounselorRead;
+                        if (userChatTarget.CounselorRead == false) isRead = false;
                         userChatTargetList.Add(userChatTarget);
+                    }
+                    else
+                    {
+                        return BadRequest("沒有此user");
                     }
                 }
             }
@@ -300,7 +313,7 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "得到所有人最後一則訊息";
-                result.Data = new { userChatTargetList };
+                result.Data = new { isRead, userChatTargetList , targetList };
                 return Ok(result);
             }
             catch (Exception ex)
@@ -341,32 +354,36 @@ namespace ProjectPi.Controllers
         //[JwtAuthFilter]
         [Route("api/chatroom/PostReadChatRoom")]
         [SwaggerResponse(typeof(ApiResponse))]
-        public async Task<IHttpActionResult> PostReadChatRoom(int UserId , int CounselorId , string MyType)
+        public async Task<IHttpActionResult> PostReadChatRoom(ViewModel.PostReadChatRooms view)
         {
             ApiResponse result = new ApiResponse();
-            if(!_db.ChatRooms.Where(c => c.UserId == UserId && c.CounselorId == CounselorId).Any())
+
+            if(!_db.ChatRooms.Where(c => c.UserId == view.UserId && c.CounselorId == view.CounselorId).Any())
             {
-                return BadRequest("沒有聊天紀錄");
+                result.Success = true;
+                result.Message = "沒有聊天紀錄";
+                result.Data = new { };
+                return Ok(result);
             }
 
-            if (MyType == "user")
+            if (view.MyType == "user")
             {
                 _db.ChatRooms
-                    .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                    .Where(c => c.UserId == view.UserId && c.CounselorId == view.CounselorId)
                     .ToList()
-                    .ForEach(c => { c.UserRead = true;  });
+                    .ForEach(c => { c.CounselorRead = true;  });
             }
-            else if (MyType == "counselor")
+            else if (view.MyType == "counselor")
             {
                 _db.ChatRooms
-                   .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                   .Where(c => c.UserId == view.UserId && c.CounselorId == view.CounselorId)
                    .ToList()
-                   .ForEach(c => {  c.CounselorRead = true; });
+                   .ForEach(c => {  c.UserRead = true; });
             }
-            else if (MyType == "all")
+            else if (view.MyType == "all")
             {
                 _db.ChatRooms
-                   .Where(c => c.UserId == UserId && c.CounselorId == CounselorId)
+                   .Where(c => c.UserId == view.UserId && c.CounselorId == view.CounselorId)
                    .ToList()
                    .ForEach(c => { c.UserRead = true; c.CounselorRead = true; });
             }

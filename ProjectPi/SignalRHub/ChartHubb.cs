@@ -21,9 +21,19 @@ namespace ProjectPi.SignalRHub
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
             if (currentUser == null)
             {
+                UserInfo newUser = new UserInfo(Context.ConnectionId, "" , "nohaveType");
+                USERLIST.Add(newUser);
+            }
+            else
+            {
+                // 如果使用者已經存在，則關閉現有的連接
+                Clients.Client(currentUser.ConnectionID).closeConnection();
+                USERLIST.Remove(currentUser);
+                // 新增新的連接
                 UserInfo newUser = new UserInfo(Context.ConnectionId, "", "user");
                 USERLIST.Add(newUser);
             }
+
 
             return base.OnConnected();
         }
@@ -66,7 +76,7 @@ namespace ProjectPi.SignalRHub
                 currentUser.UserName = inputName;
             }
             //廣播給全部客戶端
-            //this.ShowAllUser();
+            this.ShowAllUser();
         }
 
         /// <summary>
@@ -96,11 +106,56 @@ namespace ProjectPi.SignalRHub
         public void SetUserId(int id , string userType)
         {
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
+            var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
+            if (isCheckList != null)
+            {
+                var connectionId = currentUser.ConnectionID;
+                USERLIST.Remove(currentUser);
+                Clients.Client(connectionId).forceDisconnect();
+            }
             if (currentUser != null)
             {
                 currentUser.Id = id;
                 currentUser.UserType = userType;
             }
+           
+            this.ShowAllUser();
+            //this.CheckUserId(id, userType);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [HubMethodName("loginOut")]
+        public void LoginOut()
+        {
+            var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
+            Clients.All.broadcastUserList("有人想要登出");
+            Clients.All.broadcastUserList(Context.ConnectionId);
+
+            Clients.Client(myUser.ConnectionID).stopConnect();
+        }
+
+        /// <summary>
+        /// 確認是否重複連線
+        /// </summary>
+
+        [HubMethodName("checkUserId")]
+        public void CheckUserId(int id, string userType)
+        {
+            var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
+            if (isCheckList != null)
+            {
+                // 通知現有連線被斷開
+                Clients.Client(isCheckList.ConnectionID).IsLogin(true);
+                // 斷開現有連線
+            }
+            else
+            {
+                Clients.Client(Context.ConnectionId).IsLogin(false);
+            }
+
+
         }
         /// <summary>
         /// 指定人發送信息
@@ -113,7 +168,7 @@ namespace ProjectPi.SignalRHub
             var myUser = USERLIST.Where(y => y.ConnectionID == Context.ConnectionId).FirstOrDefault();
             var outsideUser = USERLIST.FirstOrDefault(x => x.UserType != myType && x.Id == outsideID);
             var chatMsg = new { CounselorId = outsideID, UserId = myUser.Id, Content = message, Type = "send" , InitDate = DateTime.Now };
-           
+            Clients.All.broadcastUserList("有人傳送訊息哦");
             if (myType == "user")
             {
                  chatMsg = new { CounselorId = outsideID , UserId = myUser.Id , Content = message , Type = "send", InitDate = DateTime.Now };
