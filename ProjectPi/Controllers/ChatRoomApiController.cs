@@ -112,7 +112,8 @@ namespace ProjectPi.Controllers
             _db.SaveChanges();
 
             var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type,x.UserRead,x.CounselorRead, x.InitDate });
-
+            Counselor counselor = _db.Counselors.Where(x => x.Id == chatlogList.FirstOrDefault().CounselorId).FirstOrDefault();
+            if (counselor == null) return BadRequest("沒有此諮商師存在");
             if (!chatlogList.Any())
             {
                 result.Success = true;
@@ -126,7 +127,7 @@ namespace ProjectPi.Controllers
                 else photo = "https://pi.rocket-coding.com/upload/headshot/"+photo;
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
-                result.Data = new { Photo = photo , ChatlogList = chatlogList };
+                result.Data = new { Photo = photo ,Name = counselor.Name, ChatlogList = chatlogList };
 
                 return Ok(result);
             }
