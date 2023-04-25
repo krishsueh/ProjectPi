@@ -354,6 +354,7 @@ namespace ProjectPi.Controllers
         public async Task<IHttpActionResult> PostReadChatRoom(ViewModel.PostReadChatRooms view)
         {
             ApiResponse result = new ApiResponse();
+
             if(!_db.ChatRooms.Where(c => c.UserId == view.UserId && c.CounselorId == view.CounselorId).Any())
             {
                 result.Success = true;
