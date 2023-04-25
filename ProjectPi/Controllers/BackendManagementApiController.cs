@@ -4,11 +4,14 @@ using ProjectPi.Models;
 using ProjectPi.Security;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace ProjectPi.Controllers
@@ -119,14 +122,13 @@ namespace ProjectPi.Controllers
         public IHttpActionResult GetCounselorLicense()
         {
             ApiResponse result = new ApiResponse();
-            var LicenseList = _db.Counselors.Where(x => x.LicenseImg != null && x.Validation == false)
+            var LicenseList = _db.Counselors.Where(x => x.LicenseImg != null)
                 .Select(x => new { x.Id,x.Name,x.LicenseImg,x.CertNumber}).ToList();
             result.Success = true;
             result.Message = "取得成功";
             if(!LicenseList.Any())
             {
                 result.Message = "沒有諮商師申請";
-                return Ok(result);
             }
             result.Data = new { LicenseList };
             return Ok(result);
@@ -145,14 +147,18 @@ namespace ProjectPi.Controllers
             counselor.Validation = view.Validation;
             if (counselor.Validation == false)
             {
-                counselor.LicenseImg = "null";
+                //counselor.LicenseImg = "null";
                 result.Success = true;
                 result.Message = "審核不通過";
             }
-            else
+            else if(counselor.Validation == true)
             {
                 result.Success = true;
                 result.Message = "審核通過";
+            }
+            else
+            {
+                return BadRequest("參數錯誤");
             }
             _db.SaveChanges();
             return Ok(result);
@@ -167,6 +173,7 @@ namespace ProjectPi.Controllers
         public IHttpActionResult GetNewebPayOrder(bool isPay = true, int PageNumber =1 , int PageSize = 10)
         {
             ApiResponse result = new ApiResponse();
+
             var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName,x.UserName,x.OrderNum,x.OrderDate,x.Price,x.Field, x.OrderStatus }).ToList();
             if (isPay == false) orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus != "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field,x.OrderStatus }).ToList();
             
@@ -386,6 +393,54 @@ namespace ProjectPi.Controllers
                     }
                 }
             }
+        }
+
+        [HttpPost]
+        [Route("api/backend/SendEmailCounselor")]
+        [SwaggerResponse(typeof(ApiResponse))]
+        public async Task<IHttpActionResult> SendEmailCounselor(ViewModel_C.C_Account view)
+        {
+            string indexPath = Url.Content("https://pi-rocket-coding.vercel.app");
+            Counselor counselor = _db.Counselors.Where(x => x.Id == view.Id).FirstOrDefault();
+            ApiResponse result = new ApiResponse();
+            // Google 發信帳號密碼
+            string sendFrom = ConfigurationManager.AppSettings["SendFrom"];
+            string password = ConfigurationManager.AppSettings["GmailPassword"];
+            string sendTo = counselor.Account.Trim().ToLower();
+            string subject = "【拍拍】證書審核不通過";
+            string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>您的證書審核未通過。<br><br>提醒您，需要重新申請諮商師圖片上傳。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
+
+            SendGmailMail(sendFrom, sendTo, subject, mailBody, password);
+            return Ok();
+        }
+
+        /// <summary>
+        /// 發送系統通知信
+        /// </summary>
+        public static void SendGmailMail(string sendFrom, string sendTo, string Subject, string mailBody, string password)
+        {
+            MailMessage mailMessage = new MailMessage(sendFrom, sendTo);
+            mailMessage.Subject = Subject;
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = mailBody;
+            // SMTP Server
+            SmtpClient mailSender = new SmtpClient("smtp.gmail.com");
+            NetworkCredential basicAuthenticationInfo = new NetworkCredential(sendFrom, password);
+            mailSender.Credentials = basicAuthenticationInfo;
+            mailSender.Port = 587;
+            mailSender.EnableSsl = true;
+
+            try
+            {
+
+                mailSender.Send(mailMessage);
+                mailMessage.Dispose();
+            }
+            catch
+            {
+                return;
+            }
+            mailSender = null;
         }
 
 
