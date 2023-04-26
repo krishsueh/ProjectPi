@@ -114,7 +114,7 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 得到諮商師證書申請列表
+        /// 顯示諮商師證書申請列表
         /// </summary>
         /// <returns></returns>
         [Route("api/CounselorLicense")]
@@ -181,15 +181,16 @@ namespace ProjectPi.Controllers
             {
                 return BadRequest("沒有任何金流資料");
             }
-            
+            double MaxPage = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").Count();
+            MaxPage = Math.Ceiling( MaxPage / PageSize);
             result.Success = true;
             result.Message = "取得成功";
-            result.Data = new { orderRecordsList };
+            result.Data = new { MaxPage, orderRecordsList };
             return Ok(result);
         }
 
         /// <summary>
-        /// 取得治療紀錄
+        /// 取得諮商紀錄
         /// </summary>
         /// <returns></returns>
         [Route("api/getAppTList")]
@@ -197,11 +198,15 @@ namespace ProjectPi.Controllers
         public IHttpActionResult GetAppTList()
         {
             ApiResponse result = new ApiResponse();
-            var appointmentsList = _db.Appointments.Select(x => new { x.Id , x.MyOrder.Field ,x.MyOrder.CounselorName,x.MyOrder.UserName , x.ReserveStatus ,Time = x.AppointmentTime!=null?x.AppointmentTime:null , x.Star}).ToList();
-            if (appointmentsList == null) return BadRequest("沒有任何資料");
+            var appointmentsList = _db.Appointments.Select(x => new { x.Id , x.MyOrder.Field ,x.MyOrder.CounselorName,x.MyOrder.UserName , x.ReserveStatus ,Time = x.AppointmentTime!=null?x.AppointmentTime:null , x.Star}).OrderBy(x=>x.Time).ToList();
             result.Success = true;
             result.Message = "成功取得訊息";
             result.Data = new { appointmentsList };
+            if (appointmentsList == null)
+            {
+                result.Message = "沒有任何資料";
+            }
+          
             return Ok(result);
         }
 
@@ -395,21 +400,28 @@ namespace ProjectPi.Controllers
             }
         }
 
+        /// <summary>
+        /// 身分審核未通過，寄信給諮商師
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("api/backend/SendEmailCounselor")]
         [SwaggerResponse(typeof(ApiResponse))]
         public async Task<IHttpActionResult> SendEmailCounselor(ViewModel_C.C_Account view)
         {
             string indexPath = Url.Content("https://pi-rocket-coding.vercel.app");
+            string path = "";
             Counselor counselor = _db.Counselors.Where(x => x.Id == view.Id).FirstOrDefault();
             ApiResponse result = new ApiResponse();
+            string guid = counselor.Guid.ToString();
+
             // Google 發信帳號密碼
             string sendFrom = ConfigurationManager.AppSettings["SendFrom"];
             string password = ConfigurationManager.AppSettings["GmailPassword"];
             string sendTo = counselor.Account.Trim().ToLower();
-            string subject = "【拍拍】證書審核不通過";
-            string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>您的證書審核未通過。<br><br>提醒您，需要重新申請諮商師圖片上傳。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
-
+            string subject = "【拍拍】您的身分審核未通過。";
+            string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>您的身分審核未通過。<br><br>提醒您，請重新上傳符合資格的執業執照。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + path + "?guid=" + guid + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>重設密碼</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
             SendGmailMail(sendFrom, sendTo, subject, mailBody, password);
             return Ok();
         }

@@ -92,14 +92,14 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
-                result.Data = new { Photo = photo, Name = counselor.Name };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name , UserName = user.Name };
                 return Ok(result);
             }
             if (!_db.ChatRooms.Where(x => x.UserId == UserId).Any())
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
-                result.Data = new { Photo = photo, Name = counselor.Name };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name, UserName = user.Name };
                 return Ok(result);
             }
             //修改已讀
@@ -125,14 +125,14 @@ namespace ProjectPi.Controllers
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
-                result.Data = new { Photo = photo, Name = counselor.Name };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name, UserName = user.Name };
                 return Ok(result);
             }
             try
             {
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
-                result.Data = new { Photo = photo, Name = counselor.Name, ChatlogList = chatlogList };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name, UserName = user.Name, ChatlogList = chatlogList };
 
                 return Ok(result);
             }

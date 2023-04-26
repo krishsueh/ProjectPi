@@ -1156,6 +1156,7 @@ namespace ProjectPi.Controllers
         {
             ApiResponse result = new ApiResponse();
             Appointment appointment = _db.Appointments.Where(x => x.Id == AppointmentId).FirstOrDefault();
+            
             //判斷有沒有已成立的課程
             if (appointment == null)
             {
@@ -1184,6 +1185,7 @@ namespace ProjectPi.Controllers
             {
                 return BadRequest("參數錯誤，無此諮商");
             }
+            appointment.ReserveStatus = "已完成";
             appointment.Star = view.Star;
             appointment.Comment = view.Comment;
             _db.SaveChanges();
