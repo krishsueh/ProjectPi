@@ -971,6 +971,7 @@ namespace ProjectPi.Controllers
                 })
                 .OrderBy(x => x.UserId)
                 .ToList();
+            int maxPageNum = (int)Math.Ceiling((double)appointmentsWithOrder.Count / 15);
             if (string.IsNullOrEmpty(Name))
             {
                 appointmentsWithOrder = appointmentsWithOrder.Skip((Page - 1) * pageSize)
@@ -979,7 +980,7 @@ namespace ProjectPi.Controllers
             }
             else
             {
-                appointmentsWithOrder = appointmentsWithOrder.Where(x=>x.Appointments.UserName == Name).Skip((Page - 1) * pageSize)
+                appointmentsWithOrder = appointmentsWithOrder.Where(x=>x.Appointments.UserName.Contains(Name)).Skip((Page - 1) * pageSize)
               .Take(pageSize)
               .ToList();
             }
@@ -990,7 +991,7 @@ namespace ProjectPi.Controllers
             string photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
             result.Success = true;
             result.Message = "取得個案紀錄";
-            result.Data = new { Photo=photo, appointmentsWithOrder };
+            result.Data = new { Photo=photo, MaxPageNum = maxPageNum, appointmentsWithOrder };
             if(appointmentsWithOrder == null)
             {
                 result.Message = "無個案紀錄";
@@ -1048,7 +1049,7 @@ namespace ProjectPi.Controllers
 
 
             DateTime time = DateTime.Now;
-
+            DateTime RecordT = DateTime.Now; 
             foreach (var item in appointmentsWithOrder)
             {
                 AppointmentLogs appointmentLogs = new AppointmentLogs();
@@ -1060,8 +1061,12 @@ namespace ProjectPi.Controllers
                 {
                     time = (DateTime)item.AppointmentTime;
                 }
+                if (item.RecordDate != null)
+                {
+                    RecordT = (DateTime)item.RecordDate;
+                }
                 appointmentLogs.AppointmentDate = time.ToString("yyyy/M/d");
-                appointmentLogs.AppointmentTime = time.ToString("HH:mm");
+                appointmentLogs.AppointmentTime = RecordT.ToString("yyyy/M/d");
                 appointmentLogsList.Add(appointmentLogs);
             }
             //判斷有沒有已成立的課程

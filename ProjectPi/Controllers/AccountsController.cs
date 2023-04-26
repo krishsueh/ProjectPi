@@ -573,6 +573,7 @@ namespace ProjectPi.Controllers
             User user = _db.Users.Where(x => x.Account == userAccount).FirstOrDefault();
             string url = "";
             bool isHaveUrl = false;
+            DateTime spanNowTime = DateTime.Now;
             DateTime dtCheck = DateTime.Now.AddMinutes(-60);
             if (counselor != null)
             {
@@ -587,16 +588,11 @@ namespace ProjectPi.Controllers
                 .Select(joined => new
                 {
                     AppointmentId = joined.Appointment.Id,
-                    OrderNum = joined.Order.OrderNum,
                     UserName = joined.Order.UserName,
                     CounselorName = joined.Order.CounselorName,
                     AppointmentTime = joined.Appointment.AppointmentTime,
                     ReserveStatus = joined.Appointment.ReserveStatus,
                     ZoomLink = joined.Appointment.ZoomLink,
-                    CounsellingRecord = joined.Appointment.CounsellingRecord,
-                    RecordDate = joined.Appointment.RecordDate,
-                    Star = joined.Appointment.Star,
-                    Comment = joined.Appointment.Comment,
                     InitDate = joined.Appointment.InitDate
                 })
                 .OrderBy(joined => joined.AppointmentTime)
@@ -613,7 +609,8 @@ namespace ProjectPi.Controllers
                         {
                             spanTime = (TimeSpan)(item.AppointmentTime - DateTime.Now);
                             msg += " spanTime = " + spanTime.ToString();
-                            if(spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 60)
+                            spanNowTime = ((DateTime)item.AppointmentTime).AddHours(-1);
+                            if (spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 10080)
                             {
                                 url = item.ZoomLink;
                                 break;
@@ -624,13 +621,13 @@ namespace ProjectPi.Controllers
                            
                             result.Success = true;
                             result.Message = "課程時間還沒到";
-                            result.Data = new {isHaveUrl , appointmentsWithOrder };
+                            result.Data = new {isHaveUrl, spanNowTime, appointmentsWithOrder };
                             return Ok(result);
                         }
                         isHaveUrl = true;
                         result.Success = true;
                         result.Message = "時間快到囉~ " ;
-                        result.Data = new { isHaveUrl,url };
+                        result.Data = new { isHaveUrl,url, spanNowTime };
                         return Ok(result);
                     }
                     catch (Exception ex)
@@ -661,16 +658,11 @@ namespace ProjectPi.Controllers
                 .Select(joined => new
                 {
                     AppointmentId = joined.Appointment.Id,
-                    OrderNum = joined.Order.OrderNum,
                     UserName = joined.Order.UserName,
                     CounselorName = joined.Order.CounselorName,
                     AppointmentTime = joined.Appointment.AppointmentTime,
                     ReserveStatus = joined.Appointment.ReserveStatus,
                     ZoomLink = joined.Appointment.ZoomLink,
-                    CounsellingRecord = joined.Appointment.CounsellingRecord,
-                    RecordDate = joined.Appointment.RecordDate,
-                    Star = joined.Appointment.Star,
-                    Comment = joined.Appointment.Comment,
                     InitDate = joined.Appointment.InitDate
                 })
                 .OrderBy(joined => joined.AppointmentTime)
@@ -687,24 +679,26 @@ namespace ProjectPi.Controllers
                         {
                             spanTime = (TimeSpan)(item.AppointmentTime - DateTime.Now);
                             msg += " spanTime = " + spanTime.ToString();
-                            if (spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 60)
+                            spanNowTime = ((DateTime)item.AppointmentTime).AddHours(-1);
+                            if (spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 10080)
                             {
                                 url = item.ZoomLink;
                                 break;
                             }
                         }
+                       
                         if (string.IsNullOrEmpty(url))
                         {
                             isHaveUrl = false;
                             result.Success = true;
                             result.Message = "課程時間還沒到";
-                            result.Data = new { isHaveUrl , appointmentsWithOrder };
+                            result.Data = new { isHaveUrl, spanNowTime, appointmentsWithOrder };
                             return Ok(result);
                         }
                         isHaveUrl = true;
                         result.Success = true;
                         result.Message = "時間快到囉~ ";
-                        result.Data = new { isHaveUrl, url };
+                        result.Data = new { isHaveUrl, spanNowTime, url };
                         return Ok(result);
                     }
                     catch (Exception ex)
