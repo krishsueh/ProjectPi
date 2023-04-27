@@ -65,7 +65,7 @@ namespace ProjectPi.Controllers
                         counselor.Account = view.Account.ToLower();
                         counselor.Password = BitConverter
                             .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(view.Password))).Replace("-", null);
-                        counselor.CertNumber = view.Certification;
+                        counselor.CertNumber = "諮心字第"+view.Certification+"號";
                         counselor.LicenseImg = view.License;
                         counselor.Validation = false;
 

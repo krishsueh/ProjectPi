@@ -30,6 +30,12 @@ namespace ProjectPi.Controllers
         {
         
             ApiResponse result = new ApiResponse();
+            bool isHaveUser = _db.Users.Where(x => x.Id == view.UserId).Any();
+            bool isHaveCounselor = _db.Counselors.Where(x => x.Id == view.CounselorId).Any();
+
+            if (!isHaveUser) return BadRequest("沒有此用戶");
+            if (!isHaveCounselor) return BadRequest("沒有此諮商師");
+
             ChatRoom _chatroom = new ChatRoom();
             try
             {
