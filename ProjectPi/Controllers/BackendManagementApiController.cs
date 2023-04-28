@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 
+
 namespace ProjectPi.Controllers
 {
     [OpenApiTag("BackendManagement", Description = "後台管理系統")]
@@ -128,16 +129,16 @@ namespace ProjectPi.Controllers
         {
             ApiResponse result = new ApiResponse();
             var LicenseList = _db.Counselors.Where(x => x.LicenseImg != null && x.Name.Contains(CounselorName))
-                .Select(x => new { x.Id,x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber,x.Validation}).OrderBy(x=>x.Id).ToList();
+                .Select(x => new {  x.Id,x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber,x.Validation}).OrderByDescending(x=>x.Id).ToList();
             if(string.IsNullOrEmpty(CounselorName))
             {
                 LicenseList = _db.Counselors.Where(x => x.LicenseImg != null)
-                .Select(x => new { x.Id, x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber, x.Validation }).OrderBy(x => x.Id).ToList();
+                .Select(x => new { x.Id, x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber, x.Validation }).OrderByDescending(x => x.Id).ToList();
             }
             else
             {
                 LicenseList = _db.Counselors.Where(x => x.LicenseImg != null && x.Name.Contains(CounselorName))
-                .Select(x => new { x.Id, x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber, x.Validation }).OrderBy(x => x.Id).ToList();
+                .Select(x => new { x.Id, x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber, x.Validation }).OrderByDescending(x => x.Id).ToList();
             }
             result.Success = true;
             result.Message = "取得成功";
@@ -491,14 +492,22 @@ namespace ProjectPi.Controllers
             mailSender = null;
         }
 
+        ///ModelGuid view
         /// <summary>
         /// 更新/補件諮商師執照
         /// </summary>
         /// <returns></returns>
         [Route("api/updateGuidLicense")]
+        //[JwtAuthFilter]
         [HttpPost]
-        public async Task<IHttpActionResult> UpdateLicense(ViewModel.ModelGuid view)
+        public async Task<IHttpActionResult> UpdateGuidLicense()
         {
+
+            var counselorToken = Request.Headers.Authorization.Parameter;//JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            Guid guid = Guid.Parse(counselorToken);
+            int counselorId = _db.Counselors.Where(x => x.Guid == guid).FirstOrDefault().Id;//(int)counselorToken["Id"];
+            string counselorName = _db.Counselors.Where(x => x.Guid == guid).FirstOrDefault().Name;//counselorToken["Name"].ToString();
+
             // 檢查請求是否包含 multipart/form-data.
             if (!Request.Content.IsMimeMultipartContent())
             {
@@ -539,7 +548,7 @@ namespace ProjectPi.Controllers
 
                 // 將頭像路徑存入資料庫
                 Counselor haveCounselor = _db.Counselors
-                .Where(x => x.Guid == view.guid).FirstOrDefault();
+                .Where(x => x.Id == counselorId).FirstOrDefault();
                 haveCounselor.LicenseImg = fileName;
                 _db.SaveChanges();
 
@@ -549,12 +558,11 @@ namespace ProjectPi.Controllers
                 result.Data = null;
                 return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return BadRequest("執照上傳失敗或未上傳");
+                return BadRequest("執照上傳失敗或未上傳:");
             }
         }
-
 
     }
 }
