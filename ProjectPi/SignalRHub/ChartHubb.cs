@@ -26,12 +26,12 @@ namespace ProjectPi.SignalRHub
             }
             else
             {
-                // 如果使用者已經存在，則關閉現有的連接
-                Clients.Client(currentUser.ConnectionID).closeConnection();
-                USERLIST.Remove(currentUser);
-                // 新增新的連接
-                UserInfo newUser = new UserInfo(Context.ConnectionId, "", "user");
-                USERLIST.Add(newUser);
+                //// 如果使用者已經存在，則關閉現有的連接
+                //Clients.Client(currentUser.ConnectionID).closeConnection();
+                //USERLIST.Remove(currentUser);
+                //// 新增新的連接
+                //UserInfo newUser = new UserInfo(Context.ConnectionId, "", "user");
+                //USERLIST.Add(newUser);
             }
 
 
@@ -107,12 +107,12 @@ namespace ProjectPi.SignalRHub
         {
             var currentUser = USERLIST.Where(x => x.ConnectionID == Context.ConnectionId).FirstOrDefault();
             var isCheckList = USERLIST.Where(x => x.Id == id && x.UserType == userType).FirstOrDefault();
-            if (isCheckList != null)
-            {
-                var connectionId = currentUser.ConnectionID;
-                USERLIST.Remove(currentUser);
-                Clients.Client(connectionId).forceDisconnect();
-            }
+            //if (isCheckList != null)
+            //{
+            //    var connectionId = currentUser.ConnectionID;
+            //    USERLIST.Remove(currentUser);
+            //    Clients.Client(connectionId).forceDisconnect();
+            //}
             if (currentUser != null)
             {
                 currentUser.Id = id;
@@ -169,29 +169,51 @@ namespace ProjectPi.SignalRHub
             var outsideUser = USERLIST.FirstOrDefault(x => x.UserType != myType && x.Id == outsideID);
             var chatMsg = new { CounselorId = outsideID, UserId = myUser.Id, Content = message, Type = "send" , InitDate = DateTime.Now };
             Clients.All.broadcastUserList("有人傳送訊息哦");
+            int userId, counselorId;
             if (myType == "user")
             {
                  chatMsg = new { CounselorId = outsideID , UserId = myUser.Id , Content = message , Type = "send", InitDate = DateTime.Now };
+                userId = myUser.Id;
+                counselorId = outsideID;
             }
             else
             {
                  chatMsg = new { CounselorId = myUser.Id, UserId = outsideID, Content = message, Type = "accept", InitDate = DateTime.Now };
+                userId = outsideID;
+                counselorId = myUser.Id;
             }
-            //var outsideUser = USERLIST.Where(x => x.ConnectionID != Context.ConnectionId).Where(x => x.Id == outsideID).FirstOrDefault();
-            Clients.Client(myUser.ConnectionID).showMessage(myUser.Id,message , myType , chatMsg);
-            Clients.Client(myUser.ConnectionID).showLastMsg();
-            var UserList = new { Myid = myUser.Id, MyType = myUser.UserType };
-            Clients.Client(myUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString() , UserList );
-
-            //前端js定义function showMessage(speakerName , message)
-            if (outsideUser != null)
+            var UList = USERLIST.Where(x => x.UserType == "user" && x.Id == userId).ToList();
+            var CList = USERLIST.Where(x => x.UserType == "counselor" && x.Id == counselorId).ToList();
+            foreach(var item in UList)
             {
-                var ConList = new { Outid = outsideUser.Id, OutType = outsideUser.UserType };
-                Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id,message, myType , chatMsg);
-                Clients.Client(outsideUser.ConnectionID).showLastMsg();
-                Clients.Client(outsideUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString(), UserList, ConList);
-                //雙方的界面都要渲染，透過伺服器呼叫雙方的JS的Method重新渲染畫面
+                Clients.Client(item.ConnectionID).showMessage(myUser.Id, message, myType, chatMsg);
+                Clients.Client(item.ConnectionID).showLastMsg();
+                //var UserList = new { Myid = myUser.Id, MyType = myUser.UserType };
+                Clients.Client(item.ConnectionID).showIconUnRead(USERLIST.Count.ToString());
             }
+            foreach (var item in CList)
+            {
+                Clients.Client(item.ConnectionID).showMessage(myUser.Id, message, myType, chatMsg);
+                Clients.Client(item.ConnectionID).showLastMsg();
+                //var UserList = new { Myid = myUser.Id, MyType = myUser.UserType };
+                Clients.Client(item.ConnectionID).showIconUnRead(USERLIST.Count.ToString());
+            }
+
+            //var outsideUser = USERLIST.Where(x => x.ConnectionID != Context.ConnectionId).Where(x => x.Id == outsideID).FirstOrDefault();
+            //Clients.Client(myUser.ConnectionID).showMessage(myUser.Id,message , myType , chatMsg);
+            //Clients.Client(myUser.ConnectionID).showLastMsg();
+            //var UserList = new { Myid = myUser.Id, MyType = myUser.UserType };
+            //Clients.Client(myUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString() , UserList );
+
+            ////前端js定义function showMessage(speakerName , message)
+            //if (outsideUser != null)
+            //{
+            //    var ConList = new { Outid = outsideUser.Id, OutType = outsideUser.UserType };
+            //    Clients.Client(outsideUser.ConnectionID).showMessage(myUser.Id,message, myType , chatMsg);
+            //    Clients.Client(outsideUser.ConnectionID).showLastMsg();
+            //    Clients.Client(outsideUser.ConnectionID).showIconUnRead(USERLIST.Count.ToString(), UserList, ConList);
+            //    //雙方的界面都要渲染，透過伺服器呼叫雙方的JS的Method重新渲染畫面
+            //}
             /*
              離線訊息不用渲染OR 提示
             else

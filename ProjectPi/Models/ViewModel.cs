@@ -168,6 +168,14 @@ namespace ProjectPi.Models
             public int AdminAccess { get; set; }
         }
 
+        /// <summary>
+        /// 後台諮商師補件郵件取得Guid
+        /// </summary>
+        public class ModelGuid
+        {
+            public Guid guid { get; set; }
+        }
+
 
     }
 
