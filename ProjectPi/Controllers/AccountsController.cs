@@ -297,9 +297,8 @@ namespace ProjectPi.Controllers
                     string sendTo = view.Account.Trim().ToLower();
                     string subject = "【拍拍】重設密碼連結";
                     string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>請點選下列連結進入重設密碼頁面。<br><br>提醒您，若您未提出重設密碼的需求，請忽略此封信件。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + path + "?guid=" + guid + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>重設密碼</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</ span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
-                    string mailBodyEnd = "<p style='color: #424242; text-align: center;'>-----此為系統發出信件，請勿直接回覆，感謝您的配合。-----</p>";
 
-                    SendGmailMail(sendFrom, sendTo, subject, mailBody + mailBodyEnd, password);
+                    SendGmailMail(sendFrom, sendTo, subject, mailBody, password);
 
                     ApiResponse result = new ApiResponse { };
                     result.Success = true;
@@ -349,13 +348,17 @@ namespace ProjectPi.Controllers
         [HttpPost]
         [JwtAuthFilter]
         [Route("api/resetPassword")]
-        public IHttpActionResult PostResetPassword(string Password, string ConfirmPassword)
+        public IHttpActionResult PostResetPassword(ViewModel.AccountReset _Password)
         {
             PiDbContext _db = new PiDbContext();
             ApiResponse result = new ApiResponse();
             var token = Request.Headers.Authorization.Parameter;
             string secretKey = WebConfigurationManager.AppSettings["TokenKey"];
-            if (Password != ConfirmPassword)
+            if (_Password.Password.Length < 8)
+            {
+                return BadRequest("密碼不能少於8位數");
+            }
+            if (_Password.Password != _Password.ConfirmPassword)
             {
                 return BadRequest("二次密碼輸入不符");
             }
@@ -370,7 +373,7 @@ namespace ProjectPi.Controllers
                 if (user != null)
                 {
                     string newPassword = BitConverter
-                          .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                          .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                           .Replace("-", null);
                     if (user.Password == newPassword)
                     {
@@ -389,7 +392,7 @@ namespace ProjectPi.Controllers
                 else if (counselor != null)
                 {
                     string newPassword = BitConverter
-                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                            .Replace("-", null);
                     if (counselor.Password == newPassword)
                     {
@@ -411,7 +414,7 @@ namespace ProjectPi.Controllers
                     return BadRequest("帳號不存在");
                 }
             }
-            else return BadRequest("沒有token");
+            else return BadRequest("沒有登入");
         }
 
 
@@ -424,24 +427,32 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("api/resetPassword/guid")]
-        public IHttpActionResult PostResetPassword(string Password, string ConfirmPassword, Guid Guid)
+        public IHttpActionResult PostGuidSetPassword(ViewModel.AccountResetGuid _Password)
         {
             PiDbContext _db = new PiDbContext();
             ApiResponse result = new ApiResponse();
             //判斷用哪一種方式重設密碼guid / token
-
-            if (Password != ConfirmPassword)
+            if (_Password.Password.Length < 8)
+            {
+                return BadRequest("密碼不能少於8位數");
+            }
+            if (_Password.Password != _Password.ConfirmPassword)
             {
                 return BadRequest("二次密碼輸入不符");
             }
 
-            User user = _db.Users.Where(x => x.Guid == Guid).FirstOrDefault();
-            Counselor counselor = _db.Counselors.Where(x => x.Guid == Guid).FirstOrDefault();
+            User user = _db.Users.Where(x => x.Guid == _Password.Guid).FirstOrDefault();
+            Counselor counselor = _db.Counselors.Where(x => x.Guid == _Password.Guid).FirstOrDefault();
             if (user != null)
             {
-                user.Password = BitConverter
-                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
+                var newPassword = BitConverter
+                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
                            .Replace("-", null);
+                if (user.Password == newPassword)
+                {
+                    return BadRequest("不能與舊密碼相同");
+                }
+                user.Password = newPassword;
                 if (ModelState.IsValid)
                 {
                     _db.Entry(user).State = EntityState.Modified;
@@ -453,9 +464,14 @@ namespace ProjectPi.Controllers
             }
             else if (counselor != null)
             {
-                counselor.Password = BitConverter
-                           .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(Password)))
-                           .Replace("-", null);
+                var newPassword = BitConverter
+                          .ToString(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(_Password.Password)))
+                          .Replace("-", null);
+                if (counselor.Password == newPassword)
+                {
+                    return BadRequest("不能與舊密碼相同");
+                }
+                counselor.Password = newPassword;
                 if (ModelState.IsValid)
                 {
                     _db.Entry(counselor).State = EntityState.Modified;
@@ -466,7 +482,7 @@ namespace ProjectPi.Controllers
                 return Ok(result);
 
             }
-            else return BadRequest("Guid錯誤");
+            else return BadRequest("參數錯誤，請重新發送驗證信");
         }
 
         /// <summary>
@@ -539,6 +555,181 @@ namespace ProjectPi.Controllers
                 return BadRequest("執照上傳失敗或未上傳");
             }
         }
+
+        /// <summary>
+        /// 得到ZoomUrl
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/getZoomUrl")]
+        [JwtAuthFilter]
+        [HttpGet]
+        public async Task<IHttpActionResult> GetZoomUrl()
+        {
+            PiDbContext _db = new PiDbContext();
+            ApiResponse result = new ApiResponse();
+            var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            string userAccount = userToken["Account"].ToString();
+            Counselor counselor = _db.Counselors.Where(x => x.Account == userAccount).FirstOrDefault();
+            User user = _db.Users.Where(x => x.Account == userAccount).FirstOrDefault();
+            string url = "";
+            bool isHaveUrl = false;
+            DateTime dtCheck = DateTime.Now.AddMinutes(-60);
+            if (counselor != null)
+            {
+                var appointmentsWithOrder = _db.Appointments
+                .Join(
+                    _db.OrderRecords,
+                    appointment => appointment.OrderId,
+                    order => order.Id,
+                    (appointment, order) => new { Appointment = appointment, Order = order }
+                )
+                .Where(joined =>  joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null && joined.Appointment.AppointmentTime >= dtCheck)
+                .Select(joined => new
+                {
+                    AppointmentId = joined.Appointment.Id,
+                    OrderNum = joined.Order.OrderNum,
+                    UserName = joined.Order.UserName,
+                    CounselorName = joined.Order.CounselorName,
+                    AppointmentTime = joined.Appointment.AppointmentTime,
+                    ReserveStatus = joined.Appointment.ReserveStatus,
+                    ZoomLink = joined.Appointment.ZoomLink,
+                    CounsellingRecord = joined.Appointment.CounsellingRecord,
+                    RecordDate = joined.Appointment.RecordDate,
+                    Star = joined.Appointment.Star,
+                    Comment = joined.Appointment.Comment,
+                    InitDate = joined.Appointment.InitDate
+                })
+                .OrderBy(joined => joined.AppointmentTime)
+                .ToList();
+
+                
+                if (appointmentsWithOrder.Count != 0)
+                {
+                    string msg = "";
+                    TimeSpan spanTime = TimeSpan.FromMinutes(0);
+                    try
+                    {
+                        foreach(var item in appointmentsWithOrder)
+                        {
+                            spanTime = (TimeSpan)(item.AppointmentTime - DateTime.Now);
+                            msg += " spanTime = " + spanTime.ToString();
+                            if(spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 60)
+                            {
+                                url = item.ZoomLink;
+                                break;
+                            }
+                        }
+                        if(string.IsNullOrEmpty(url))
+                        {
+                           
+                            result.Success = true;
+                            result.Message = "課程時間還沒到";
+                            result.Data = new {isHaveUrl , appointmentsWithOrder };
+                            return Ok(result);
+                        }
+                        isHaveUrl = true;
+                        result.Success = true;
+                        result.Message = "時間快到囉~ " ;
+                        result.Data = new { isHaveUrl,url };
+                        return Ok(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        return BadRequest("error: " + ex);
+                    }
+            
+              
+                }
+                else
+                {
+                    result.Success = true;
+                    result.Message = "沒有成立的訂單";
+                  
+                    return Ok(result);
+                }
+            }
+            else if (user != null)
+            {
+                var appointmentsWithOrder = _db.Appointments
+                .Join(
+                    _db.OrderRecords,
+                    appointment => appointment.OrderId,
+                    order => order.Id,
+                    (appointment, order) => new { Appointment = appointment, Order = order }
+                )
+                .Where(joined => joined.Order.UserId == user.Id && joined.Appointment.ReserveStatus == "已成立" && joined.Appointment.AppointmentTime != null && joined.Appointment.AppointmentTime >= dtCheck )
+                .Select(joined => new
+                {
+                    AppointmentId = joined.Appointment.Id,
+                    OrderNum = joined.Order.OrderNum,
+                    UserName = joined.Order.UserName,
+                    CounselorName = joined.Order.CounselorName,
+                    AppointmentTime = joined.Appointment.AppointmentTime,
+                    ReserveStatus = joined.Appointment.ReserveStatus,
+                    ZoomLink = joined.Appointment.ZoomLink,
+                    CounsellingRecord = joined.Appointment.CounsellingRecord,
+                    RecordDate = joined.Appointment.RecordDate,
+                    Star = joined.Appointment.Star,
+                    Comment = joined.Appointment.Comment,
+                    InitDate = joined.Appointment.InitDate
+                })
+                .OrderBy(joined => joined.AppointmentTime)
+                .ToList();
+
+
+                if (appointmentsWithOrder.Count != 0)
+                {
+                    string msg = "";
+                    TimeSpan spanTime = TimeSpan.FromMinutes(0);
+                    try
+                    {
+                        foreach (var item in appointmentsWithOrder)
+                        {
+                            spanTime = (TimeSpan)(item.AppointmentTime - DateTime.Now);
+                            msg += " spanTime = " + spanTime.ToString();
+                            if (spanTime.TotalMinutes > -30 && spanTime.TotalMinutes < 60)
+                            {
+                                url = item.ZoomLink;
+                                break;
+                            }
+                        }
+                        if (string.IsNullOrEmpty(url))
+                        {
+                            isHaveUrl = false;
+                            result.Success = true;
+                            result.Message = "課程時間還沒到";
+                            result.Data = new { isHaveUrl , appointmentsWithOrder };
+                            return Ok(result);
+                        }
+                        isHaveUrl = true;
+                        result.Success = true;
+                        result.Message = "時間快到囉~ ";
+                        result.Data = new { isHaveUrl, url };
+                        return Ok(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        return BadRequest("error: " + ex);
+                    }
+
+
+                }
+                else
+                {
+                    isHaveUrl = false;
+                    result.Success = true;
+                    result.Message = "沒有成立的訂單";
+                    result.Data = new { isHaveUrl};
+                    return Ok(result);
+                }
+
+            }
+            else return BadRequest("Token錯誤");
+
+        }
+
+       
+
     }
 }
 

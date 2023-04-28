@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 訂單紀錄
+    /// </summary>
     public class OrderRecord
     {
         /// <summary>
@@ -33,11 +36,23 @@ namespace ProjectPi.Models
         public DateTime OrderDate { get; set; }
 
         /// <summary>
+        /// 個案編號
+        /// </summary>
+        [Display(Name = "個案編號")]
+        public int UserId { get; set; }
+
+        /// <summary>
         /// 個案姓名
         /// </summary>
         [MaxLength(50)]
         [Display(Name = "個案姓名")]
         public string UserName { get; set; }
+
+        /// <summary>
+        /// 諮商師編號
+        /// </summary>
+        [Display(Name = "諮商師編號")]
+        public int CounselorId { get; set; }
 
         /// <summary>
         /// 諮商師姓名

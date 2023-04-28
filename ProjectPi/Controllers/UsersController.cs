@@ -10,7 +10,7 @@ using System.Web.Http;
 
 namespace ProjectPi.Controllers
 {
-    [OpenApiTag("Users", Description = "個案操作功能")]
+    [OpenApiTag("Users", Description = "個案會員中心")]
     public class UsersController : ApiController
     {
         PiDbContext _db = new PiDbContext();
@@ -53,7 +53,7 @@ namespace ProjectPi.Controllers
         [HttpPut]
         public IHttpActionResult PutCounselors(ViewModel_U.Profile view)
         {
-            if (view.Name == null)
+            if (String.IsNullOrEmpty(view.Name))
                 return BadRequest("姓名欄必填");
             else
             {

@@ -293,5 +293,40 @@ namespace ProjectPi.Models
             public bool Available { get; set; }
         }
 
+        /// <summary>
+        /// 接收預約
+        /// </summary>
+        public class Appt
+        {
+            /// <summary>
+            /// 預約編號
+            /// </summary>
+            [Display(Name = "預約編號")]
+            public int AppointmentId { get; set; }
+        }
+
+        /// <summary>
+        /// 請求時段變更
+        /// </summary>
+        public class ReAppt:Appt
+        {
+            /// <summary>
+            /// 請求變更時段原因
+            /// </summary>
+            [Display(Name = "原因")]
+            public string Reason { get; set; }
+        }
+
+        /// <summary>
+        /// 修改諮商師開通狀態
+        /// </summary>
+        public class C_Validation
+        {
+            [Display(Name="諮商師ID")]
+            public int CounselorId { get; set; }
+            [Display(Name = "狀態")]
+            public bool Validation { get; set; }
+        }
+
     }
 }

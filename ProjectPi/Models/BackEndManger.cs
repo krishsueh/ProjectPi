@@ -8,12 +8,12 @@ using System.Web;
 namespace ProjectPi.Models
 {
     /// <summary>
-    /// 諮商師
+    /// 後端管理Model
     /// </summary>
-    public class Counselor
+    public class BackEndManger
     {
         /// <summary>
-        /// 諮商師編號
+        /// 編號
         /// </summary>
         [Key]
         [Display(Name = "編號")]
@@ -21,7 +21,7 @@ namespace ProjectPi.Models
         public int Id { get; set; }
 
         /// <summary>
-        /// 諮商師姓名
+        /// 姓名
         /// </summary>
         [Required]
         [MaxLength(50)]
@@ -29,7 +29,23 @@ namespace ProjectPi.Models
         public string Name { get; set; }
 
         /// <summary>
-        /// 諮商師帳號
+        /// 後端管理性別
+        /// </summary>
+        [Required]
+        [MaxLength(50)]
+        [Display(Name = "性別")]
+        public string Sex { get; set; }
+
+        /// <summary>
+        /// 後端管理生日
+        /// </summary>
+        [Display(Name = "生日")]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:d}")]
+        [DataType(DataType.Date)]
+        public DateTime BirthDate { get; set; }
+
+        /// <summary>
+        /// 帳號
         /// </summary>
         [Required]
         [Display(Name = "帳號")]
@@ -40,7 +56,7 @@ namespace ProjectPi.Models
         public string Account { get; set; }
 
         /// <summary>
-        /// 諮商師密碼
+        /// 密碼
         /// </summary>
         [Required]
         [Display(Name = "密碼")]
@@ -49,63 +65,14 @@ namespace ProjectPi.Models
         public string Password { get; set; }
 
         /// <summary>
-        /// 證書字號
+        /// 後端管理權限
         /// </summary>
         [Required]
-        [MaxLength(50)]
-        [Display(Name = "證書字號")]
-        public string CertNumber { get; set; }
+        [Display(Name = "權限")]
+        public int AdminAccess { get; set; }
 
         /// <summary>
-        /// 執業證照
-        /// </summary>
-        [Required]
-        [MaxLength(50)]
-        [Display(Name = "執業證照")]
-        public string LicenseImg { get; set; }
-
-        /// <summary>
-        /// 個人照片
-        /// </summary>
-        [MaxLength(50)]
-        [Display(Name = "個人照片")]
-        public string Photo { get; set; }
-
-        /// <summary>
-        /// 個人賣點
-        /// </summary>
-        [MaxLength(50)]
-        [Display(Name = "個人賣點")]
-        public string SellingPoint { get; set; }
-
-        /// <summary>
-        /// 自我介紹
-        /// </summary>
-        [MaxLength(300)]
-        [Display(Name = "自我介紹")]
-        public string SelfIntroduction { get; set; }
-
-        /// <summary>
-        /// 介紹影片
-        /// </summary>
-        [MaxLength(100)]
-        [Display(Name = "介紹影片")]
-        public string VideoLink { get; set; }
-
-        /// <summary>
-        /// 影片開放
-        /// </summary>
-        [Display(Name = "影片開放")]
-        public bool? IsVideoOpen { get; set; }
-
-        /// <summary>
-        /// 諮商師審核狀態
-        /// </summary>
-        [Display(Name = "審核狀態")]
-        public bool Validation { get; set; }
-
-        /// <summary>
-        /// 諮商師 Guid
+        /// Guid
         /// </summary>
         [Display(Name = "Guid")]
         public Guid Guid { get; set; }
@@ -119,13 +86,10 @@ namespace ProjectPi.Models
         /// <summary>
         /// 將 Guid 與 InitDate 設為自動生成
         /// </summary>
-        public Counselor()
+        public BackEndManger()
         {
             Guid = Guid.NewGuid();
             InitDate = DateTime.UtcNow;
         }
-
-        public virtual ICollection<Product> Products { get; set; }
-        public virtual ICollection<Feature> Features { get; set; }
     }
 }

@@ -7,6 +7,9 @@ using System.Web;
 
 namespace ProjectPi.Models
 {
+    /// <summary>
+    /// 預約課程
+    /// </summary>
     public class Appointment
     {
         /// <summary>
@@ -33,12 +36,24 @@ namespace ProjectPi.Models
         public string ReserveStatus { get; set; }
 
         /// <summary>
+        /// 預約時間編號
+        /// </summary>
+        [Display(Name = "預約時間編號")]
+        public int AppointmentTimeId { get; set; }
+
+        /// <summary>
         /// 預約時間
         /// </summary>
         [Display(Name = "預約時間")]
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:hh:mm}")]
         [DataType(DataType.DateTime)]
         public DateTime? AppointmentTime { get; set; }
+
+        /// <summary>
+        /// Zoom 連結
+        /// </summary>
+        [Display(Name = "Zoom 連結")]
+        public string ZoomLink { get; set; }
 
         /// <summary>
         /// 個案紀錄

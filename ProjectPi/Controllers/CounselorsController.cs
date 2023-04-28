@@ -67,9 +67,9 @@ namespace ProjectPi.Controllers
         [HttpPut]
         public IHttpActionResult PutCounselors(ViewModel_C.Profile view)
         {
-            if (view.Name == null)
+            if (String.IsNullOrEmpty(view.Name))
                 return BadRequest("姓名欄必填");
-            else if (view.LicenseImg == null)
+            else if (String.IsNullOrEmpty(view.LicenseImg))
                 return BadRequest("請上傳執照");
             else
             {
@@ -149,12 +149,24 @@ namespace ProjectPi.Controllers
 
                 // 使用 SixLabors.ImageSharp 調整圖片尺寸 (正方形大頭貼)
                 var image = SixLabors.ImageSharp.Image.Load<Rgba32>(filePath);
-                image.Mutate(x => x.Resize(640, 640));
+                int size = Math.Min(image.Width, image.Height);
+                int x = (image.Width - size) / 2;
+                int y = (image.Height - size) / 2;
+                Rectangle cropArea = new Rectangle(x, y, size, size);
+
+                if (size > 640)
+                {
+                    image.Mutate(i => i.Crop(cropArea).Resize(640, 640));
+                }
+                else
+                {
+                    image.Mutate(i => i.Crop(cropArea));
+                }
                 image.Save(filePath);
 
                 // 將頭像路徑存入資料庫
                 Counselor haveCounselor = _db.Counselors
-                .Where(x => x.Id == counselorId).FirstOrDefault();
+                .Where(i => i.Id == counselorId).FirstOrDefault();
                 haveCounselor.Photo = fileName;
                 _db.SaveChanges();
 

@@ -7,11 +7,13 @@ using System.Text;
 using System.Web.Http;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
+using NSwag.Annotations;
 using ProjectPi.Models;
 using RestSharp;
 
 namespace ProjectPi.Controllers
 {
+    [OpenApiTag("Zoom", Description = "Zoom")]
     public class ZoomApiController : ApiController
     {
         /// <summary>
@@ -29,11 +31,8 @@ namespace ProjectPi.Controllers
         {
 
             ApiResponse result = new ApiResponse();
-
-
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var now = DateTime.Now;
-
             var apiSecret = "7S2JIaMSBmx32CLpYAVtZ3ThTQ897kplWlIM";
             byte[] symmetricKey = Encoding.ASCII.GetBytes(apiSecret);
             var tokenDescriptor = new SecurityTokenDescriptor

@@ -160,7 +160,17 @@ namespace ProjectPi.Controllers
             //因為即使查詢沒有回傳任何資料，hasProduct 仍然是一個空的 List 物件，而不是 null
             if (!hasProduct.Any())
             {
-                return BadRequest("尚未新增課程資訊");
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "尚未新增課程",
+                    Data = new
+                    {
+                        FieldIds = new int[0],
+                        Courses = new object[0],
+                        Feature = new string[0]
+                    }
+                });
             }
             else
             {
@@ -181,6 +191,7 @@ namespace ProjectPi.Controllers
                     .Select(x => new
                     {
                         FieldId = x.Key,
+                        
                         Course = x.Select(y => new
                         {
                             Item = y.Item,
@@ -188,16 +199,10 @@ namespace ProjectPi.Controllers
                             Price = y.Price,
                             Availability = y.Availability
                         }).ToList(),
+
                         Feature = _db.Features
                             .Where(y => y.CounselorId == counselorId && y.FieldId == x.Key)
-                            .Select(y => new
-                            {
-                                Feature1 = y.Feature1,
-                                Feature2 = y.Feature2,
-                                Feature3 = y.Feature3,
-                                Feature4 = y.Feature4,
-                                Feature5 = y.Feature5
-                            })
+                            .Select(y => new List<string> { y.Feature1, y.Feature2, y.Feature3, y.Feature4, y.Feature5 })
                             .FirstOrDefault()
                     })
                     .ToList()

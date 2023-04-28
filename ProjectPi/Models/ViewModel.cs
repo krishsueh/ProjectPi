@@ -22,67 +22,10 @@ namespace ProjectPi.Models
         public string Account { get; set; }
 
         /// <summary>
-        /// 取得特定諮商師頁面
+        /// 預約管理分頁數
         /// </summary>
-        public class counselorProfile
-        {
-            [Display(Name = "個人頭像")]
-            public string Photo { get; set; }
-
-            [Display(Name = "姓名")]
-            public string Name { get; set; }
-
-            [Display(Name = "專長領域Tags")]
-            public string[] FieldTags { get; set; }
-
-            [Display(Name = "自我介紹")]
-            public string SelfIntroduction { get; set; }
-
-            [Display(Name = "證號")]
-            public string CertNumber { get; set; }
-
-            [Display(Name = "影片")]
-            public string VideoLink { get; set; }
-
-            [Display(Name = "專長領域")]
-            public List<Fields> Fields { get; set; }
-        }
-        public class Fields
-        {
-            [Display(Name = "專長領域")]
-            public string Field { get; set; }
-
-            [Display(Name = "課程特色")]
-            public Features Features { get; set; }
-
-            [Display(Name = "課程方案")]
-            public List<Courses> Courses { get; set; }
-        }
-        public class Features
-        {
-            [Display(Name = "特色1")]
-            public string Feature1 { get; set; }
-
-            [Display(Name = "特色2")]
-            public string Feature2 { get; set; }
-
-            [Display(Name = "特色3")]
-            public string Feature3 { get; set; }
-
-            [Display(Name = "特色4")]
-            public string Feature4 { get; set; }
-
-            [Display(Name = "特色5")]
-            public string Feature5 { get; set; }
-        }
-        public class Courses
-        {
-            [Display(Name = "方案")]
-            public string Item { get; set; }
-
-            [Display(Name = "價格")]
-            public int Price { get; set; }
-        }
+        [Display(Name = "頁數")]
+        public int PageNum { get; set; }
 
         /// <summary>
         /// 取得諮商師總覽
@@ -112,5 +55,121 @@ namespace ProjectPi.Models
             [Display(Name = "個人頭像")]
             public string Photo { get; set; }
         }
+
+        /// <summary>
+        /// 重設密碼
+        /// </summary>
+        public class AccountResetGuid
+        {
+            [Display(Name = "新密碼")]
+            public string Password { get; set; }
+            [Display(Name = "二次確認")]
+            public string ConfirmPassword { get; set; }
+
+            [Display(Name = "Guid")]
+            public Guid Guid { get; set; }
+
+        }
+        /// <summary>
+        /// 重設密碼
+        /// </summary>
+        public class AccountReset
+        {
+            [Display(Name = "新密碼")]
+            public string Password { get; set; }
+            [Display(Name = "二次確認")]
+            public string ConfirmPassword { get; set; }
+
+       
+
+        }
+
+        /// <summary>
+        /// 聊天室存訊息VIEW
+        /// </summary>
+        public class PostChatRoomLog
+        {
+
+            /// <summary>
+            /// 諮商師編號
+            /// </summary>
+            [Display(Name = "諮商師編號")]
+            public int CounselorId { get; set; }
+
+            /// <summary>
+            /// 個案編號
+            /// </summary>
+            [Display(Name = "個案編號")]
+            public int UserId { get; set; }
+
+            /// <summary>
+            /// 傳輸類型
+            /// </summary>
+            [MaxLength(10)]
+            [Display(Name = "傳輸類型")]
+            public string Type { get; set; }
+
+            /// <summary>
+            /// 訊息內容
+            /// </summary>
+            [Display(Name = "訊息內容")]
+            public string Content { get; set; }
+
+
+
+
+
+
+        }
+
+        /// <summary>
+        /// 已讀對方訊息的VIEW
+        /// </summary>
+        public class PostReadChatRooms
+        {
+            /// <summary>
+            /// 個案編號
+            /// </summary>
+            [Display(Name = "個案編號")]
+            public int UserId { get; set; }
+            /// <summary>
+            /// 諮商師編號
+            /// </summary>
+            [Display(Name = "諮商師編號")]
+            public int CounselorId { get; set; }
+            /// <summary>
+            /// 用戶類別
+            /// </summary>
+            [Display(Name = "用戶類別")]
+            public string MyType { get; set; }
+        }
+
+        /// <summary>
+        /// 編輯管理員
+        /// </summary>
+        public class backenderUpdate
+        {
+            /// <summary>
+            /// Guid
+            /// </summary>
+            [Display(Name = "Guid")]
+            public Guid Guid { get; set; }
+
+            /// <summary>
+            /// 姓名
+            /// </summary>
+            [Display(Name = "姓名")]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// 後端管理權限
+            /// </summary>
+            [Display(Name = "權限")]
+            public int AdminAccess { get; set; }
+        }
+
+
     }
+
+
 }
