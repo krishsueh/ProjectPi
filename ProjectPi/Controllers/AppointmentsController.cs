@@ -932,65 +932,74 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 出現課程管理已成立且預約
+        /// 諮商師的會員中心的個案紀錄
         /// </summary>
         /// <returns></returns>
         [Route("api/AppointmentsLogs")]
         [JwtAuthFilter]
         [HttpGet]
-        public IHttpActionResult GetAppointmentsLogs()
+        public IHttpActionResult GetAppointmentsLogs(int Page = 1 , string Name="")
         {
+            int pageSize = 15;
             var userToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
-            int userId = (int)userToken["Id"];
-            Counselor counselor = _db.Counselors.Where(x => x.Id == userId).FirstOrDefault();
+            int myId = (int)userToken["Id"];
+         
+            Counselor counselor = _db.Counselors.Where(x => x.Id == myId).FirstOrDefault();
             ApiResponse result = new ApiResponse();
-            List<AppointmentLogs> appointmentLogsList = new List<AppointmentLogs>();
-            List<Appointment> appointmentsList = new List<Appointment>();
-            var orderRecordsList = _db.OrderRecords.Where(x => x.CounselorName == counselor.Name && x.OrderStatus == "已成立").GroupBy(x => x.UserName).Select(o => new { UserName = o.Key, Field = o.Select(g => g.Field), Id = o.Select(g => g.Id) }).ToList();
-            var msg = "";
-            DateTime time = DateTime.Now;
-            string field = "";
-            msg = " orderRecordsList = " + orderRecordsList.Count.ToString();
-            foreach (var item in orderRecordsList)
-            {
-                bool isDone = false;
-                AppointmentLogs appointmentLogs = new AppointmentLogs();
-                List<int> indexList = item.Id.ToList();
-                msg += " indexList = " + indexList.Count.ToString();
-                foreach (var index in indexList)
+            if (counselor == null) return BadRequest("此諮商師不存在");
+
+            var appointmentsWithOrder = _db.Appointments
+                .Join(
+                    _db.OrderRecords,
+                    appointment => appointment.OrderId,
+                    order => order.Id,
+                    (appointment, order) => new { Appointment = appointment, Order = order }
+                )
+                .Where(joined => joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已成立")
+                .GroupBy(join => join.Order.UserId)
+                .Select(group => new
                 {
-                    Appointment appointments = new Appointment();
-                    appointments = _db.Appointments.Where(x => x.MyOrder.Id == index && x.ReserveStatus == "已完成").OrderByDescending(x => x.AppointmentTime).FirstOrDefault();
-                    if (appointments != null)
+                    UserId = group.Key,
+                    AppointmentCount = group.Count(),
+                    Appointments = group.Select(joined => new
                     {
-                        isDone = true;
-                        time = (DateTime)appointments.AppointmentTime;
-                        field = appointments.MyOrder.Field;
-                    }
+                        //AppointmentId = joined.Appointment.Id,
+                        UserName = joined.Order.UserName,
 
-                }
-                if (isDone)
-                {
-                    appointmentLogs.Name = item.UserName;
-                    appointmentLogs.Field = field;
-                    appointmentLogs.AppointmentDate = time.ToString("yyyy/M/d");
-                    appointmentLogs.AppointmentTime = time.ToString("HH:mm");
-                    appointmentLogsList.Add(appointmentLogs);
-                }
 
-            }
-
-            //判斷有沒有已成立的課程
-            if (!appointmentLogsList.Any())
+                    }).FirstOrDefault()
+                })
+                .OrderBy(x => x.UserId)
+                .ToList();
+            int maxPageNum = (int)Math.Ceiling((double)appointmentsWithOrder.Count / 15);
+            if (string.IsNullOrEmpty(Name))
             {
-                result.Success = true;
-                result.Message = "尚無成立課程";
-                return Ok(result);
+                appointmentsWithOrder = appointmentsWithOrder.Skip((Page - 1) * pageSize)
+              .Take(pageSize)
+              .ToList();
             }
+            else
+            {
+                appointmentsWithOrder = appointmentsWithOrder.Where(x=>x.Appointments.UserName.Contains(Name)).Skip((Page - 1) * pageSize)
+              .Take(pageSize)
+              .ToList();
+            }
+            /*
+              .Skip((Page - 1) * pageSize)
+              .Take(pageSize)
+              .ToList();*/
+            string photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
             result.Success = true;
-            result.Message = "取得課程列表";
-            result.Data = new { appointmentLogsList };
+            result.Message = "取得個案紀錄";
+            result.Data = new { Photo=photo, MaxPageNum = maxPageNum, appointmentsWithOrder };
+            if(appointmentsWithOrder == null)
+            {
+                result.Message = "無個案紀錄";
+                result.Data = new { };
+            }
             return Ok(result);
+            //下面全部刪掉
+            
         }
 
         /// <summary>
@@ -1007,55 +1016,74 @@ namespace ProjectPi.Controllers
             int userId = (int)userToken["Id"];
             Counselor counselor = _db.Counselors.Where(x => x.Id == userId).FirstOrDefault();
             ApiResponse result = new ApiResponse();
+            if (!_db.Users.Where(x => x.Name == view.Name).Any()) return BadRequest("user名字錯誤");
             List<AppointmentLogs> appointmentLogsList = new List<AppointmentLogs>();
             List<Appointment> appointmentsList = new List<Appointment>();
             if (counselor == null) return BadRequest("id不存在");
-            var orderRecordsList = _db.OrderRecords.Where(x => x.CounselorName == counselor.Name && x.UserName == view.Name && x.OrderStatus == "已成立")
-                .Select(x => new { x.UserName, x.CounselorName, x.Id }).ToList();
 
-            var orderRecordsListCheck = _db.OrderRecords.Where(x => x.UserName == view.Name).FirstOrDefault();
-            if (orderRecordsListCheck == null) return BadRequest("此參數沒有紀錄");
-            var msg = "counselor.Name = " + counselor.Name + " view.Name = " + view.Name;
-            DateTime time = DateTime.Now;
-            string field = "";
-            msg += " orderRecordsList = " + orderRecordsList.Count.ToString();
-
-            foreach (var item in orderRecordsList)
-            {
-                //Appointment appointment = new Appointment();
-                appointmentsList = _db.Appointments.Where(x => x.OrderId == item.Id && x.ReserveStatus == "已完成").ToList();
-                foreach (var itemA in appointmentsList)
+            var appointmentsWithOrder = _db.Appointments
+                .Join(
+                    _db.OrderRecords,
+                    appointment => appointment.OrderId,
+                    order => order.Id,
+                    (appointment, order) => new { Appointment = appointment, Order = order }
+                )
+                .Where(joined => joined.Order.CounselorId == counselor.Id && joined.Appointment.AppointmentTime != null && joined.Order.UserName == view.Name)
+                .Select(joined => new
                 {
-                    if (appointmentsList != null)
-                    {
-                        AppointmentLogs appointmentLogs = new AppointmentLogs();
+                    AppointmentId = joined.Appointment.Id,
+                    OrderNum = joined.Order.OrderNum,
+                    UserName = joined.Order.UserName,
+                    Field = joined.Order.Field,
+                    CounselorName = joined.Order.CounselorName,
+                    AppointmentTime = joined.Appointment.AppointmentTime,
+                    ReserveStatus = joined.Appointment.ReserveStatus,
+                    CounsellingRecord = joined.Appointment.CounsellingRecord,
+                    RecordDate = joined.Appointment.RecordDate,
+                    Star = joined.Appointment.Star,
+                    Comment = joined.Appointment.Comment,
+                    InitDate = joined.Appointment.InitDate
+                })
+                .OrderBy(joined => joined.AppointmentTime)
+                .ToList();
 
-                        msg += " appointment.Id = " + itemA.Id;
-                        msg += " appointment.OrderId = " + itemA.OrderId;
-                        //msg += " appointment.AppointmentTime = " + itemA.AppointmentTime;
-                        appointmentLogs.AppointmentId = itemA.Id;
-                        appointmentLogs.Name = item.UserName;
-                        appointmentLogs.Field = itemA.MyOrder.Field;
-                        appointmentLogs.AppointmentDate = ((DateTime)itemA.AppointmentTime).ToString("yyyy/M/d");
-                        appointmentLogs.AppointmentTime = ((DateTime)itemA.AppointmentTime).ToString("HH:mm");
-                        appointmentLogsList.Add(appointmentLogs);
-                    }
+
+            DateTime time = DateTime.Now;
+            DateTime RecordT = DateTime.Now; 
+            foreach (var item in appointmentsWithOrder)
+            {
+                AppointmentLogs appointmentLogs = new AppointmentLogs();
+
+                appointmentLogs.AppointmentId = item.AppointmentId;
+                appointmentLogs.Name = item.UserName;
+                appointmentLogs.Field = item.Field;
+                if (item.AppointmentTime != null)
+                {
+                    time = (DateTime)item.AppointmentTime;
                 }
-
-
+                if (item.RecordDate != null)
+                {
+                    RecordT = (DateTime)item.RecordDate;
+                }
+                appointmentLogs.AppointmentDate = time.ToString("yyyy/M/d");
+                appointmentLogs.AppointmentTime = RecordT.ToString("yyyy/M/d");
+                appointmentLogsList.Add(appointmentLogs);
             }
-
             //判斷有沒有已成立的課程
             if (!appointmentLogsList.Any())
             {
                 result.Success = true;
                 result.Message = "尚無任何紀錄 ";
+                result.Data = new { appointmentLogsList };
                 return Ok(result);
             }
+
             result.Success = true;
             result.Message = "取得諮商列表紀錄 ";
             result.Data = new { appointmentLogsList };
             return Ok(result);
+
+
         }
 
         /// <summary>
@@ -1128,6 +1156,7 @@ namespace ProjectPi.Controllers
         {
             ApiResponse result = new ApiResponse();
             Appointment appointment = _db.Appointments.Where(x => x.Id == AppointmentId).FirstOrDefault();
+            
             //判斷有沒有已成立的課程
             if (appointment == null)
             {
@@ -1156,6 +1185,7 @@ namespace ProjectPi.Controllers
             {
                 return BadRequest("參數錯誤，無此諮商");
             }
+            appointment.ReserveStatus = "已完成";
             appointment.Star = view.Star;
             appointment.Comment = view.Comment;
             _db.SaveChanges();

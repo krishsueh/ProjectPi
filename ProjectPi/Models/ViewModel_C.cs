@@ -328,5 +328,14 @@ namespace ProjectPi.Models
             public bool Validation { get; set; }
         }
 
+        /// <summary>
+        /// 寄送諮商師Email
+        /// </summary>
+        public class C_Account
+        {
+            [Display(Name = "諮商師ID")]
+            public int Id { get; set; }
+        }
+
     }
 }

@@ -2,14 +2,23 @@
 using NSwag.Annotations;
 using ProjectPi.Models;
 using ProjectPi.Security;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
+
 
 namespace ProjectPi.Controllers
 {
@@ -111,22 +120,31 @@ namespace ProjectPi.Controllers
         }
 
         /// <summary>
-        /// 得到諮商師證書申請列表
+        /// 顯示諮商師證書申請列表
         /// </summary>
         /// <returns></returns>
         [Route("api/CounselorLicense")]
         [HttpGet]
-        public IHttpActionResult GetCounselorLicense()
+        public IHttpActionResult GetCounselorLicense(string CounselorName="")
         {
             ApiResponse result = new ApiResponse();
-            var LicenseList = _db.Counselors.Where(x => x.LicenseImg != null && x.Validation == false)
-                .Select(x => new { x.Id,x.Name,x.LicenseImg,x.CertNumber}).ToList();
+            var LicenseList = _db.Counselors.Where(x => x.LicenseImg != null && x.Name.Contains(CounselorName))
+                .Select(x => new {  x.Id,x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber,x.Validation}).OrderByDescending(x=>x.Id).ToList();
+            if(string.IsNullOrEmpty(CounselorName))
+            {
+                LicenseList = _db.Counselors.Where(x => x.LicenseImg != null)
+                .Select(x => new { x.Id, x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber, x.Validation }).OrderByDescending(x => x.Id).ToList();
+            }
+            else
+            {
+                LicenseList = _db.Counselors.Where(x => x.LicenseImg != null && x.Name.Contains(CounselorName))
+                .Select(x => new { x.Id, x.Name, LicenseImg = "https://pi.rocket-coding.com/upload/license/" + x.LicenseImg, x.CertNumber, x.Validation }).OrderByDescending(x => x.Id).ToList();
+            }
             result.Success = true;
             result.Message = "取得成功";
             if(!LicenseList.Any())
             {
-                result.Message = "沒有諮商師申請";
-                return Ok(result);
+                result.Message = "沒有諮商師";
             }
             result.Data = new { LicenseList };
             return Ok(result);
@@ -145,14 +163,18 @@ namespace ProjectPi.Controllers
             counselor.Validation = view.Validation;
             if (counselor.Validation == false)
             {
-                counselor.LicenseImg = "null";
+                //counselor.LicenseImg = "null";
                 result.Success = true;
                 result.Message = "審核不通過";
             }
-            else
+            else if(counselor.Validation == true)
             {
                 result.Success = true;
                 result.Message = "審核通過";
+            }
+            else
+            {
+                return BadRequest("參數錯誤");
             }
             _db.SaveChanges();
             return Ok(result);
@@ -164,37 +186,61 @@ namespace ProjectPi.Controllers
         /// <returns></returns>
         [Route("api/getNewebPayOrder")]
         [HttpGet]
-        public IHttpActionResult GetNewebPayOrder(bool isPay = true, int PageNumber =1 , int PageSize = 10)
+        public IHttpActionResult GetNewebPayOrder(string UserName="")
         {
             ApiResponse result = new ApiResponse();
-            var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName,x.UserName,x.OrderNum,x.OrderDate,x.Price,x.Field, x.OrderStatus }).ToList();
-            if (isPay == false) orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus != "已成立").OrderBy(x => x.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field,x.OrderStatus }).ToList();
-            
-            if(orderRecordsList == null)
+            int sum = 0;
+            var orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").OrderByDescending(x => x.OrderDate).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field, x.OrderStatus }).ToList();
+
+            if (string.IsNullOrEmpty(UserName))
             {
-                return BadRequest("沒有任何金流資料");
+                orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立").OrderByDescending(x => x.OrderDate).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field, x.OrderStatus }).ToList();
             }
-            
+            else
+            {
+                orderRecordsList = _db.OrderRecords.Where(x => x.OrderStatus == "已成立" && x.UserName.Contains(UserName)).OrderByDescending(x => x.OrderDate).Select(x => new { x.CounselorName, x.UserName, x.OrderNum, x.OrderDate, x.Price, x.Field, x.OrderStatus }).ToList();
+            }
+
+            foreach(var item in orderRecordsList)
+            {
+                sum += item.Price;
+            }
             result.Success = true;
             result.Message = "取得成功";
-            result.Data = new { orderRecordsList };
+            result.Data = new { PriceTotal=sum,orderRecordsList };
+            if (orderRecordsList == null)
+            {
+                result.Message = "沒有任何金流資料";
+            }
             return Ok(result);
         }
 
         /// <summary>
-        /// 取得治療紀錄
+        /// 取得諮商紀錄
         /// </summary>
         /// <returns></returns>
         [Route("api/getAppTList")]
         [HttpGet]
-        public IHttpActionResult GetAppTList()
+        public IHttpActionResult GetAppTList(string UserName="")
         {
             ApiResponse result = new ApiResponse();
-            var appointmentsList = _db.Appointments.Select(x => new { x.Id , x.MyOrder.Field ,x.MyOrder.CounselorName,x.MyOrder.UserName , x.ReserveStatus ,Time = x.AppointmentTime!=null?x.AppointmentTime:null , x.Star}).ToList();
-            if (appointmentsList == null) return BadRequest("沒有任何資料");
+            var appointmentsList = _db.Appointments.Where(x=>x.MyOrder.UserName.Contains(UserName)).Select(x => new { x.Id , x.MyOrder.Field ,x.MyOrder.CounselorName,x.MyOrder.UserName , x.ReserveStatus ,Time = x.AppointmentTime!=null?x.AppointmentTime:null , x.Star}).OrderByDescending(x=>x.Time).ToList();
+            if (string.IsNullOrEmpty(UserName))
+            {
+                appointmentsList = _db.Appointments.Select(x => new { x.Id, x.MyOrder.Field, x.MyOrder.CounselorName, x.MyOrder.UserName, x.ReserveStatus, Time = x.AppointmentTime != null ? x.AppointmentTime : null, x.Star }).OrderByDescending(x => x.Time).ToList();
+            }
+            else
+            {
+                appointmentsList = _db.Appointments.Where(x => x.MyOrder.UserName.Contains(UserName)).Select(x => new { x.Id, x.MyOrder.Field, x.MyOrder.CounselorName, x.MyOrder.UserName, x.ReserveStatus, Time = x.AppointmentTime != null ? x.AppointmentTime : null, x.Star }).OrderByDescending(x => x.Time).ToList();
+            }
             result.Success = true;
             result.Message = "成功取得訊息";
             result.Data = new { appointmentsList };
+            if (appointmentsList == null)
+            {
+                result.Message = "沒有任何資料";
+            }
+          
             return Ok(result);
         }
 
@@ -388,6 +434,135 @@ namespace ProjectPi.Controllers
             }
         }
 
+        /// <summary>
+        /// 身分審核未通過，寄信給諮商師
+        /// </summary>
+        /// <param name="view"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("api/backend/SendEmailCounselor")]
+        [SwaggerResponse(typeof(ApiResponse))]
+        public async Task<IHttpActionResult> SendEmailCounselor(ViewModel_C.C_Account view)
+        {
+            string indexPath = Url.Content("https://pi-rocket-coding.vercel.app");
+            string path = "https://pi-rocket-coding.vercel.app/resentlicense";
+            Counselor counselor = _db.Counselors.Where(x => x.Id == view.Id).FirstOrDefault();
+            if (counselor == null) return BadRequest("沒有此諮商師");
+            ApiResponse result = new ApiResponse();
+            string guid = counselor.Guid.ToString();
+
+            // Google 發信帳號密碼
+            string sendFrom = ConfigurationManager.AppSettings["SendFrom"];
+            string password = ConfigurationManager.AppSettings["GmailPassword"];
+            string sendTo = counselor.Account.Trim().ToLower();
+            string subject = "【拍拍】您的身分審核未通過。";
+            string mailBody = @"<div class='container' style='width: 560px; margin: auto; border: 1px gray solid;'><div class='header'><h2 style = 'color: #424242; margin-left: 10px;'>拍拍</h2></div><div class='main' style='color: #424242; padding: 30px 30px;'><p>親愛的用戶您好：<br><br>您的身分審核未通過。<br><br>提醒您，請重新上傳符合資格的執業執照。</p><div class='btn' style='color: #424242; margin: 40px 0; border-radius: 53px; display: inline-block; background-color: #FFF6E2;'><a href = '" + path + "?guid=" + guid + "' style='text-decoration: none; display: inline-block; padding: 10px 20px; color: black'>重新上傳</a></div></div><div class='footer' style='color: #424242; background-color: #FFF6E2; padding: 20px 10px;'><p> 若您需要聯繫您的諮商師／個案用戶，請直接登入平台與您的諮商師／個案用戶聯繫。若需要客服人員協助，歡迎回覆此信件。</p><ul style = 'list-style: none; display: flex;' ><li><a href='" + indexPath + "' style='text-decoration: none; color: black;'>官方網站</a></li><li><span style = 'margin: 0 5px;' >|</span ></li><li><a href='#' style='text-decoration: none; color: black;'>常見問題</a></li></ul><p>© 2023 Pi Life Limited.</p></div>";
+            SendGmailMail(sendFrom, sendTo, subject, mailBody, password);
+            result.Success = true;
+            result.Message = "寄信成功";
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 發送系統通知信
+        /// </summary>
+        public static void SendGmailMail(string sendFrom, string sendTo, string Subject, string mailBody, string password)
+        {
+            MailMessage mailMessage = new MailMessage(sendFrom, sendTo);
+            mailMessage.Subject = Subject;
+            mailMessage.IsBodyHtml = true;
+            mailMessage.Body = mailBody;
+            // SMTP Server
+            SmtpClient mailSender = new SmtpClient("smtp.gmail.com");
+            NetworkCredential basicAuthenticationInfo = new NetworkCredential(sendFrom, password);
+            mailSender.Credentials = basicAuthenticationInfo;
+            mailSender.Port = 587;
+            mailSender.EnableSsl = true;
+
+            try
+            {
+
+                mailSender.Send(mailMessage);
+                mailMessage.Dispose();
+            }
+            catch
+            {
+                return;
+            }
+            mailSender = null;
+        }
+
+        ///ModelGuid view
+        /// <summary>
+        /// 更新/補件諮商師執照
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/updateGuidLicense")]
+        //[JwtAuthFilter]
+        [HttpPost]
+        public async Task<IHttpActionResult> UpdateGuidLicense()
+        {
+
+            var counselorToken = Request.Headers.Authorization.Parameter;//JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
+            Guid guid = Guid.Parse(counselorToken);
+            int counselorId = _db.Counselors.Where(x => x.Guid == guid).FirstOrDefault().Id;//(int)counselorToken["Id"];
+            string counselorName = _db.Counselors.Where(x => x.Guid == guid).FirstOrDefault().Name;//counselorToken["Name"].ToString();
+
+            // 檢查請求是否包含 multipart/form-data.
+            if (!Request.Content.IsMimeMultipartContent())
+            {
+                throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
+            }
+
+            // 使用 HttpContext.Current.Server.MapPath 方法來獲取指定路徑的物理路徑
+            string root = HttpContext.Current.Server.MapPath(@"~/upload/license");
+
+            try
+            {
+                // 讀取 MIME 資料
+                var provider = new MultipartMemoryStreamProvider();
+                await Request.Content.ReadAsMultipartAsync(provider);
+
+                // 取得檔案副檔名，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                string fileNameData = provider.Contents.FirstOrDefault().Headers.ContentDisposition.FileName.Trim('\"');
+                string fileType = fileNameData.Remove(0, fileNameData.LastIndexOf('.')); // .jpg
+
+                // 定義檔案名稱
+                string fileName = "License_" + DateTime.Now.ToString("yyyyMMddHHmmss") + fileType;
+
+                // 儲存圖片，單檔用.FirstOrDefault()直接取出，多檔需用迴圈
+                var fileBytes = await provider.Contents.FirstOrDefault().ReadAsByteArrayAsync();
+                var filePath = Path.Combine(root, fileName);
+
+                // 創建文件流
+                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    // 寫入文件內容
+                    await fileStream.WriteAsync(fileBytes, 0, fileBytes.Length);
+                }
+
+                // 使用 SixLabors.ImageSharp 調整圖片尺寸 (正方形大頭貼)
+                var image = SixLabors.ImageSharp.Image.Load<Rgba32>(filePath);
+                image.Mutate(x => x.Resize(640, 0));
+                image.Save(filePath);
+
+                // 將頭像路徑存入資料庫
+                Counselor haveCounselor = _db.Counselors
+                .Where(x => x.Id == counselorId).FirstOrDefault();
+                haveCounselor.LicenseImg = fileName;
+                _db.SaveChanges();
+
+                ApiResponse result = new ApiResponse { };
+                result.Success = true;
+                result.Message = "成功更新諮商師執照";
+                result.Data = null;
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("執照上傳失敗或未上傳:");
+            }
+        }
 
     }
 }

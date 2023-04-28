@@ -30,6 +30,12 @@ namespace ProjectPi.Controllers
         {
         
             ApiResponse result = new ApiResponse();
+            bool isHaveUser = _db.Users.Where(x => x.Id == view.UserId).Any();
+            bool isHaveCounselor = _db.Counselors.Where(x => x.Id == view.CounselorId).Any();
+
+            if (!isHaveUser) return BadRequest("沒有此用戶");
+            if (!isHaveCounselor) return BadRequest("沒有此諮商師");
+
             ChatRoom _chatroom = new ChatRoom();
             try
             {
@@ -78,21 +84,28 @@ namespace ProjectPi.Controllers
         [SwaggerResponse(typeof(ApiResponse))]
         public IHttpActionResult GetChatlogs(int CounselorId, int UserId, string UserType)
         {
-            
+
             ApiResponse result = new ApiResponse();
+            Counselor counselor = _db.Counselors.Where(x => x.Id == CounselorId).FirstOrDefault();
+            if (counselor == null) return BadRequest("沒有此諮商師存在");
+            User user = _db.Users.Where(x => x.Id == UserId).FirstOrDefault();
+            if (user == null) return BadRequest("沒有此用戶存在");
+            string photo = _db.Counselors.Where(x => x.Id == CounselorId).Select(x => new { x.Photo }).FirstOrDefault().Photo;
+            if (string.IsNullOrEmpty(photo)) photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
+            else photo = "https://pi.rocket-coding.com/upload/headshot/" + photo;
 
             if (!_db.ChatRooms.Where(x => x.CounselorId == CounselorId).Any())
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
-                result.Data = new { };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name , UserName = user.Name };
                 return Ok(result);
             }
             if (!_db.ChatRooms.Where(x => x.UserId == UserId).Any())
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
-                result.Data = new { };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name, UserName = user.Name };
                 return Ok(result);
             }
             //修改已讀
@@ -112,24 +125,20 @@ namespace ProjectPi.Controllers
             }
             _db.SaveChanges();
 
-            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type,x.UserRead,x.CounselorRead, x.InitDate });
-            Counselor counselor = _db.Counselors.Where(x => x.Id == chatlogList.FirstOrDefault().CounselorId).FirstOrDefault();
-            if (counselor == null) return BadRequest("沒有此諮商師存在");
+            var chatlogList = _db.ChatRooms.Where(x => (x.CounselorId == CounselorId && x.UserId == UserId)).OrderBy(x => x.InitDate).Select(x => new { x.CounselorId, x.UserId, x.Content, x.Type, x.UserRead, x.CounselorRead, x.InitDate });
+
             if (!chatlogList.Any())
             {
                 result.Success = true;
                 result.Message = "沒有聊天訊息";
-                result.Data = new { };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name, UserName = user.Name };
                 return Ok(result);
             }
             try
             {
-                string photo = _db.Counselors.Where(x => x.Id == CounselorId).Select(x => new { x.Photo }).FirstOrDefault().Photo;
-                if (string.IsNullOrEmpty(photo)) photo = "https://pi.rocket-coding.com/upload/headshot/user_profile.svg";
-                else photo = "https://pi.rocket-coding.com/upload/headshot/"+photo;
                 result.Success = true;
                 result.Message = "聊天訊息取得成功";
-                result.Data = new { Photo = photo ,Name = counselor.Name, ChatlogList = chatlogList };
+                result.Data = new { Photo = photo, CounselorName = counselor.Name, UserName = user.Name, ChatlogList = chatlogList };
 
                 return Ok(result);
             }
