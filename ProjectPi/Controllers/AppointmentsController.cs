@@ -955,7 +955,7 @@ namespace ProjectPi.Controllers
                     order => order.Id,
                     (appointment, order) => new { Appointment = appointment, Order = order }
                 )
-                .Where(joined => joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已成立")
+                .Where(joined => joined.Order.CounselorId == counselor.Id && joined.Appointment.ReserveStatus == "已完成")
                 .GroupBy(join => join.Order.UserId)
                 .Select(group => new
                 {
@@ -1028,7 +1028,7 @@ namespace ProjectPi.Controllers
                     order => order.Id,
                     (appointment, order) => new { Appointment = appointment, Order = order }
                 )
-                .Where(joined => joined.Order.CounselorId == counselor.Id && joined.Appointment.AppointmentTime != null && joined.Order.UserName == view.Name)
+                .Where(joined => joined.Order.CounselorId == counselor.Id && joined.Appointment.AppointmentTime != null && joined.Order.UserName == view.Name && joined.Appointment.ReserveStatus == "已完成")
                 .Select(joined => new
                 {
                     AppointmentId = joined.Appointment.Id,
