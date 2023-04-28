@@ -34,15 +34,20 @@ namespace ProjectPi.Controllers
         {
             var counselorToken = JwtAuthFilter.GetToken(Request.Headers.Authorization.Parameter);
             int counselorId = (int)counselorToken["Id"];
+
+            //照片存取位置
+            string photoPath = "https://pi.rocket-coding.com/upload/headshot/";
+            string licensePath = "https://pi.rocket-coding.com/upload/license/";
+
             var data = _db.Counselors
                 .Where(x => x.Id == counselorId)
                 .Select(x => new
                 {
                     Account = x.Account,
                     CounselorName = x.Name,
-                    LicenseImg = x.LicenseImg,
+                    LicenseImg = licensePath + x.LicenseImg,
                     CertNumber = x.CertNumber,
-                    Photo = x.Photo,
+                    Photo = photoPath + x.Photo,
                     SellingPoint = x.SellingPoint,
                     SelfIntroduction = x.SelfIntroduction,
                     VideoLink = x.VideoLink,
