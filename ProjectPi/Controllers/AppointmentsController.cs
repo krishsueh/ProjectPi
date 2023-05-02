@@ -778,6 +778,16 @@ namespace ProjectPi.Controllers
                 return BadRequest("查無此筆預約紀錄");
             else
             {
+                if (_db.Timetables.Where(x => x.Id == findAppointment.AppointmentTimeId).Select(x => x.Availability).FirstOrDefault() == false)
+                {
+                    return Ok( new { Message = "此時段已被預約"} );
+                }
+
+                if (findAppointment.AppointmentTime < DateTime.UtcNow)
+                {
+                    return Ok(new { Message = "預約時段已過期，請個案重新預約時間" });
+                }
+
                 var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
                 var now = DateTime.Now;
                 var apiSecret = "7S2JIaMSBmx32CLpYAVtZ3ThTQ897kplWlIM";
