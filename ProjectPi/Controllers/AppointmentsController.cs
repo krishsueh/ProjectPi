@@ -1099,7 +1099,6 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse();
             Appointment appointment = _db.Appointments.Where(x => x.Id == view.AppointmentId).FirstOrDefault();
             AppointmentLogs_Record record = new AppointmentLogs_Record();
-
             //判斷有沒有已成立的課程
             if (appointment == null)
             {
@@ -1110,7 +1109,7 @@ namespace ProjectPi.Controllers
             record.AppointmentDate = ((DateTime)appointment.AppointmentTime).ToString("yyyy/M/d");
             if (appointment.RecordDate != null) record.LastRecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
             else record.LastRecordDate = DateTime.Now.ToString("yyyy/M/d");
-            record.RecordDate = DateTime.Now.ToString("yyyy/M/d");
+            record.RecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
             record.CounsellingRecord = appointment.CounsellingRecord;
             record.AppointmentId = appointment.Id;
             result.Success = true;
