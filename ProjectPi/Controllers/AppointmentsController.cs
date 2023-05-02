@@ -258,6 +258,7 @@ namespace ProjectPi.Controllers
                     SelfIntroduction = counselorData.SelfIntroduction,
                     CertNumber = counselorData.CertNumber,
                     VideoLink = counselorData.VideoLink,
+                    IsViseoOpen = counselorData.IsVideoOpen,
                     Fields = _db.Features
                     .Where(x => x.CounselorId == id).GroupBy(x => x.FieldId).ToList()
                     .Select(x => new
