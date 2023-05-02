@@ -1110,7 +1110,7 @@ namespace ProjectPi.Controllers
             record.AppointmentDate = ((DateTime)appointment.AppointmentTime).ToString("yyyy/M/d");
             if (appointment.RecordDate != null) record.LastRecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
             else record.LastRecordDate = DateTime.Now.ToString("yyyy/M/d");
-            record.RecordDate = DateTime.Now.ToString("yyyy/M/d");
+            record.RecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
             record.CounsellingRecord = appointment.CounsellingRecord;
             record.AppointmentId = appointment.Id;
             result.Success = true;

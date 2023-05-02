@@ -404,6 +404,22 @@ namespace ProjectPi.Controllers
             return Ok(result);
         }
         //**
+        /// <summary>
+        /// 刪除聊天室對話紀錄
+        /// </summary>
+        /// <returns></returns>
+        [Route("api/chatroom/PostReadChatRoom")]
+        [SwaggerResponse(typeof(ApiResponse))]
+        public async Task<IHttpActionResult> DeleteChatroomLost()
+        {
+            ApiResponse result = new ApiResponse();
+            List<ChatRoom> chatRoomList = _db.ChatRooms.ToList();
+            _db.ChatRooms.RemoveRange(chatRoomList);
+            result.Success = true;
+            result.Message = "刪除訊息成功";
+            _db.SaveChanges();
+            return Ok(result);
+        }
 
     }
 
