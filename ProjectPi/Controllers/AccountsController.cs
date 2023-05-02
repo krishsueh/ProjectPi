@@ -101,7 +101,7 @@ namespace ProjectPi.Controllers
                 .FirstOrDefault();
 
             if (hasAccount == null)
-                return BadRequest("無此帳號");
+                return BadRequest("無此諮商師帳號，請確認登入身份或註冊新帳號");
             else
             {
                 if (!ModelState.IsValid)
@@ -211,7 +211,7 @@ namespace ProjectPi.Controllers
                 .FirstOrDefault();
 
             if (hasAccount == null)
-                return BadRequest("無此帳號");
+                return BadRequest("無此用戶帳號，請確認登入身份或註冊新帳號");
             else
             {
                 if (!ModelState.IsValid)
