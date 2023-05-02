@@ -258,6 +258,7 @@ namespace ProjectPi.Controllers
                     SelfIntroduction = counselorData.SelfIntroduction,
                     CertNumber = counselorData.CertNumber,
                     VideoLink = counselorData.VideoLink,
+                    IsVideoOpen = counselorData.IsVideoOpen,
                     Fields = _db.Features
                     .Where(x => x.CounselorId == id).GroupBy(x => x.FieldId).ToList()
                     .Select(x => new
@@ -777,6 +778,16 @@ namespace ProjectPi.Controllers
                 return BadRequest("查無此筆預約紀錄");
             else
             {
+                if (_db.Timetables.Where(x => x.Id == findAppointment.AppointmentTimeId).Select(x => x.Availability).FirstOrDefault() == false)
+                {
+                    return Ok( new { Message = "此時段已被預約"} );
+                }
+
+                if (findAppointment.AppointmentTime < DateTime.UtcNow)
+                {
+                    return Ok(new { Message = "預約時段已過期，請個案重新預約時間" });
+                }
+
                 var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
                 var now = DateTime.Now;
                 var apiSecret = "7S2JIaMSBmx32CLpYAVtZ3ThTQ897kplWlIM";
@@ -1099,7 +1110,6 @@ namespace ProjectPi.Controllers
             ApiResponse result = new ApiResponse();
             Appointment appointment = _db.Appointments.Where(x => x.Id == view.AppointmentId).FirstOrDefault();
             AppointmentLogs_Record record = new AppointmentLogs_Record();
-
             //判斷有沒有已成立的課程
             if (appointment == null)
             {
@@ -1110,7 +1120,7 @@ namespace ProjectPi.Controllers
             record.AppointmentDate = ((DateTime)appointment.AppointmentTime).ToString("yyyy/M/d");
             if (appointment.RecordDate != null) record.LastRecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
             else record.LastRecordDate = DateTime.Now.ToString("yyyy/M/d");
-            record.RecordDate = DateTime.Now.ToString("yyyy/M/d");
+            record.RecordDate = ((DateTime)appointment.RecordDate).ToString("yyyy/M/d");
             record.CounsellingRecord = appointment.CounsellingRecord;
             record.AppointmentId = appointment.Id;
             result.Success = true;
