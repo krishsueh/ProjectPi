@@ -123,6 +123,7 @@ namespace ProjectPi.Controllers
         /// 顯示諮商師證書申請列表
         /// </summary>
         /// <returns></returns>
+        [JwtAuthFilter]
         [Route("api/CounselorLicense")]
         [HttpGet]
         public IHttpActionResult GetCounselorLicense(string CounselorName="")
@@ -154,6 +155,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/udateValidation")]
+        [JwtAuthFilter]
         [HttpPut]
         public IHttpActionResult UdateValidation(ViewModel_C.C_Validation view)
         {
@@ -185,6 +187,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/getNewebPayOrder")]
+        [JwtAuthFilter]
         [HttpGet]
         public IHttpActionResult GetNewebPayOrder(string UserName="")
         {
@@ -220,6 +223,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/getAppTList")]
+        [JwtAuthFilter]
         [HttpGet]
         public IHttpActionResult GetAppTList(string UserName="")
         {
@@ -249,6 +253,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/getCounselorList")]
+        [JwtAuthFilter]
         [HttpGet]
         public IHttpActionResult GetCounselorList(int PageNumber=1 , int PageSize = 10)
         {
@@ -267,6 +272,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/getUserList")]
+        [JwtAuthFilter]
         [HttpGet]
         public IHttpActionResult GetUserList(int PageNumber = 1, int PageSize = 10)
         {
@@ -285,6 +291,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/backend/getBackender")]
+        [JwtAuthFilter]
         [HttpGet]
         public IHttpActionResult GetBackender(int PageNumber = 1, int PageSize = 10)
         {
@@ -312,6 +319,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/backend/updateBackender")]
+        [JwtAuthFilter]
         [HttpPut]
         public IHttpActionResult PutBackender(ViewModel.backenderUpdate view)
         {
@@ -439,6 +447,7 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <param name="view"></param>
         /// <returns></returns>
+        [JwtAuthFilter]
         [HttpPost]
         [Route("api/backend/SendEmailCounselor")]
         [SwaggerResponse(typeof(ApiResponse))]
@@ -498,7 +507,6 @@ namespace ProjectPi.Controllers
         /// </summary>
         /// <returns></returns>
         [Route("api/updateGuidLicense")]
-        //[JwtAuthFilter]
         [HttpPost]
         public async Task<IHttpActionResult> UpdateGuidLicense()
         {
